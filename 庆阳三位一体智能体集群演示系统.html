@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>庆阳"低空·能源·智算"三位一体 智能体集群演示系统</title>
+<style>
+:root {
+  --bg0:#060a14;--bg1:#0c1220;--bg2:#131b2e;--bg3:#1a243c;
+  --border:#1e2d4a;--border-lit:#2a4470;
+  --t1:#e8edf5;--t2:#94a3b8;--t3:#5a6a84;
+  --blue:#3b82f6;--cyan:#06b6d4;--green:#10b981;--orange:#f59e0b;--red:#ef4444;--purple:#8b5cf6;--pink:#ec4899;
+  --font:'Microsoft YaHei','PingFang SC',system-ui,sans-serif;
+  --mono:'Cascadia Code','Fira Code','Consolas',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;font-family:var(--font);background:var(--bg0);color:var(--t1)}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* NAV */
+.nav{height:52px;display:flex;align-items:center;gap:16px;padding:0 20px;background:rgba(12,18,32,.95);border-bottom:1px solid var(--border);position:relative;z-index:100;backdrop-filter:blur(12px)}
+.nav-logo{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;letter-spacing:.5px;white-space:nowrap}
+.nav-logo .ico{width:32px;height:32px;border-radius:7px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;font-weight:800}
+.nav-logo em{font-style:normal;color:var(--cyan)}
+.nav-tabs{display:flex;gap:3px;margin-left:32px}
+.nav-tab{padding:7px 16px;border-radius:6px;font-size:12px;cursor:pointer;transition:.2s;color:var(--t2);border:1px solid transparent;display:flex;align-items:center;gap:6px;background:0}
+.nav-tab:hover{color:var(--t1);background:rgba(59,130,246,.08)}
+.nav-tab.on{color:var(--blue);background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.25)}
+.nav-tab .d{width:5px;height:5px;border-radius:50%}
+.nav-r{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:11px;color:var(--t3)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pdot 2s infinite}
+@keyframes pdot{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* PAGE */
+.body{height:calc(100% - 52px);overflow-y:auto;overflow-x:hidden;position:relative;z-index:10}
+.pg{display:none;padding:16px 20px;min-height:100%;animation:fi .35s ease}.pg.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* COMMON */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;transition:.25s;position:relative;overflow:hidden}
+.card:hover{border-color:rgba(59,130,246,.25)}
+.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-t{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:500}
+.b-g{background:rgba(16,185,129,.12);color:var(--green)}.b-b{background:rgba(59,130,246,.12);color:var(--blue)}
+.b-o{background:rgba(245,158,11,.12);color:var(--orange)}.b-r{background:rgba(239,68,68,.12);color:var(--red)}
+.b-p{background:rgba(139,92,246,.12);color:var(--purple)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
+.sec{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.sec::before{content:'';width:3px;height:16px;background:linear-gradient(to bottom,var(--blue),var(--cyan));border-radius:2px}
+
+/* METRIC */
+.met-v{font-size:26px;font-weight:700;letter-spacing:-.5px;line-height:1.2}
+.met-l{font-size:11px;color:var(--t3);margin-top:3px}
+.met-c{font-size:10px;margin-top:1px}
+.met-c.up{color:var(--green)}.met-c.dn{color:var(--red)}
+
+/* ============ THINK CHAIN ============ */
+.think-chain{display:flex;align-items:stretch;gap:0;margin:16px 0;background:var(--bg1);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.think-phase{flex:1;padding:14px 12px;display:flex;flex-direction:column;gap:6px;position:relative;transition:.3s;cursor:pointer}
+.think-phase:hover{background:rgba(59,130,246,.04)}
+.think-phase.active{background:rgba(59,130,246,.08)}
+.think-phase+.think-phase{border-left:1px solid var(--border)}
+.think-phase .ph-head{display:flex;align-items:center;gap:6px}
+.think-phase .ph-ico{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.think-phase .ph-name{font-size:12px;font-weight:600}
+.think-phase .ph-sub{font-size:10px;color:var(--t3)}
+.think-phase .ph-body{font-size:11px;color:var(--t2);line-height:1.6;min-height:48px;font-family:var(--mono);white-space:pre-wrap}
+.think-phase .ph-body .hl{color:var(--cyan)}
+.think-phase .ph-body .warn{color:var(--orange)}
+.think-phase .ph-body .act{color:var(--green)}
+.think-phase .ph-body .danger{color:var(--red)}
+.think-phase .ph-tag{position:absolute;top:6px;right:8px;font-size:9px;padding:1px 6px;border-radius:4px}
+
+/* arrow between phases */
+.think-arrow{display:flex;align-items:center;justify-content:center;width:24px;font-size:14px;color:var(--t3);flex-shrink:0}
+
+/* ============ HARNESS ENGINE ============ */
+.harness{background:var(--bg1);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.harness-head{padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);background:rgba(245,158,11,.04)}
+.harness-head .h-icon{font-size:16px}
+.harness-head .h-title{font-size:13px;font-weight:700;color:var(--orange)}
+.harness-body{padding:16px;display:flex;gap:16px;align-items:flex-start}
+.harness-col{flex:1;min-width:0}
+.harness-col .hc-title{font-size:11px;font-weight:600;color:var(--t3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.harness-node{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:11px;display:flex;align-items:center;gap:8px;transition:.2s}
+.harness-node:hover{border-color:rgba(59,130,246,.3)}
+.harness-node .hn-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.harness-node .hn-name{font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.harness-node .hn-status{font-size:9px;padding:1px 5px;border-radius:3px}
+.harness-arrow{display:flex;justify-content:center;padding:2px 0;color:var(--t3);font-size:10px}
+
+/* ============ REAL UI SCREENS ============ */
+.screen{background:#0d1117;border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;height:520px}
+.screen-topbar{height:36px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px;font-size:11px;color:var(--t2);flex-shrink:0}
+.screen-topbar .win-dots{display:flex;gap:4px}
+.screen-topbar .win-dots span{width:8px;height:8px;border-radius:50%}
+.screen-topbar .screen-title{font-weight:600;color:var(--t1)}
+.screen-body{flex:1;display:flex;overflow:hidden}
+
+/* Panel within screen */
+.sp{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sp:last-child{border-right:0}
+.sp-head{height:28px;display:flex;align-items:center;padding:0 10px;font-size:10px;font-weight:600;color:var(--t3);background:rgba(0,0,0,.2);border-bottom:1px solid var(--border);flex-shrink:0;text-transform:uppercase;letter-spacing:.3px}
+.sp-body{flex:1;padding:8px;overflow-y:auto}
+
+/* Gauge */
+.gauge{display:flex;flex-direction:column;align-items:center;gap:2px}
+.gauge-ring{position:relative;width:64px;height:64px}
+.gauge-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.gauge-ring circle{fill:none;stroke-width:5}
+.gauge-ring .bg{stroke:var(--border)}
+.gauge-ring .fg{stroke-linecap:round;transition:stroke-dashoffset 1.5s ease}
+.gauge-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.gauge-label{font-size:9px;color:var(--t3)}
+
+/* Map canvas */
+.map-canvas{width:100%;height:100%;position:relative;background:linear-gradient(135deg,#0a1628,#0d1a2d)}
+.map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(59,130,246,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.04) 1px,transparent 1px);background-size:40px 40px}
+.map-dot{position:absolute;width:8px;height:8px;border-radius:50%;z-index:2}
+.map-dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1px solid;opacity:.3;animation:mping 2s infinite}
+@keyframes mping{0%{transform:scale(1);opacity:.3}100%{transform:scale(2.5);opacity:0}}
+.map-label{position:absolute;font-size:9px;color:var(--t2);z-index:3;white-space:nowrap;pointer-events:none}
+.map-uav{position:absolute;z-index:4;font-size:14px;transition:all 2s ease}
+.map-trail{position:absolute;z-index:1;border:1px dashed rgba(59,130,246,.2);border-radius:4px}
+
+/* Chart bars */
+.mini-chart{display:flex;align-items:flex-end;gap:3px;height:48px}
+.mini-chart .bar{width:8px;border-radius:2px 2px 0 0;transition:height .8s ease}
+
+/* Alert card */
+.alert-card{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:8px 10px;margin-bottom:6px;font-size:11px;display:flex;align-items:flex-start;gap:6px}
+.alert-card.warn{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.2)}
+.alert-card.info{background:rgba(59,130,246,.06);border-color:rgba(59,130,246,.2)}
+.alert-card .al-icon{font-size:12px;flex-shrink:0;margin-top:1px}
+.alert-card .al-text{flex:1;line-height:1.4}
+.alert-card .al-time{font-size:9px;color:var(--t3);flex-shrink:0}
+
+/* Log line */
+.log-line{font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--t2)}
+.log-line .ts{color:var(--cyan)}
+.log-line .agent{color:var(--orange)}
+.log-line .msg{color:var(--t2)}
+
+/* Command panel */
+.cmd-panel{background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:8px}
+.cmd-panel .cmd-head{font-size:10px;color:var(--t3);margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.cmd-line{font-family:var(--mono);font-size:11px;padding:2px 0;color:var(--cyan)}
+.cmd-line .prompt{color:var(--green)}
+
+/* Scenario tabs */
+.sc-tabs{display:flex;gap:2px;background:rgba(0,0,0,.3);border-radius:8px;padding:3px;margin-bottom:14px}
+.sc-tab{padding:8px 18px;border-radius:6px;font-size:12px;cursor:pointer;transition:.2s;color:var(--t3);background:0;border:0;font-family:var(--font);display:flex;align-items:center;gap:6px}
+.sc-tab:hover{color:var(--t2)}.sc-tab.on{color:var(--t1);background:rgba(59,130,246,.15)}
+
+/* Flow trigger */
+.flow-btn{padding:8px 24px;border-radius:6px;border:1px solid var(--blue);background:rgba(59,130,246,.1);color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;transition:.2s;font-family:var(--font)}
+.flow-btn:hover{background:var(--blue);color:#fff}
+.flow-btn:disabled{opacity:.4;cursor:not-allowed;background:0;color:var(--t3)}
+
+/* Responsive */
+@media(max-width:1100px){.g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-logo"><div class="ico">QY</div>庆阳<em>三位一体</em> · 智能体集群</div>
+  <div class="nav-tabs">
+    <div class="nav-tab on" onclick="go('overview')" data-p="overview"><div class="d" style="background:var(--blue)"></div>总览驾驶舱</div>
+    <div class="nav-tab" onclick="go('think')" data-p="think"><div class="d" style="background:var(--purple)"></div>智能体思考链</div>
+    <div class="nav-tab" onclick="go('harness')" data-p="harness"><div class="d" style="background:var(--orange)"></div>Harness总线引擎</div>
+    <div class="nav-tab" onclick="go('scenario')" data-p="scenario"><div class="d" style="background:var(--green)"></div>场景演示</div>
+  </div>
+  <div class="nav-r"><span id="clk"></span><div style="display:flex;align-items:center;gap:5px"><div class="live-dot"></div>系统运行中</div></div>
+</div>
+
+<div id="toasts" style="position:fixed;top:60px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:6px"></div>
+
+<div class="body">
+
+<!-- ==================== OVERVIEW ==================== -->
+<div class="pg on" id="pg-overview">
+  <div class="g4" style="margin-bottom:16px">
+    <div class="card"><div class="card-t">🔷 算力规模</div><div class="met-v" style="color:var(--blue)" id="m1">0</div><div class="met-l">PFlops 智算</div><div class="met-c up">▲ 23.5% 同比</div></div>
+    <div class="card"><div class="card-t">⚡ 新能源装机</div><div class="met-v" style="color:var(--green)" id="m2">0</div><div class="met-l">万千瓦 风光</div><div class="met-c up">▲ 绿电占比 83%</div></div>
+    <div class="card"><div class="card-t">🛸 低空作业</div><div class="met-v" style="color:var(--cyan)" id="m3">0</div><div class="met-l">架次/日 巡检</div><div class="met-c up">▲ 覆盖率 96%</div></div>
+    <div class="card"><div class="card-t">🤖 智能体在线</div><div class="met-v" style="color:var(--purple)" id="m4">0</div><div class="met-l">个 领域智能体</div><div class="met-c up">● 全部在线</div></div>
+  </div>
+  <div class="sec">三大中心枢纽实时状态</div>
+  <div class="g3" style="margin-bottom:16px">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:16px">🖥️</span><b style="font-size:13px">庆阳国家智算中心</b><span class="badge b-g" style="margin-left:auto">运行中</span></div>
+      <div class="g2" style="gap:8px">
+        <div style="background:rgba(0,0,0,.15);border-radius:6px;padding:6px 8px"><div style="font-size:18px;font-weight:700;color:var(--blue)">14.2万</div><div style="font-size:9px;color:var(--t3)">智算规模(P)</div></div>
+        <div style="background:rgba(0,0,0,.15);border-radius:6px;padding:6px 8px"><div style="font-size:18px;font-weight:700;color:var(--cyan)">87.3%</div><div style="font-size:9px;color:var(--t3)">集群利用率</div></div>
+        <div style="background:rgba(0,0,0,.15);border-radius:6px;padding:6px 8px"><div style="font-size:18px;font-weight:700;color:var(--green)">91.6%</div><div style="font-size:9px;color:var(--t3)">绿电使用率</div></div>
+        <div style="background:rgba(0,0,0,.15);border-radius:6px;padding:6px 8px"><div style="font-size:18px;font-weight:700;color:var(--purple)">1.18</div><div style="font-size:9px;color:var(--t3)">PUE值</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:16px">⚡</span><b style="font-size:13px">新能源场站调度中心</b><span class="badge b-g" style="margin-left:auto">运行中</span></div>
+      <div class="g2" style="gap:8px">
+        <div style="background:rgba(0,0,0,.15);border-radius:6px;padding:6px 8px"><div style="font-size:18px;font-weight:700;color:var(--green)">830</div><div style="font-size:9px;color:var(--t3)">装机(万千瓦)</div></div>
+        <div style="background:rgba(0,0,0,.15);border-radius:6px;padding:6px 8px"><div style="font-size:18px;font-weight:700;color:var(--cyan)">632</div><div style="font-size:9px;color:var(--t3)">实时出力</div></div>
+        <div style="background:rgba(0,0,0,.15);border-radius:6px;padding:6px 8px"><div style="font-size:18px;font-weight:700;color:var(--orange)">76.1%</div><div style="font-size:9px;color:var(--t3)">消纳率</div></div>
+        <div style="background:rgba(0,0,0,.15);border-radius:6px;padding:6px 8px"><div style="font-size:18px;font-weight:700;color:var(--blue)">24</div><div style="font-size:9px;color:var(--t3)">场站接入</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:16px">🛸</span><b style="font-size:13px">无人系统指控中心</b><span class="badge b-g" style="margin-left:auto">运行中</span></div>
+      <div class="g2" style="gap:8px">
+        <div style="background:rgba(0,0,0,.15);border-radius:6px;padding:6px 8px"><div style="font-size:18px;font-weight:700;color:var(--purple)">18</div><div style="font-size:9px;color:var(--t3)">在线无人机</div></div>
+        <div style="background:rgba(0,0,0,.15);border-radius:6px;padding:6px 8px"><div style="font-size:18px;font-weight:700;color:var(--cyan)">6</div><div style="font-size:9px;color:var(--t3)">执行任务</div></div>
+        <div style="background:rgba(0,0,0,.15);border-radius:6px;padding:6px 8px"><div style="font-size:18px;font-weight:700;color:var(--green)">92%</div><div style="font-size:9px;color:var(--t3)">空域利用率</div></div>
+        <div style="background:rgba(0,0,0,.15);border-radius:6px;padding:6px 8px"><div style="font-size:18px;font-weight:700;color:var(--blue)">0</div><div style="font-size:9px;color:var(--t3)">安全告警</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-h"><div class="card-t">📊 智能体总线消息流</div><span class="badge b-g">实时</span></div><div id="bus-log" style="height:180px;overflow-y:auto"></div></div>
+    <div class="card"><div class="card-h"><div class="card-t">⏱️ 跨域协同事件</div><span class="badge b-b">近1小时</span></div><div id="recent-evts"></div></div>
+  </div>
+</div>
+
+<!-- ==================== THINK CHAIN ==================== -->
+<div class="pg" id="pg-think">
+  <div class="sec">智能体思考链 — Perceive → Reason → Decide → Act</div>
+  <div style="font-size:12px;color:var(--t2);margin-bottom:16px">点击下方任意智能体，观察其完整的感知-推理-决策-行动闭环运行过程。每个智能体实时接收多源信号，经推理引擎生成决策，驱动执行动作。</div>
+
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="agent-btns"></div>
+
+  <div id="think-panel" style="margin-bottom:16px"></div>
+
+  <!-- Harness mini view embedded -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-h"><div class="card-t">🔗 Harness总线编排 — 当前智能体协作拓扑</div><span class="badge b-o">实时</span></div>
+    <canvas id="harness-canvas" width="1100" height="200" style="width:100%;height:200px;border-radius:8px;background:var(--bg1)"></canvas>
+  </div>
+</div>
+
+<!-- ==================== HARNESS ==================== -->
+<div class="pg" id="pg-harness">
+  <div class="sec">Harness 智能体总线编排引擎</div>
+  <div style="font-size:12px;color:var(--t2);margin-bottom:16px">Harness是三域融合平台的智能体编排核心，基于DAG工作流引擎实现8个领域智能体的任务编排、资源调度、消息路由与状态监控。支持条件分支、并行执行、超时熔断与跨域协同。</div>
+
+  <div class="g2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="card-h"><div class="card-t">📋 DAG编排拓扑</div><span class="badge b-o">Harness Engine v2.1</span></div>
+      <canvas id="dag-canvas" width="600" height="400" style="width:100%;height:400px;border-radius:8px;background:var(--bg1)"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">📊 编排运行日志</div><span class="badge b-g">实时</span></div>
+      <div id="harness-log" style="height:400px;overflow-y:auto;font-family:var(--mono);font-size:11px;line-height:1.7"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-t">⚡ Harness核心能力</div></div>
+    <div class="g4">
+      <div style="text-align:center;padding:12px"><div style="font-size:24px;margin-bottom:6px">🔄</div><div style="font-size:12px;font-weight:600;margin-bottom:4px">DAG工作流</div><div style="font-size:10px;color:var(--t2)">条件分支、并行执行、循环迭代</div></div>
+      <div style="text-align:center;padding:12px"><div style="font-size:24px;margin-bottom:6px">📡</div><div style="font-size:12px;font-weight:600;margin-bottom:4px">消息路由</div><div style="font-size:10px;color:var(--t2)">发布订阅、点对点、广播组播</div></div>
+      <div style="text-align:center;padding:12px"><div style="font-size:24px;margin-bottom:6px">🛡️</div><div style="font-size:12px;font-weight:600;margin-bottom:4px">熔断降级</div><div style="font-size:10px;color:var(--t2)">超时熔断、限流降级、故障隔离</div></div>
+      <div style="text-align:center;padding:12px"><div style="font-size:24px;margin-bottom:6px">📈</div><div style="font-size:12px;font-weight:600;margin-bottom:4px">状态监控</div><div style="font-size:10px;color:var(--t2)">全链路追踪、性能指标、告警联动</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCENARIOS ==================== -->
+<div class="pg" id="pg-scenario">
+  <div class="sec">四大典型场景 — 真实界面演示</div>
+  <div class="sc-tabs">
+    <button class="sc-tab on" onclick="switchSc(0)">🏗️ 零碳园区运维</button>
+    <button class="sc-tab" onclick="switchSc(1)">🔍 智能巡检</button>
+    <button class="sc-tab" onclick="switchSc(2)">⚡ 算电协同</button>
+    <button class="sc-tab" onclick="switchSc(3)">🚑 应急救援</button>
+  </div>
+  <div style="display:flex;gap:10px;margin-bottom:12px;align-items:center">
+    <button class="flow-btn" onclick="runScenario()" id="sc-btn">▶ 触发场景演示</button>
+    <span style="font-size:11px;color:var(--t3)" id="sc-status">就绪</span>
+  </div>
+  <div id="sc-container"></div>
+</div>
+
+</div><!-- /body -->
+
+<script>
+// ============ NAVIGATION ============
+function go(p){document.querySelectorAll('.pg').forEach(e=>e.classList.remove('on'));document.querySelectorAll('.nav-tab').forEach(e=>e.classList.remove('on'));document.getElementById('pg-'+p).classList.add('on');document.querySelector(`.nav-tab[data-p="${p}"]`).classList.add('on')}
+function updateClk(){document.getElementById('clk').textContent=new Date().toLocaleString('zh-CN',{hour12:false})}
+setInterval(updateClk,1000);updateClk();
+
+// ============ ANIMATED COUNTERS ============
+function animVal(el,end,dur,suf=''){let s=0;const step=end/(dur/16);const t=setInterval(()=>{s+=step;if(s>=end){s=end;clearInterval(t)}el.textContent=(Number.isInteger(end)?Math.floor(s):s.toFixed(1))+suf},16)}
+setTimeout(()=>{animVal(document.getElementById('m1'),15,1200,'万');animVal(document.getElementById('m2'),830,1200);animVal(document.getElementById('m3'),156,1200);animVal(document.getElementById('m4'),8,800)},200);
+
+// ============ TOAST ============
+function toast(msg,type='info'){const c=document.getElementById('toasts');const t=document.createElement('div');t.style.cssText=`padding:10px 18px;border-radius:8px;font-size:12px;color:#fff;min-width:260px;animation:fi .3s ease;box-shadow:0 6px 20px rgba(0,0,0,.4);display:flex;align-items:center;gap:8px;`;const bg={info:'linear-gradient(135deg,#3b82f6,#1d4ed8)',success:'linear-gradient(135deg,#10b981,#059669)',warning:'linear-gradient(135deg,#f59e0b,#d97706)',error:'linear-gradient(135deg,#ef4444,#dc2626)'};const ico={info:'ℹ️',success:'✅',warning:'⚠️',error:'❌'};t.style.background=bg[type]||bg.info;t.innerHTML=`<span>${ico[type]||'ℹ️'}</span><span>${msg}</span>`;c.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(30px)';setTimeout(()=>t.remove(),300)},3500)}
+
+// ============ BUS LOG ============
+const busMsgs=['【功率预测智能体】→ 总线：预测未来2h风电出力超负荷120MW','【算力调度智能体】← 总线：启动3个低优AI训练任务消纳绿电','【低空巡检智能体】→ 总线：3号方阵发现光伏板热斑缺陷','【新能源集控智能体】← 总线：生成维修工单 #20260627-042','【飞行调度智能体】→ 总线：3架无人机A区巡检任务执行中','【安全预警智能体】→ 总线：B3空域风速超限预警','【绿电交易智能体】→ 总线：日前市场绿电成交价0.382元/度','【应急救援智能体】→ 总线：应急待命状态正常','【AI运维智能体】→ 总线：B3机房PUE异常，已定位空调群控偏差','【新能源集控智能体】→ 总线：环县北场站今日发电量预计超计划8%'];
+let bi=0;
+function addBusLog(){const el=document.getElementById('bus-log');if(!el)return;const now=new Date().toLocaleTimeString('zh-CN',{hour12:false});const m=document.createElement('div');m.className='log-line';m.innerHTML=`<span class="ts">${now}</span> <span class="agent">[${busMsgs[bi%busMsgs.length].split('】')[0].replace('【','')}]</span> <span class="msg">${busMsgs[bi%busMsgs.length].split('】')[1]||''}</span>`;el.prepend(m);if(el.children.length>25)el.removeChild(el.lastChild);bi++}
+setInterval(addBusLog,4000);for(let i=0;i<4;i++)setTimeout(addBusLog,i*200);
+
+// ============ RECENT EVENTS ============
+const revts=[{t:'14:32:15',m:'功率预测→算力调度：风电出力高峰，触发算电协同'},{t:'14:18:03',m:'低空巡检→集控：A区巡检完成，发现1处热斑缺陷'},{t:'13:45:22',m:'绿电交易→总线：日前市场成交120MWh'},{t:'13:10:08',m:'AI运维→总线：B3机房PUE修复，空调群控策略调整'},{t:'12:30:00',m:'飞行调度→总线：6架无人机午间巡检任务编排完成'}];
+(function(){const el=document.getElementById('recent-evts');if(!el)return;el.innerHTML=revts.map((e,i)=>`<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;${i===0?'color:var(--cyan)':'color:var(--t2)'}"><span style="color:var(--cyan);flex-shrink:0;width:60px">${e.t}</span><span>${e.m}</span></div>`).join('')})();
+
+// ============ THINK CHAIN PAGE ============
+const agents=[
+  {id:'inspect',name:'低空巡检智能体',icon:'🔍',color:'var(--green)',status:'在线',
+   perceive:'接收数据源：\n· 无人机实时视频流（3路）\n· 气象站：风力4级/能见度12km\n· 场站设备台账：A区光伏2460块\n· 历史巡检记录：上次0异常',
+   reason:'推理分析：\n· 当前气象条件<span class="act">适合巡检</span>\n· A区上次巡检距今72h → <span class="warn">超过标准周期</span>\n· 光伏板老化率12% → 高风险区域\n· 计算最优巡检路径：3架→12航线',
+   decide:'决策输出：\n· 调度3架无人机执行A区巡检\n· 优先覆盖3号方阵（老化率最高）\n· AI视觉模型：热斑检测v3.2\n· 预计完成时间：45分钟',
+   act:'执行动作：\n· → <span class="hl">Harness.orchestrate</span>("inspect_mission")\n· → 飞行调度智能体：航线规划请求\n· → 算力调度：申请2×A100 GPU\n· → 集控智能体：巡检结果订阅'},
+  {id:'flight',name:'飞行调度智能体',icon:'✈️',color:'var(--cyan)',status:'在线',
+   perceive:'接收数据源：\n· 巡检智能体：A区巡检任务请求\n· 空域态势：B3区域风速8m/s\n· 无人机状态：18架在线/3架充电中\n· 气象预报：未来2h风力稳定',
+   reason:'推理分析：\n· 可调度无人机：5架（满足3架需求）\n· B3区域风速<span class="warn">接近上限</span>（9m/s限飞）\n· 航线冲突检测：2条航线交叉→调整\n· 电池续航：满电可飞38min→够用',
+   decide:'决策输出：\n· 分配UAV-03/07/12执行A区任务\n· 航线规划：避开B3区域，绕行C1走廊\n· 编队模式：品字形，间距200m\n· 备降点：2号机巢（距A区1.2km）',
+   act:'执行动作：\n· → <span class="hl">Harness.dispatch</span>("flight_plan", [UAV-03,07,12])\n· → 巡检智能体：任务已接受，预计14:05起飞\n· → 安全预警：B3区域风速关注\n· → 总线：任务状态=READY'},
+  {id:'rescue',name:'应急救援智能体',icon:'🚑',color:'var(--red)',status:'待命',
+   perceive:'接收数据源：\n· 政府应急平台：泥石流预警（3级）\n· 气象雷达：暴雨持续，降水量45mm/h\n· 交通：S202省道K37段中断\n· 电力：3个村庄供电不稳定',
+   reason:'推理分析：\n· 泥石流风险等级：<span class="danger">高</span>\n· 受影响人口：约860人\n· 无人机投送能力：5架×100kg = 500kg/批次\n· <span class="warn">道路中断</span>→只能空中投送\n· 需要跨域协同：供电+算力+飞行',
+   decide:'决策输出：\n· 启动II级应急响应\n· 跨域协同请求：\n  - 飞行调度：5架重型无人机\n  - 集控智能体：应急供电保障\n  - 算力调度：GPU→灾情评估模型\n· 投送计划：3批次/5吨物资',
+   act:'执行动作：\n· → <span class="hl">Harness.emergency</span>("level_II", crossDomain=true)\n· → 飞行调度：紧急航线规划（3村庄）\n· → 集控智能体：就近场站切应急供电\n· → 算力调度：分配8×A100灾情推理'},
+  {id:'safety',name:'安全预警智能体',icon:'🛡️',color:'var(--orange)',status:'在线',
+   perceive:'接收数据源：\n· 空域雷达：18个飞行目标\n· 气象站：B3区域风速8.2m/s\n· 地理围栏：2个临时禁飞区\n· 无人机遥测：UAV-05偏航0.3°',
+   reason:'推理分析：\n· 整体空域安全等级：<span class="act">良好</span>\n· B3区域风速<span class="warn">接近限飞阈值</span>→黄色预警\n· UAV-05偏航在容差内→继续监控\n· 临时禁飞区已同步所有飞行计划',
+   decide:'决策输出：\n· B3区域发布黄色预警（注意级）\n· 通知飞行调度：B3区域谨慎通过\n· 持续监控UAV-05偏航趋势\n· 更新空域态势图→推送所有订阅者',
+   act:'执行动作：\n· → <span class="hl">Harness.broadcast</span>("airspace_alert", level=yellow)\n· → 飞行调度：B3区域风速预警\n· → 巡检智能体：作业安全提示\n· → 总线：态势更新已推送'},
+  {id:'control',name:'新能源集控智能体',icon:'🏭',color:'var(--blue)',status:'在线',
+   perceive:'接收数据源：\n· 24座场站SCADA实时数据\n· 环县北：6台主变/186组逆变器\n· 设备温度：3号逆变器IGBT 78°C\n· 今日计划发电：480MWh',
+   reason:'推理分析：\n· 3号逆变器IGBT温度<span class="warn">偏高</span>（正常<70°C）\n· 效率下降：该逆变器出力降低8%\n· 预测性模型：72h内故障概率62%\n· 建议：降额运行+安排检修',
+   decide:'决策输出：\n· 3号逆变器降额至80%运行\n· 生成预测性维护工单\n· 通知巡检智能体：下次巡检重点关注\n· 调整出力预期：-12MW',
+   act:'执行动作：\n· → <span class="hl">Harness.task</span>("maintenance_order", priority=medium)\n· → 巡检智能体：3号逆变器热成像请求\n· → 功率预测：出力预期调整-12MW\n· → 总线：设备状态更新'},
+  {id:'predict',name:'功率预测智能体',icon:'📈',color:'var(--purple)',status:'在线',
+   perceive:'接收数据源：\n· 气象预报：未来4h风力强劲\n· 实时出力：当前632MW\n· 历史同期：凌晨2-5h出力曲线\n· 储能状态：SOC 45% 可充电',
+   reason:'推理分析：\n· 预测未来4h风电出力：<span class="act">超负荷150MW</span>\n· 弃风概率：18%→需要消纳策略\n· 算力集群当前负载：87%→可扩容\n· 储能充电能力：120MW×4h = 480MWh',
+   decide:'决策输出：\n· 发布"绿电富余"信号\n· 建议：3个低优AI训练任务提前执行\n· 建议：储能充电消纳剩余电力\n· 预计消纳率提升至94%',
+   act:'执行动作：\n· → <span class="hl">Harness.signal</span>("green_surplus", delta=150MW)\n· → 算力调度：3个训练任务提前\n· → 绿电交易：出力预测数据推送\n· → 集控：储能充电指令'},
+  {id:'trade',name:'绿电交易智能体',icon:'💰',color:'var(--orange)',status:'在线',
+   perceive:'接收数据源：\n· 功率预测：未来4h出力超负荷\n· 市场行情：日前价格0.382元/度\n· 绿证库存：可交易绿证2.4万张\n· 合约执行：3个长期合约待履约',
+   reason:'推理分析：\n· 日前价格<span class="act">低于均值</span>→卖出窗口\n· 长期合约履约需200MWh→优先安排\n· 绿证价格上行趋势→可暂持\n· 剩余可交易量：340MWh',
+   decide:'决策输出：\n· 优先执行长期合约：200MWh\n· 日前市场挂单：140MWh @0.382\n· 绿证暂不出售（等价格上行）\n· 碳减排量：预计486吨CO2',
+   act:'执行动作：\n· → <span class="hl">Harness.execute</span>("trade_order", amount=340MWh)\n· → 算力调度：算力需求反馈\n· → 集控：消纳状态同步\n· → 总线：交易执行确认'},
+  {id:'schedule',name:'算力调度智能体',icon:'🖥️',color:'var(--cyan)',status:'繁忙',
+   perceive:'接收数据源：\n· 集群状态：GPU利用率87%/CPU 72%\n· 功率预测：绿电富余150MW\n· 任务队列：3个低优/2个中优/1个高优\n· 绿电使用率：91.6%',
+   reason:'推理分析：\n· 绿电富余→<span class="act">可扩容推理任务</span>\n· 3个低优训练任务预估消耗：120MW\n· 剩余30MW→储能充电\n· 调度后利用率：87%→95%（+8%）\n· 绿电匹配率：91.6%→97.2%',
+   decide:'决策输出：\n· 将3个低优训练任务提前至当前时段\n· Model-X推理任务扩容2×GPU\n· 启动储能充电消纳剩余电力\n· 通知运营管理员确认',
+   act:'执行动作：\n· → <span class="hl">Harness.schedule</span>("gpu_rebalance", tasks=[T-01,T-02,T-03])\n· → 功率预测：算力扩容确认\n· → 集控：储能充电启动\n· → 总线：调度执行完成'}
+];
+
+// Agent buttons
+(function(){const el=document.getElementById('agent-btns');el.innerHTML=agents.map(a=>`<div onclick="selectAgent('${a.id}')" style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);cursor:pointer;transition:.2s;font-size:12px" class="abtn" data-id="${a.id}"><span>${a.icon}</span><span style="font-weight:600">${a.name}</span><span style="width:5px;height:5px;border-radius:50%;background:${a.status==='在线'?'var(--green)':'var(--orange)'}"></span></div>`).join('')})();
+
+let curAgent='inspect';
+function selectAgent(id){curAgent=id;document.querySelectorAll('.abtn').forEach(e=>{e.style.borderColor=e.dataset.id===id?'var(--blue)':'var(--border)';e.style.background=e.dataset.id===id?'rgba(59,130,246,.1)':'var(--bg2)'});renderThink(id)}
+function renderThink(id){
+  const a=agents.find(x=>x.id===id);if(!a)return;
+  const panel=document.getElementById('think-panel');
+  panel.innerHTML=`
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-h"><div class="card-t">${a.icon} ${a.name} — 思考链实时状态</div><span class="badge ${a.status==='在线'?'b-g':'b-o'}">${a.status}</span></div>
+    <div class="think-chain" id="tc-${a.id}">
+      <div class="think-phase" id="ph-0">
+        <div class="ph-tag badge b-b">Phase 1</div>
+        <div class="ph-head"><div class="ph-ico" style="background:rgba(6,182,212,.15);color:var(--cyan)">👁️</div><div><div class="ph-name" style="color:var(--cyan)">Perceive 感知</div><div class="ph-sub">多源信号接入</div></div></div>
+        <div class="ph-body">${a.perceive}</div>
+      </div>
+      <div class="think-arrow">→</div>
+      <div class="think-phase" id="ph-1">
+        <div class="ph-tag badge b-p">Phase 2</div>
+        <div class="ph-head"><div class="ph-ico" style="background:rgba(139,92,246,.15);color:var(--purple)">🧠</div><div><div class="ph-name" style="color:var(--purple)">Reason 推理</div><div class="ph-sub">知识图谱+模型推理</div></div></div>
+        <div class="ph-body">${a.reason}</div>
+      </div>
+      <div class="think-arrow">→</div>
+      <div class="think-phase" id="ph-2">
+        <div class="ph-tag badge b-o">Phase 3</div>
+        <div class="ph-head"><div class="ph-ico" style="background:rgba(245,158,11,.15);color:var(--orange)">⚖️</div><div><div class="ph-name" style="color:var(--orange)">Decide 决策</div><div class="ph-sub">多目标优化决策</div></div></div>
+        <div class="ph-body">${a.decide}</div>
+      </div>
+      <div class="think-arrow">→</div>
+      <div class="think-phase" id="ph-3">
+        <div class="ph-tag badge b-g">Phase 4</div>
+        <div class="ph-head"><div class="ph-ico" style="background:rgba(16,185,129,.15);color:var(--green)">⚡</div><div><div class="ph-name" style="color:var(--green)">Act 行动</div><div class="ph-sub">Harness编排执行</div></div></div>
+        <div class="ph-body">${a.act}</div>
+      </div>
+    </div>
+  </div>`;
+  animateThinkChain();
+}
+
+let thinkAnim=null;
+function animateThinkChain(){
+  if(thinkAnim)clearInterval(thinkAnim);
+  let phase=0;
+  document.querySelectorAll('.think-phase').forEach(e=>e.classList.remove('active'));
+  thinkAnim=setInterval(()=>{
+    document.querySelectorAll('.think-phase').forEach(e=>e.classList.remove('active'));
+    document.getElementById('ph-'+phase).classList.add('active');
+    phase=(phase+1)%4;
+  },2500);
+}
+selectAgent('inspect');
+
+// ============ HARNESS CANVAS (Think page) ============
+function drawHarnessMini(){
+  const c=document.getElementById('harness-canvas');if(!c)return;
+  const ctx=c.getContext('2d');const W=c.width,H=c.height;
+  ctx.clearRect(0,0,W,H);
+  // Draw bus line
+  const busY=H/2;
+  ctx.strokeStyle='rgba(245,158,11,0.3)';ctx.lineWidth=3;ctx.setLineDash([8,4]);
+  ctx.beginPath();ctx.moveTo(40,busY);ctx.lineTo(W-40,busY);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(245,158,11,0.8)';ctx.font='bold 11px Microsoft YaHei';ctx.textAlign='center';
+  ctx.fillText('Harness Bus',W/2,busY-8);
+
+  // Draw agent nodes
+  const nodes=agents.map((a,i)=>({x:80+i*(W-160)/(agents.length-1),y:busY,a}));
+  nodes.forEach((n,i)=>{
+    // Line to bus
+    ctx.strokeStyle=n.a.status==='在线'?'rgba(16,185,129,0.3)':'rgba(245,158,11,0.3)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(n.x,n.y-12);ctx.lineTo(n.x,n.y-2);ctx.stroke();
+    // Node circle
+    ctx.beginPath();ctx.arc(n.x,n.y-18,6,0,Math.PI*2);
+    ctx.fillStyle=curAgent===n.a.id?'rgba(59,130,246,0.8)':'rgba(59,130,246,0.3)';ctx.fill();
+    if(curAgent===n.a.id){ctx.beginPath();ctx.arc(n.x,n.y-18,10,0,Math.PI*2);ctx.strokeStyle='rgba(59,130,246,0.4)';ctx.lineWidth=1;ctx.stroke()}
+    // Label
+    ctx.fillStyle=curAgent===n.a.id?'#fff':'rgba(148,163,184,0.7)';ctx.font='9px Microsoft YaHei';ctx.textAlign='center';
+    ctx.fillText(n.a.name.replace('智能体',''),n.x,n.y+14);
+    // Animated dot on bus
+    const t=Date.now()/2000;
+    const dotX=n.x+Math.sin(t+i)*20;
+    ctx.beginPath();ctx.arc(dotX,busY,2,0,Math.PI*2);ctx.fillStyle='rgba(245,158,11,0.6)';ctx.fill();
+  });
+  // Cross-domain connections (highlighted when active)
+  if(curAgent){
+    const activeIdx=agents.findIndex(a=>a.id===curAgent);
+    const connMap={inspect:[5,1,7],flight:[0,2,3],rescue:[1,4,7],safety:[1,0],control:[0,5,6],predict:[7,6,4],trade:[5,7,4],schedule:[5,4,6]};
+    const conns=connMap[curAgent]||[];
+    conns.forEach(j=>{
+      if(j<agents.length&&j!==activeIdx){
+        ctx.strokeStyle='rgba(59,130,246,0.15)';ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(nodes[activeIdx].x,nodes[activeIdx].y-18);
+        ctx.quadraticCurveTo((nodes[activeIdx].x+nodes[j].x)/2,busY-50,nodes[j].x,nodes[j].y-18);
+        ctx.stroke();
+      }
+    });
+  }
+  requestAnimationFrame(drawHarnessMini);
+}
+drawHarnessMini();
+
+// ============ HARNESS PAGE - DAG ============
+function drawDAG(){
+  const c=document.getElementById('dag-canvas');if(!c)return;
+  const ctx=c.getContext('2d');const W=c.width,H=c.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Background grid
+  ctx.strokeStyle='rgba(59,130,246,0.03)';ctx.lineWidth=1;
+  for(let x=0;x<W;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+  for(let y=0;y<H;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+
+  // DAG nodes
+  const dagNodes=[
+    {id:'bus',label:'Harness Bus\n(Orchestrator)',x:W/2,y:40,w:120,h:36,color:'#f59e0b'},
+    // Left: Low-altitude
+    {id:'inspect',label:'低空巡检',x:100,y:120,w:80,h:28,color:'#10b981'},
+    {id:'flight',label:'飞行调度',x:220,y:120,w:80,h:28,color:'#06b6d4'},
+    {id:'rescue',label:'应急救援',x:100,y:200,w:80,h:28,color:'#ef4444'},
+    {id:'safety',label:'安全预警',x:220,y:200,w:80,h:28,color:'#f59e0b'},
+    // Right: Energy
+    {id:'control',label:'新能源集控',x:380,y:120,w:80,h:28,color:'#3b82f6'},
+    {id:'predict',label:'功率预测',x:500,y:120,w:80,h:28,color:'#8b5cf6'},
+    {id:'trade',label:'绿电交易',x:380,y:200,w:80,h:28,color:'#f59e0b'},
+    {id:'schedule',label:'算力调度',x:500,y:200,w:80,h:28,color:'#06b6d4'},
+  ];
+  // Edges
+  const edges=[
+    ['bus','inspect'],['bus','flight'],['bus','rescue'],['bus','safety'],
+    ['bus','control'],['bus','predict'],['bus','trade'],['bus','schedule'],
+    ['inspect','flight'],['inspect','control'],['flight','safety'],['flight','rescue'],
+    ['predict','schedule'],['predict','trade'],['control','trade'],['schedule','control'],
+    ['rescue','flight'],['rescue','schedule'],['safety','inspect'],
+  ];
+  const nodeMap={};dagNodes.forEach(n=>nodeMap[n.id]=n);
+
+  // Draw edges
+  const t=Date.now()/1000;
+  edges.forEach(([from,to],i)=>{
+    const f=nodeMap[from],tt=nodeMap[to];if(!f||!tt)return;
+    ctx.strokeStyle='rgba(59,130,246,0.12)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(f.x,f.y+f.h/2);
+    const midY=(f.y+tt.y)/2;
+    ctx.bezierCurveTo(f.x,midY,tt.x,midY,tt.x,tt.y-tt.h/2);
+    ctx.stroke();
+    // Animated dot
+    const prog=((t*0.3+i*0.15)%1);
+    const px=f.x+(tt.x-f.x)*prog;
+    const py=f.y+f.h/2+(tt.y-tt.h/2-f.y-f.h/2)*prog;
+    ctx.beginPath();ctx.arc(px,py,2,0,Math.PI*2);ctx.fillStyle='rgba(59,130,246,0.5)';ctx.fill();
+  });
+
+  // Draw nodes
+  dagNodes.forEach(n=>{
+    const r=6;
+    ctx.fillStyle=n.color+'22';ctx.strokeStyle=n.color+'66';ctx.lineWidth=1;
+    ctx.beginPath();ctx.roundRect(n.x-n.w/2,n.y-n.h/2,n.w,n.h,r);ctx.fill();ctx.stroke();
+    ctx.fillStyle=n.color;ctx.font='bold 10px Microsoft YaHei';ctx.textAlign='center';ctx.textBaseline='middle';
+    const lines=n.label.split('\n');
+    lines.forEach((l,i)=>ctx.fillText(l,n.x,n.y+(i-lines.length/2+0.5)*12));
+    // Pulse for bus
+    if(n.id==='bus'){
+      const pulse=Math.sin(t*2)*4+4;
+      ctx.beginPath();ctx.arc(n.x,n.y,pulse,0,Math.PI*2);ctx.strokeStyle=n.color+'44';ctx.lineWidth=2;ctx.stroke();
+    }
+  });
+
+  // Title
+  ctx.fillStyle='rgba(148,163,184,0.5)';ctx.font='10px Microsoft YaHei';ctx.textAlign='left';
+  ctx.fillText('DAG工作流拓扑 — 双向箭头表示跨域协同通道',10,H-10);
+
+  requestAnimationFrame(drawDAG);
+}
+drawDAG();
+
+// Harness log
+const harnessLogEntries=[
+  {t:'14:32:15.237',lvl:'INFO',msg:'Harness.orchestrate → 功率预测→算力调度: green_surplus信号 [latency: 3ms]'},
+  {t:'14:32:15.241',lvl:'DEBUG',msg:'DAG.eval → 检查依赖: predict→schedule 边条件满足，执行调度节点'},
+  {t:'14:32:15.892',lvl:'INFO',msg:'Harness.schedule → GPU重平衡: tasks=[T-01,T-02,T-03] 执行中'},
+  {t:'14:32:16.103',lvl:'INFO',msg:'Harness.broadcast → 空域预警: B3区域黄色预警已推送至3个订阅者'},
+  {t:'14:32:18.456',lvl:'DEBUG',msg:'DAG.eval → 巡检→集控: 缺陷工单路由 #20260627-042'},
+  {t:'14:32:19.001',lvl:'INFO',msg:'Harness.task → 维护工单已创建: 3号逆变器IGBT温度异常 [priority: medium]'},
+  {t:'14:32:20.773',lvl:'WARN',msg:'CircuitBreaker → 飞行调度响应延迟: 450ms (阈值: 500ms) — 进入HALF-OPEN'},
+  {t:'14:32:21.234',lvl:'INFO',msg:'Harness.orchestrate → 算电协同流程完成: 消纳绿电+480MWh [耗时: 6.2s]'},
+  {t:'14:32:22.001',lvl:'DEBUG',msg:'StateStore → 快照保存: 8个智能体状态 + 12条活跃边'},
+  {t:'14:32:23.455',lvl:'INFO',msg:'Harness.execute → 绿电交易订单: 340MWh @0.382元/度 → 成交确认'},
+];
+let hli=0;
+function addHarnessLog(){
+  const el=document.getElementById('harness-log');if(!el)return;
+  const e=harnessLogEntries[hli%harnessLogEntries.length];hli++;
+  const lvlColors={INFO:'var(--blue)',DEBUG:'var(--t3)',WARN:'var(--orange)',ERROR:'var(--red)'};
+  const d=document.createElement('div');d.className='log-line';
+  d.innerHTML=`<span class="ts">${e.t}</span> <span style="color:${lvlColors[e.lvl]};font-weight:600">[${e.lvl}]</span> <span class="msg">${e.msg}</span>`;
+  el.prepend(d);if(el.children.length>30)el.removeChild(el.lastChild);
+}
+setInterval(addHarnessLog,3000);for(let i=0;i<5;i++)setTimeout(addHarnessLog,i*200);
+
+// ============ SCENARIO SCREENS ============
+let curSc=0, scRunning=false;
+
+function switchSc(i){curSc=i;scRunning=false;document.querySelectorAll('.sc-tab').forEach((b,j)=>b.classList.toggle('on',j===i));renderSc(i)}
+
+function renderSc(i){
+  const c=document.getElementById('sc-container');
+  const screens=[
+    // ===== SCENARIO 0: 零碳园区运维 =====
+    `<div class="screen">
+      <div class="screen-topbar"><div class="win-dots"><span style="background:#ef4444"></span><span style="background:#f59e0b"></span><span style="background:#10b981"></span></div><div class="screen-title">庆阳国家智算中心 · 零碳园区运维驾驶舱</div><span style="margin-left:auto;font-size:10px;color:var(--t3)">v3.2.1</span></div>
+      <div class="screen-body">
+        <div class="sp" style="width:30%">
+          <div class="sp-head">📊 关键指标</div>
+          <div class="sp-body">
+            <div style="display:flex;justify-content:space-around;margin-bottom:12px">
+              <div class="gauge"><div class="gauge-ring"><svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15.5"/><circle class="fg" cx="18" cy="18" r="15.5" stroke="var(--green)" stroke-dasharray="97.4" stroke-dashoffset="8.2" id="g-pue"/></svg><div class="gauge-val" style="color:var(--green)" id="g-pue-v">1.18</div></div><div class="gauge-label">PUE</div></div>
+              <div class="gauge"><div class="gauge-ring"><svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15.5"/><circle class="fg" cx="18" cy="18" r="15.5" stroke="var(--cyan)" stroke-dasharray="97.4" stroke-dashoffset="10.7"/></svg><div class="gauge-val" style="color:var(--cyan)">89%</div></div><div class="gauge-label">利用率</div></div>
+            </div>
+            <div style="display:flex;justify-content:space-around;margin-bottom:12px">
+              <div class="gauge"><div class="gauge-ring"><svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15.5"/><circle class="fg" cx="18" cy="18" r="15.5" stroke="var(--blue)" stroke-dasharray="97.4" stroke-dashoffset="8.2"/></svg><div class="gauge-val" style="color:var(--blue)">91.6%</div></div><div class="gauge-label">绿电率</div></div>
+              <div class="gauge"><div class="gauge-ring"><svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15.5"/><circle class="fg" cx="18" cy="18" r="15.5" stroke="var(--orange)" stroke-dasharray="97.4" stroke-dashoffset="12"/></svg><div class="gauge-val" style="color:var(--orange)">36°C</div></div><div class="gauge-label">平均温度</div></div>
+            </div>
+            <div style="font-size:10px;color:var(--t3);margin-bottom:4px">算力负载趋势 (24h)</div>
+            <div class="mini-chart" id="chart-load">${Array.from({length:24},()=>`<div class="bar" style="height:${30+Math.random()*70}%;background:var(--blue)"></div>`).join('')}</div>
+          </div>
+        </div>
+        <div class="sp" style="width:40%">
+          <div class="sp-head">🏗️ 园区三维孪生 — B3机房</div>
+          <div class="sp-body" style="position:relative;background:linear-gradient(180deg,#0a1628,#0d1a2d);display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <canvas id="room-canvas" width="400" height="280" style="width:100%;height:100%;border-radius:6px"></canvas>
+            <div style="position:absolute;top:8px;right:8px;font-size:9px;color:var(--t3);background:rgba(0,0,0,.5);padding:2px 6px;border-radius:3px">实时渲染</div>
+          </div>
+        </div>
+        <div class="sp" style="width:30%">
+          <div class="sp-head">🔔 告警与工单</div>
+          <div class="sp-body" id="alert-list">
+            <div class="alert-card"><span class="al-icon">⚠️</span><div class="al-text"><b style="color:var(--orange)">B3机房PUE异常</b><br><span style="font-size:9px;color:var(--t3)">1.18→1.25 空调群控策略偏差</span></div><span class="al-time">10:00</span></div>
+            <div class="alert-card info"><span class="al-icon">ℹ️</span><div class="al-text"><b style="color:var(--blue)">A1机房巡检完成</b><br><span style="font-size:9px;color:var(--t3)">全部设备正常，PUE 1.16</span></div><span class="al-time">09:45</span></div>
+            <div class="alert-card info"><span class="al-icon">✅</span><div class="al-text"><b style="color:var(--green)">B2机房UPS更换完成</b><br><span style="font-size:9px;color:var(--t3)">工单 #M-0627-18 已关闭</span></div><span class="al-time">09:30</span></div>
+          </div>
+          <div class="sp-head">🤖 AI运维智能体日志</div>
+          <div class="sp-body" style="max-height:120px" id="ai-ops-log">
+            <div class="log-line"><span class="ts">10:00:01</span> <span class="agent">[Perceive]</span> 检测到B3 PUE异常 ↑1.25</div>
+            <div class="log-line"><span class="ts">10:00:02</span> <span class="agent">[Reason]</span> 根因定位：空调群控参数#12偏差</div>
+            <div class="log-line"><span class="ts">10:00:03</span> <span class="agent">[Decide]</span> 推荐方案：调整群控参数-0.3°C</div>
+            <div class="log-line"><span class="ts">10:00:04</span> <span class="agent">[Act]</span> <span style="color:var(--green)">→ Harness.orchestrate("pue_fix")</span></div>
+          </div>
+        </div>
+      </div>
+    </div>`,
+
+    // ===== SCENARIO 1: 智能巡检 =====
+    `<div class="screen">
+      <div class="screen-topbar"><div class="win-dots"><span style="background:#ef4444"></span><span style="background:#f59e0b"></span><span style="background:#10b981"></span></div><div class="screen-title">新能源场站调度中心 · 智能巡检监控台</div><span style="margin-left:auto;font-size:10px;color:var(--t3)">UAV-Center v2.8</span></div>
+      <div class="screen-body">
+        <div class="sp" style="width:55%">
+          <div class="sp-head">🗺️ 场站巡检地图 — 环县北风光电站</div>
+          <div class="sp-body" style="padding:0;position:relative">
+            <div class="map-canvas" id="insp-map">
+              <div class="map-grid"></div>
+              <!-- Field stations -->
+              <div class="map-dot" style="left:15%;top:25%;background:var(--green);border-color:var(--green)"></div><div class="map-label" style="left:17%;top:23%">A区光伏</div>
+              <div class="map-dot" style="left:60%;top:20%;background:var(--blue);border-color:var(--blue)"></div><div class="map-label" style="left:62%;top:18%">B区风机</div>
+              <div class="map-dot" style="left:35%;top:60%;background:var(--green);border-color:var(--green)"></div><div class="map-label" style="left:37%;top:58%">C区光伏</div>
+              <div class="map-dot" style="left:78%;top:55%;background:var(--orange);border-color:var(--orange)"></div><div class="map-label" style="left:80%;top:53%">升压站</div>
+              <div class="map-dot" style="left:48%;top:40%;background:var(--cyan);border-color:var(--cyan)"></div><div class="map-label" style="left:50%;top:38%">机巢#1</div>
+              <!-- UAVs -->
+              <div class="map-uav" id="uav1" style="left:22%;top:32%">🛸</div>
+              <div class="map-uav" id="uav2" style="left:28%;top:28%">🛸</div>
+              <div class="map-uav" id="uav3" style="left:18%;top:38%">🛸</div>
+              <!-- Trail -->
+              <div class="map-trail" style="left:12%;top:22%;width:30%;height:24%"></div>
+              <!-- Defect marker -->
+              <div id="defect-marker" style="display:none;position:absolute;left:25%;top:30%;z-index:5">
+                <div style="width:20px;height:20px;border-radius:50%;background:rgba(239,68,68,.3);border:2px solid var(--red);animation:mping 1.5s infinite"></div>
+                <div style="position:absolute;top:-16px;left:24px;font-size:9px;color:var(--red);white-space:nowrap;background:rgba(0,0,0,.7);padding:1px 4px;border-radius:3px">热斑缺陷 ⚠️</div>
+              </div>
+              <!-- Info overlay -->
+              <div style="position:absolute;bottom:8px;left:8px;font-size:9px;color:var(--t3);background:rgba(0,0,0,.6);padding:4px 8px;border-radius:4px">
+                风力 4级 | 能见度 12km | 温度 26°C | 3架执行中
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="sp" style="width:25%">
+          <div class="sp-head">📸 实时画面 — UAV-03</div>
+          <div class="sp-body" style="background:#000;display:flex;flex-direction:column;gap:6px">
+            <div id="uav-feed" style="flex:1;background:linear-gradient(135deg,#0a1a0a,#0d2810);border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;min-height:140px">
+              <div style="text-align:center">
+                <div style="font-size:32px">☀️</div>
+                <div style="font-size:10px;color:var(--green);margin-top:4px">红外热成像</div>
+              </div>
+              <div style="position:absolute;top:6px;left:6px;font-size:9px;color:var(--green);background:rgba(0,0,0,.6);padding:2px 6px;border-radius:3px">● REC UAV-03</div>
+              <div id="hotspot-overlay" style="display:none;position:absolute;left:55%;top:45%;width:24px;height:24px;border:2px solid var(--red);border-radius:50%;animation:mping 1s infinite"></div>
+            </div>
+            <div style="font-size:10px;color:var(--t2)">
+              <div>航线：A区-3号方阵 | 高度：50m | 电量：72%</div>
+              <div>AI检测：<span id="detect-result" style="color:var(--green)">正常</span></div>
+            </div>
+          </div>
+          <div class="sp-head">🤖 巡检智能体状态</div>
+          <div class="sp-body" style="max-height:100px" id="insp-agent-log">
+            <div class="log-line"><span class="ts">14:00</span> <span class="agent">[Perceive]</span> 气象适合，A区周期超期</div>
+            <div class="log-line"><span class="ts">14:00</span> <span class="agent">[Reason]</span> 3号方阵老化率高→优先巡检</div>
+            <div class="log-line"><span class="ts">14:01</span> <span class="agent">[Decide]</span> 调度3架UAV执行A区任务</div>
+            <div class="log-line"><span class="ts">14:02</span> <span class="agent">[Act]</span> <span style="color:var(--green)">Harness.orchestrate("inspect_A")</span></div>
+          </div>
+        </div>
+        <div class="sp" style="width:20%">
+          <div class="sp-head">📊 巡检统计</div>
+          <div class="sp-body">
+            <div style="margin-bottom:8px"><div style="font-size:10px;color:var(--t3)">今日进度</div><div style="height:4px;background:var(--border);border-radius:2px;margin-top:3px"><div style="width:68%;height:100%;background:var(--green);border-radius:2px"></div></div><div style="font-size:9px;color:var(--t3);margin-top:2px">42/62 区域</div></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              <div style="background:rgba(0,0,0,.2);border-radius:4px;padding:6px;text-align:center"><div style="font-size:16px;font-weight:700;color:var(--cyan)">3</div><div style="font-size:9px;color:var(--t3)">执行中</div></div>
+              <div style="background:rgba(0,0,0,.2);border-radius:4px;padding:6px;text-align:center"><div style="font-size:16px;font-weight:700;color:var(--green)">39</div><div style="font-size:9px;color:var(--t3)">已完成</div></div>
+              <div style="background:rgba(0,0,0,.2);border-radius:4px;padding:6px;text-align:center"><div style="font-size:16px;font-weight:700;color:var(--orange)">1</div><div style="font-size:9px;color:var(--t3)">缺陷</div></div>
+              <div style="background:rgba(0,0,0,.2);border-radius:4px;padding:6px;text-align:center"><div style="font-size:16px;font-weight:700;color:var(--blue)">97%</div><div style="font-size:9px;color:var(--t3)">准确率</div></div>
+            </div>
+          </div>
+          <div class="sp-head">🔧 设备工单</div>
+          <div class="sp-body" id="insp-orders">
+            <div style="font-size:11px;color:var(--t3);text-align:center;padding:20px 0">暂无待处理工单</div>
+          </div>
+        </div>
+      </div>
+    </div>`,
+
+    // ===== SCENARIO 2: 算电协同 =====
+    `<div class="screen">
+      <div class="screen-topbar"><div class="win-dots"><span style="background:#ef4444"></span><span style="background:#f59e0b"></span><span style="background:#10b981"></span></div><div class="screen-title">庆阳国家智算中心 · 算电协同调度台</div><span style="margin-left:auto;font-size:10px;color:var(--t3)">GreenCompute v1.5</span></div>
+      <div class="screen-body">
+        <div class="sp" style="width:35%">
+          <div class="sp-head">⚡ 新能源出力曲线</div>
+          <div class="sp-body">
+            <canvas id="energy-curve" width="350" height="200" style="width:100%;height:200px"></canvas>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <div style="font-size:9px;color:var(--t3)"><span style="display:inline-block;width:12px;height:2px;background:var(--green);vertical-align:middle;margin-right:3px"></span>实际出力</div>
+              <div style="font-size:9px;color:var(--t3)"><span style="display:inline-block;width:12px;height:2px;background:var(--orange);vertical-align:middle;margin-right:3px;border-style:dashed"></span>预测出力</div>
+              <div style="font-size:9px;color:var(--t3)"><span style="display:inline-block;width:12px;height:2px;background:var(--red);vertical-align:middle;margin-right:3px"></span>负荷需求</div>
+            </div>
+          </div>
+          <div class="sp-head">🤖 功率预测智能体</div>
+          <div class="sp-body" style="max-height:120px" id="predict-log">
+            <div class="log-line"><span class="ts">02:00</span> <span class="agent">[Perceive]</span> 风力强劲，储能SOC 45%</div>
+            <div class="log-line"><span class="ts">02:00</span> <span class="agent">[Reason]</span> 未来4h出力超负荷<span style="color:var(--green)">+150MW</span></div>
+            <div class="log-line"><span class="ts">02:00</span> <span class="agent">[Decide]</span> 发布green_surplus信号</div>
+            <div class="log-line"><span class="ts">02:01</span> <span class="agent">[Act]</span> <span style="color:var(--green)">Harness.signal("green_surplus")</span></div>
+          </div>
+        </div>
+        <div class="sp" style="width:35%">
+          <div class="sp-head">🖥️ 算力资源面板</div>
+          <div class="sp-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+              <div style="background:rgba(0,0,0,.2);border-radius:6px;padding:8px"><div style="font-size:10px;color:var(--t3)">GPU利用率</div><div style="font-size:20px;font-weight:700;color:var(--cyan)" id="gpu-util">87%</div><div style="height:3px;background:var(--border);border-radius:2px;margin-top:3px"><div id="gpu-bar" style="width:87%;height:100%;background:var(--cyan);border-radius:2px;transition:width 1s"></div></div></div>
+              <div style="background:rgba(0,0,0,.2);border-radius:6px;padding:8px"><div style="font-size:10px;color:var(--t3)">绿电匹配率</div><div style="font-size:20px;font-weight:700;color:var(--green)">91.6%</div><div style="height:3px;background:var(--border);border-radius:2px;margin-top:3px"><div style="width:91.6%;height:100%;background:var(--green);border-radius:2px"></div></div></div>
+            </div>
+            <div style="font-size:10px;color:var(--t3);margin-bottom:6px">任务队列</div>
+            <div id="task-list">
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:11px;border-bottom:1px solid var(--border)"><span style="width:6px;height:6px;border-radius:50%;background:var(--red)"></span><span style="flex:1">T-High: 大模型推理服务</span><span class="badge b-r">高优</span></div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:11px;border-bottom:1px solid var(--border)"><span style="width:6px;height:6px;border-radius:50%;background:var(--orange)"></span><span style="flex:1">T-Mid: 视频分析流水线</span><span class="badge b-o">中优</span></div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:11px;border-bottom:1px solid var(--border)"><span style="width:6px;height:6px;border-radius:50%;background:var(--blue)"></span><span style="flex:1">T-01: 训练任务(低优)</span><span class="badge b-b" id="t01-badge">待调度</span></div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:11px;border-bottom:1px solid var(--border)"><span style="width:6px;height:6px;border-radius:50%;background:var(--blue)"></span><span style="flex:1">T-02: 训练任务(低优)</span><span class="badge b-b" id="t02-badge">待调度</span></div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:11px"><span style="width:6px;height:6px;border-radius:50%;background:var(--blue)"></span><span style="flex:1">T-03: 训练任务(低优)</span><span class="badge b-b" id="t03-badge">待调度</span></div>
+            </div>
+          </div>
+          <div class="sp-head">🤖 算力调度智能体</div>
+          <div class="sp-body" style="max-height:80px" id="schedule-log">
+            <div class="log-line"><span class="ts">02:01</span> <span class="agent">[Perceive]</span> 接收green_surplus信号</div>
+            <div class="log-line"><span class="ts">02:01</span> <span class="agent">[Reason]</span> 3个低优任务可提前，需120MW</div>
+          </div>
+        </div>
+        <div class="sp" style="width:30%">
+          <div class="sp-head">💰 绿电交易面板</div>
+          <div class="sp-body">
+            <div style="background:rgba(0,0,0,.2);border-radius:6px;padding:10px;margin-bottom:8px">
+              <div style="font-size:10px;color:var(--t3);margin-bottom:4px">实时电价</div>
+              <div style="font-size:24px;font-weight:700;color:var(--green)">0.382 <span style="font-size:12px">元/度</span></div>
+              <div style="font-size:10px;color:var(--green)">↓ 低于均值 3.5%</div>
+            </div>
+            <div style="font-size:10px;color:var(--t3);margin-bottom:4px">交易记录</div>
+            <div style="font-size:11px;color:var(--t2);line-height:1.8">
+              <div>日前市场 200MWh ✅</div>
+              <div>实时交易 140MWh 📋</div>
+              <div>绿证持有 2.4万张</div>
+              <div>碳减排 <span style="color:var(--green)">486吨CO₂</span></div>
+            </div>
+          </div>
+          <div class="sp-head">📈 算电协同指标</div>
+          <div class="sp-body">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div><div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:var(--t3)">绿电消纳率</span><span style="color:var(--green)" id="consume-rate">76.1%</span></div><div style="height:4px;background:var(--border);border-radius:2px;margin-top:2px"><div id="consume-bar" style="width:76.1%;height:100%;background:var(--green);border-radius:2px;transition:width 1s"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:var(--t3)">弃风率</span><span style="color:var(--orange)" id="curtail-rate">18%</span></div><div style="height:4px;background:var(--border);border-radius:2px;margin-top:2px"><div style="width:18%;height:100%;background:var(--orange);border-radius:2px"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:var(--t3)">储能SOC</span><span style="color:var(--cyan)" id="soc-val">45%</span></div><div style="height:4px;background:var(--border);border-radius:2px;margin-top:2px"><div id="soc-bar" style="width:45%;height:100%;background:var(--cyan);border-radius:2px;transition:width 1s"></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`,
+
+    // ===== SCENARIO 3: 应急救援 =====
+    `<div class="screen">
+      <div class="screen-topbar"><div class="win-dots"><span style="background:#ef4444"></span><span style="background:#f59e0b"></span><span style="background:#10b981"></span></div><div class="screen-title">无人系统指控中心 · 应急指挥平台</div><span style="margin-left:auto;font-size:10px;color:var(--red);font-weight:600">⚠ II级响应</span></div>
+      <div class="screen-body">
+        <div class="sp" style="width:45%">
+          <div class="sp-head" style="color:var(--red)">🚨 应急态势大屏</div>
+          <div class="sp-body" style="padding:0;position:relative">
+            <div class="map-canvas" id="emergency-map">
+              <div class="map-grid"></div>
+              <!-- Terrain features -->
+              <div style="position:absolute;left:20%;top:30%;width:60%;height:40%;border:1px solid rgba(139,92,246,.15);border-radius:20px;background:rgba(139,92,246,.03)"></div>
+              <div class="map-label" style="left:40%;top:28%;color:var(--purple)">🏔️ 山区地带</div>
+              <!-- Affected villages -->
+              <div class="map-dot" style="left:30%;top:40%;background:var(--red);border-color:var(--red)" id="v1"></div><div class="map-label" style="left:32%;top:38%;color:var(--red);font-weight:600">王家村 ⚠️</div>
+              <div class="map-dot" style="left:50%;top:50%;background:var(--red);border-color:var(--red)" id="v2"></div><div class="map-label" style="left:52%;top:48%;color:var(--red);font-weight:600">李家湾 ⚠️</div>
+              <div class="map-dot" style="left:65%;top:35%;background:var(--red);border-color:var(--red)" id="v3"></div><div class="map-label" style="left:67%;top:33%;color:var(--red);font-weight:600">张家沟 ⚠️</div>
+              <!-- UAVs -->
+              <div class="map-uav" id="euav1" style="left:15%;top:15%">🛸</div>
+              <div class="map-uav" id="euav2" style="left:80%;top:20%">🛸</div>
+              <div class="map-uav" id="euav3" style="left:10%;top:65%">🛸</div>
+              <div class="map-uav" id="euav4" style="left:85%;top:70%">🛸</div>
+              <div class="map-uav" id="euav5" style="left:50%;top:80%">🛸</div>
+              <!-- Supply routes -->
+              <svg style="position:absolute;inset:0;width:100%;height:100%;z-index:1" id="routes-svg">
+                <defs><marker id="arrowR" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto"><polygon points="0 0, 6 2, 0 4" fill="rgba(239,68,68,.4)"/></marker></defs>
+                <line x1="15%" y1="15%" x2="30%" y2="40%" stroke="rgba(239,68,68,.3)" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowR)"/>
+                <line x1="80%" y1="20%" x2="50%" y2="50%" stroke="rgba(239,68,68,.3)" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowR)"/>
+                <line x1="50%" y1="80%" x2="65%" y2="35%" stroke="rgba(239,68,68,.3)" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowR)"/>
+              </svg>
+              <!-- Info -->
+              <div style="position:absolute;bottom:8px;left:8px;font-size:9px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);padding:4px 8px;border-radius:4px;color:var(--red)">
+                ⚠️ 泥石流预警 | 道路中断 | 3村庄受困 | 860人
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="sp" style="width:30%">
+          <div class="sp-head">🤖 应急救援智能体 — 跨域协同</div>
+          <div class="sp-body">
+            <div style="font-size:10px;color:var(--t3);margin-bottom:6px">思考链实时状态</div>
+            <div id="rescue-think" style="display:flex;flex-direction:column;gap:4px">
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:4px;background:rgba(6,182,212,.06);border-left:2px solid var(--cyan)"><span style="font-size:10px">👁️</span><span style="font-size:10px;color:var(--cyan);font-weight:600">感知</span><span style="font-size:10px;color:var(--t2);flex:1">泥石流3级预警，道路中断</span></div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:4px;background:rgba(139,92,246,.06);border-left:2px solid var(--purple)"><span style="font-size:10px">🧠</span><span style="font-size:10px;color:var(--purple);font-weight:600">推理</span><span style="font-size:10px;color:var(--t2);flex:1">860人受困，仅空中可达</span></div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:4px;background:rgba(245,158,11,.06);border-left:2px solid var(--orange)"><span style="font-size:10px">⚖️</span><span style="font-size:10px;color:var(--orange);font-weight:600">决策</span><span style="font-size:10px;color:var(--t2);flex:1">II级响应，5架UAV+应急供电</span></div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:4px;background:rgba(16,185,129,.06);border-left:2px solid var(--green)"><span style="font-size:10px">⚡</span><span style="font-size:10px;color:var(--green);font-weight:600">行动</span><span style="font-size:10px;color:var(--t2);flex:1">Harness.emergency → 跨域协同</span></div>
+            </div>
+          </div>
+          <div class="sp-head">📋 跨域协同状态</div>
+          <div class="sp-body" id="cross-domain">
+            <div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:11px;border-bottom:1px solid var(--border)"><span>✈️</span><span style="flex:1">飞行调度智能体</span><span class="badge b-g">5架已调配</span></div>
+            <div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:11px;border-bottom:1px solid var(--border)"><span>⚡</span><span style="flex:1">新能源集控智能体</span><span class="badge b-o">供电保障中</span></div>
+            <div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:11px"><span>🖥️</span><span style="flex:1">算力调度智能体</span><span class="badge b-p">8×A100已分配</span></div>
+          </div>
+        </div>
+        <div class="sp" style="width:25%">
+          <div class="sp-head">📦 物资投送追踪</div>
+          <div class="sp-body">
+            <div id="supply-tracker">
+              <div style="background:rgba(0,0,0,.2);border-radius:6px;padding:8px;margin-bottom:6px"><div style="font-size:10px;color:var(--t3);margin-bottom:3px">批次 #1 → 王家村</div><div style="font-size:13px;font-weight:600;color:var(--cyan)">飞行中 🛸 2.0t</div><div style="font-size:9px;color:var(--t3);margin-top:2px">预计到达 15:45</div></div>
+              <div style="background:rgba(0,0,0,.2);border-radius:6px;padding:8px;margin-bottom:6px"><div style="font-size:10px;color:var(--t3);margin-bottom:3px">批次 #2 → 李家湾</div><div style="font-size:13px;font-weight:600;color:var(--orange)">装载中 📦 1.8t</div><div style="font-size:9px;color:var(--t3);margin-top:2px">预计起飞 15:40</div></div>
+              <div style="background:rgba(0,0,0,.2);border-radius:6px;padding:8px"><div style="font-size:10px;color:var(--t3);margin-bottom:3px">批次 #3 → 张家沟</div><div style="font-size:13px;font-weight:600;color:var(--t3)">待分配 ⏳ 1.2t</div><div style="font-size:9px;color:var(--t3);margin-top:2px">等待UAV返回</div></div>
+            </div>
+          </div>
+          <div class="sp-head">📱 一线人员终端</div>
+          <div class="sp-body">
+            <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:10px;font-size:11px">
+              <div style="color:var(--cyan);font-weight:600;margin-bottom:6px">👤 救援人员-张伟</div>
+              <div style="color:var(--t2);line-height:1.6">
+                📍 当前位置：王家村村委会<br>
+                🛡️ 安全等级：<span style="color:var(--green)">安全</span><br>
+                📦 物资到达：<span style="color:var(--cyan)">约10分钟</span><br>
+                🗺️ 撤离路线：<span style="color:var(--orange)">向北1.2km至安置点</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`
+  ];
+  c.innerHTML=screens[i];
+  // Init scenario-specific canvases
+  setTimeout(()=>{
+    if(i===0)drawRoom();
+    if(i===2)drawEnergyCurve();
+  },100);
+}
+
+// ============ ROOM CANVAS (Scenario 0) ============
+function drawRoom(){
+  const c=document.getElementById('room-canvas');if(!c)return;
+  const ctx=c.getContext('2d');const W=c.width,H=c.height;
+  ctx.clearRect(0,0,W,H);
+  // Floor
+  ctx.fillStyle='#0d1a2d';ctx.fillRect(0,0,W,H);
+  // Grid
+  ctx.strokeStyle='rgba(59,130,246,.04)';ctx.lineWidth=1;
+  for(let x=0;x<W;x+=20){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+  for(let y=0;y<H;y+=20){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+  // Server racks
+  const racks=[[40,40],[100,40],[160,40],[220,40],[280,40],[340,40],
+               [40,120],[100,120],[160,120],[220,120],[280,120],[340,120],
+               [40,200],[100,200],[160,200],[220,200],[280,200],[340,200]];
+  racks.forEach(([x,y],i)=>{
+    ctx.fillStyle=i===3?'rgba(245,158,11,0.15)':'rgba(59,130,246,0.08)';
+    ctx.strokeStyle=i===3?'rgba(245,158,11,0.4)':'rgba(59,130,246,0.15)';
+    ctx.lineWidth=1;
+    ctx.fillRect(x,y,50,60);ctx.strokeRect(x,y,50,60);
+    // LED indicators
+    for(let r=0;r<3;r++){
+      ctx.fillStyle=i===3&&r===1?'rgba(245,158,11,0.8)':'rgba(16,185,129,0.5)';
+      ctx.fillRect(x+8,y+10+r*16,34,3);
+    }
+    // Label
+    ctx.fillStyle='rgba(148,163,184,0.4)';ctx.font='8px monospace';ctx.textAlign='center';
+    ctx.fillText(`R${i+1}`,x+25,y+72);
+  });
+  // Highlight B3
+  ctx.strokeStyle='rgba(245,158,11,0.6)';ctx.lineWidth=2;ctx.setLineDash([4,2]);
+  ctx.strokeRect(220-4,120-4,58,68);ctx.setLineDash([]);
+  ctx.fillStyle='rgba(245,158,11,0.8)';ctx.font='bold 10px Microsoft YaHei';ctx.textAlign='left';
+  ctx.fillText('B3 ⚠️ PUE 1.25',224,115);
+  // AC unit
+  ctx.fillStyle='rgba(6,182,212,0.1)';ctx.strokeStyle='rgba(6,182,212,0.3)';
+  ctx.fillRect(180,260,80,15);ctx.strokeRect(180,260,80,15);
+  ctx.fillStyle='rgba(6,182,212,0.5)';ctx.font='8px monospace';ctx.textAlign='center';
+  ctx.fillText('HVAC-G12 群控',220,272);
+}
+
+// ============ ENERGY CURVE (Scenario 2) ============
+function drawEnergyCurve(){
+  const c=document.getElementById('energy-curve');if(!c)return;
+  const ctx=c.getContext('2d');const W=c.width,H=c.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0d1a2d';ctx.fillRect(0,0,W,H);
+  // Axes
+  ctx.strokeStyle='rgba(148,163,184,0.2)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(40,10);ctx.lineTo(40,H-20);ctx.lineTo(W-10,H-20);ctx.stroke();
+  // Y labels
+  ctx.fillStyle='rgba(148,163,184,0.4)';ctx.font='8px monospace';ctx.textAlign='right';
+  ['800','600','400','200','0'].forEach((l,i)=>ctx.fillText(l,35,H-20-i*(H-30)/4));
+  // X labels
+  ctx.textAlign='center';
+  ['0h','4h','8h','12h','16h','20h','24h'].forEach((l,i)=>ctx.fillText(l,40+i*(W-50)/6,H-8));
+  // Load line (constant ~500MW)
+  const loadY=H-20-500*(H-30)/800;
+  ctx.strokeStyle='rgba(239,68,68,0.4)';ctx.lineWidth=1;ctx.setLineDash([4,3]);
+  ctx.beginPath();ctx.moveTo(40,loadY);ctx.lineTo(W-10,loadY);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(239,68,68,0.5)';ctx.font='8px Microsoft YaHei';ctx.textAlign='left';ctx.fillText('负荷 500MW',W-100,loadY-4);
+  // Predicted curve (dashed orange)
+  const predData=[200,180,220,350,500,600,700,650,550,450,400,500,600,700,750,680,550,400,300,280,250,220,200,180];
+  ctx.strokeStyle='rgba(245,158,11,0.5)';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);
+  ctx.beginPath();predData.forEach((v,i)=>{const x=40+i*(W-50)/23;const y=H-20-v*(H-30)/800;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)});ctx.stroke();ctx.setLineDash([]);
+  // Actual curve (green)
+  const actData=[210,195,240,380,520,620,720,670,570,470,420,520,620,720,760,0,0,0,0,0,0,0,0,0];
+  ctx.strokeStyle='rgba(16,185,129,0.8)';ctx.lineWidth=2;
+  ctx.beginPath();actData.forEach((v,i)=>{if(v===0)return;const x=40+i*(W-50)/23;const y=H-20-v*(H-30)/800;ctx.lineTo(x,y)});ctx.stroke();
+  // Highlight surplus area
+  ctx.fillStyle='rgba(16,185,129,0.08)';
+  ctx.beginPath();ctx.moveTo(40+2*(W-50)/23,H-20);
+  for(let i=2;i<8;i++){const x=40+i*(W-50)/23;const y=H-20-actData[i]*(H-30)/800;ctx.lineTo(x,y)}
+  for(let i=7;i>=2;i--){const x=40+i*(W-50)/23;const y=H-20-500*(H-30)/800;ctx.lineTo(x,y)}
+  ctx.closePath();ctx.fill();
+  // Surplus label
+  ctx.fillStyle='rgba(16,185,129,0.7)';ctx.font='bold 10px Microsoft YaHei';ctx.textAlign='center';
+  ctx.fillText('绿电富余 +150MW',140,H-20-650*(H-30)/800);
+  // Current time marker
+  const curX=40+2*(W-50)/23;
+  ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1;ctx.setLineDash([2,2]);
+  ctx.beginPath();ctx.moveTo(curX,10);ctx.lineTo(curX,H-20);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='8px Microsoft YaHei';ctx.fillText('当前 02:00',curX,8);
+}
+
+// ============ SCENARIO FLOW ANIMATION ============
+function runScenario(){
+  if(scRunning)return;scRunning=true;
+  const btn=document.getElementById('sc-btn');btn.disabled=true;btn.textContent='演示进行中...';
+  document.getElementById('sc-status').textContent='运行中';
+  toast('场景演示触发','info');
+
+  if(curSc===0) runSc0();
+  else if(curSc===1) runSc1();
+  else if(curSc===2) runSc2();
+  else if(curSc===3) runSc3();
+
+  setTimeout(()=>{scRunning=false;btn.disabled=false;btn.textContent='▶ 重新演示';document.getElementById('sc-status').textContent='演示完成';toast('场景演示完成','success')},12000);
+}
+
+// Scenario 0: PUE alert flow
+function runSc0(){
+  const log=document.getElementById('ai-ops-log');
+  const alerts=document.getElementById('alert-list');
+  const pueV=document.getElementById('g-pue-v');
+  const pueCircle=document.getElementById('g-pue');
+  // Step 1: Alert appears (already shown)
+  // Step 2: AI reasons
+  setTimeout(()=>{addScreenLog(log,'10:00:02','Reason','根因：空调群控参数#12偏差，回风温度异常','var(--purple)');toast('[Reason] 根因定位完成','info')},1500);
+  // Step 3: AI decides
+  setTimeout(()=>{addScreenLog(log,'10:00:03','Decide','推荐方案：调整群控参数-0.3°C，恢复PID控制','var(--orange)');toast('[Decide] 决策方案已生成','info')},3500);
+  // Step 4: Harness act
+  setTimeout(()=>{addScreenLog(log,'10:00:04','Act','Harness.orchestrate("pue_fix") → 执行中','var(--green)');toast('[Act] Harness编排执行','warning')},5500);
+  // Step 5: PUE recovers
+  setTimeout(()=>{
+    pueV.textContent='1.19';pueV.style.color='var(--green)';
+    if(pueCircle)pueCircle.style.strokeDashoffset='10';
+    addScreenLog(log,'10:00:07','Result','✅ PUE回落至1.19，告警自动关闭','var(--green)');
+    // Update alert
+    const first=alerts.querySelector('.alert-card');
+    if(first){first.classList.remove('alert-card');first.style.background='rgba(16,185,129,.06)';first.style.borderColor='rgba(16,185,129,.2)';first.querySelector('b').style.color='var(--green)';first.querySelector('b').textContent='B3机房PUE已恢复';first.querySelector('.al-icon').textContent='✅'}
+    toast('PUE异常修复完成！人工干预<30秒','success');
+  },8000);
+}
+
+// Scenario 1: Inspection defect flow
+function runSc1(){
+  const log=document.getElementById('insp-agent-log');
+  const defect=document.getElementById('defect-marker');
+  const hotspot=document.getElementById('hotspot-overlay');
+  const detect=document.getElementById('detect-result');
+  const orders=document.getElementById('insp-orders');
+  // Move UAVs
+  setTimeout(()=>{
+    document.getElementById('uav1').style.left='25%';document.getElementById('uav1').style.top='30%';
+    document.getElementById('uav2').style.left='23%';document.getElementById('uav2').style.top='26%';
+    toast('无人机编队到达3号方阵','info');
+  },2000);
+  // Detect defect
+  setTimeout(()=>{
+    if(defect)defect.style.display='block';
+    if(hotspot)hotspot.style.display='block';
+    if(detect){detect.textContent='热斑缺陷 ⚠️';detect.style.color='var(--red)'}
+    addScreenLog(log,'14:12','Perceive','AI视觉检测：3号方阵热斑缺陷','var(--cyan)');
+    toast('[Perceive] 检测到光伏板热斑缺陷','warning');
+  },4500);
+  // Reason
+  setTimeout(()=>{addScreenLog(log,'14:12','Reason','缺陷等级：中 | 坐标(36.2N,107.8E) | 面积0.8m²','var(--purple)');toast('[Reason] 缺陷评估完成','info')},6500);
+  // Decide + Act
+  setTimeout(()=>{
+    addScreenLog(log,'14:12','Decide','生成维修工单 → 集控智能体','var(--orange)');
+    addScreenLog(log,'14:12','Act','Harness.task("maintenance_order") → 工单 #042','var(--green)');
+    // Add order in panel
+    if(orders)orders.innerHTML='<div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:6px;padding:8px;font-size:11px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><b style="color:var(--orange)">工单 #20260627-042</b><span class="badge b-o">中优先级</span></div><div style="font-size:10px;color:var(--t2)">3号方阵光伏板热斑 | 预计24h内处理</div></div>';
+    toast('维修工单已生成，90秒全链路闭环','success');
+  },8500);
+}
+
+// Scenario 2: Green energy surplus flow
+function runSc2(){
+  const gpuUtil=document.getElementById('gpu-util');
+  const gpuBar=document.getElementById('gpu-bar');
+  const consumeRate=document.getElementById('consume-rate');
+  const consumeBar=document.getElementById('consume-bar');
+  const socVal=document.getElementById('soc-val');
+  const socBar=document.getElementById('soc-bar');
+  const log=document.getElementById('schedule-log');
+  // Step: Schedule tasks
+  setTimeout(()=>{
+    addScreenLog(log,'02:01','Decide','3个低优任务提前执行，储能充电消纳','var(--orange)');
+    toast('[Decide] 算电协同决策完成','info');
+  },2000);
+  setTimeout(()=>{
+    addScreenLog(log,'02:02','Act','Harness.schedule → GPU重平衡执行','var(--green)');
+    // Update task badges
+    ['t01-badge','t02-badge','t03-badge'].forEach((id,i)=>{const el=document.getElementById(id);if(el){el.textContent='执行中';el.className='badge b-g'}});
+    toast('[Act] Harness编排执行','warning');
+  },4000);
+  // Step: Metrics update
+  setTimeout(()=>{
+    if(gpuUtil)gpuUtil.textContent='95%';
+    if(gpuBar)gpuBar.style.width='95%';
+    if(consumeRate)consumeRate.textContent='94%';
+    if(consumeBar)consumeBar.style.width='94%';
+    if(socVal)socVal.textContent='78%';
+    if(socBar)socBar.style.width='78%';
+    toast('算电协同完成：消纳+480MWh，弃风率↓18%','success');
+  },8000);
+}
+
+// Scenario 3: Emergency response flow
+function runSc3(){
+  // Move UAVs toward villages
+  setTimeout(()=>{
+    document.getElementById('euav1').style.left='28%';document.getElementById('euav1').style.top='38%';
+    document.getElementById('euav2').style.left='48%';document.getElementById('euav2').style.top='48%';
+    document.getElementById('euav3').style.left='63%';document.getElementById('euav3').style.top='33%';
+    toast('[Act] 5架UAV已起飞，飞往3个村庄','warning');
+  },2000);
+  // Supply status update
+  setTimeout(()=>{
+    const tracker=document.getElementById('supply-tracker');
+    if(tracker){
+      tracker.innerHTML=`
+        <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:6px;padding:8px;margin-bottom:6px"><div style="font-size:10px;color:var(--t3);margin-bottom:3px">批次 #1 → 王家村</div><div style="font-size:13px;font-weight:600;color:var(--green)">投送中 📦 2.0t</div><div style="font-size:9px;color:var(--green);margin-top:2px">预计3分钟到达</div></div>
+        <div style="background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.2);border-radius:6px;padding:8px;margin-bottom:6px"><div style="font-size:10px;color:var(--t3);margin-bottom:3px">批次 #2 → 李家湾</div><div style="font-size:13px;font-weight:600;color:var(--cyan)">飞行中 🛸 1.8t</div><div style="font-size:9px;color:var(--cyan);margin-top:2px">预计5分钟到达</div></div>
+        <div style="background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.2);border-radius:6px;padding:8px"><div style="font-size:10px;color:var(--t3);margin-bottom:3px">批次 #3 → 张家沟</div><div style="font-size:13px;font-weight:600;color:var(--purple)">飞行中 🛸 1.2t</div><div style="font-size:9px;color:var(--purple);margin-top:2px">预计8分钟到达</div></div>`;
+    }
+    toast('5吨应急物资正在投送至3个村庄','info');
+  },5000);
+  setTimeout(()=>{toast('30分钟内5吨物资精准投送完成，全程零人工干预','success')},10000);
+}
+
+function addScreenLog(el,ts,phase,msg,color){
+  if(!el)return;
+  const d=document.createElement('div');d.className='log-line';
+  d.innerHTML=`<span class="ts">${ts}</span> <span style="color:${color};font-weight:600">[${phase}]</span> <span class="msg">${msg}</span>`;
+  el.appendChild(d);el.scrollTop=el.scrollHeight;
+}
+
+// Init
+renderSc(0);
+</script>
+
+<!-- AIGC: {"Label":"value1","ContentProducer":"001191110000802100433B11010001191110000802100433B11010","ProduceID":"93ee6103-4622-48e5-a706-8065d97c9dc9","ReservedCode1":"72dafc97cd38b92e5f3d5cdfd0dfbbe6","ContentPropagator":"001191110000802100433B11010001191110000802100433B11010","PropagateID":"95684fd3-d612-4c9a-b07e-2354a8418a69","ReservedCode2":"2734827274df537123a472bf4de01eb5"} -->
+</body>
+</html>
