@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>李晶 | 政企AI解决方案专家</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e17;--bg2:#0f1525;--card:rgba(16,24,48,0.6);--card-hover:rgba(20,32,64,0.8);
+  --border:rgba(60,100,200,0.2);--border-h:rgba(80,140,255,0.4);
+  --t1:#e8eef8;--t2:#8090b0;--t3:#506080;
+  --blue:#0099ff;--cyan:#00d4ff;--green:#00e676;--orange:#ff8800;
+  --red:#ff3d3d;--purple:#b060ff;--yellow:#ffcc00;--pink:#e91e63;
+  --grad1:linear-gradient(135deg,#0099ff 0%,#00d4ff 100%);
+  --grad2:linear-gradient(135deg,#b060ff 0%,#0099ff 100%);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--t1);overflow-x:hidden;line-height:1.6}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:rgba(80,120,200,0.3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(80,120,200,0.5)}
+
+/* Particle Canvas */
+#particles{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+/* Navigation */
+nav{position:fixed;top:0;left:0;width:100%;z-index:100;backdrop-filter:blur(20px);background:rgba(10,14,23,0.7);border-bottom:1px solid var(--border);transition:padding .3s}
+nav .nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 32px}
+nav .logo{font-size:18px;font-weight:700;background:var(--grad1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1px}
+nav .links{display:flex;gap:28px}
+nav .links a{font-size:14px;color:var(--t2);transition:color .2s;position:relative}
+nav .links a:hover{color:var(--cyan)}
+nav .links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--cyan);transition:width .2s}
+nav .links a:hover::after{width:100%}
+nav .menu-btn{display:none;font-size:24px;color:var(--t1);cursor:pointer;background:none;border:none}
+
+/* Hero */
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;z-index:1}
+.hero .bg-grad{position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at 30% 40%,rgba(0,153,255,0.08),transparent 60%),radial-gradient(ellipse at 70% 60%,rgba(176,96,255,0.06),transparent 60%);z-index:-1}
+.hero-content{text-align:center;padding:0 32px;max-width:900px}
+.hero .avatar-ring{width:120px;height:120px;border-radius:50%;margin:0 auto 28px;position:relative;display:flex;align-items:center;justify-content:center}
+.hero .avatar-ring::before{content:'';position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,var(--cyan),var(--purple),var(--green),var(--cyan));animation:spin 4s linear infinite}
+.hero .avatar-ring::after{content:'';position:absolute;inset:0;border-radius:50%;background:var(--bg)}
+.hero .avatar-inner{position:relative;z-index:1;width:100px;height:100px;border-radius:50%;background:var(--grad1);display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700;color:#fff}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hero h1{font-size:48px;font-weight:800;margin-bottom:12px;background:linear-gradient(135deg,#fff 0%,#80a0ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero .subtitle{font-size:22px;color:var(--cyan);margin-bottom:8px;font-weight:600}
+.hero .tagline{font-size:15px;color:var(--t2);margin-bottom:24px}
+.hero .badges{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:32px}
+.hero .badge{padding:6px 16px;border-radius:20px;font-size:13px;border:1px solid var(--border);background:var(--card);color:var(--t2);transition:all .2s}
+.hero .badge:hover{border-color:var(--border-h);color:var(--t1);transform:translateY(-2px)}
+.hero .cta{display:inline-flex;align-items:center;gap:10px;padding:14px 40px;border-radius:30px;background:var(--grad1);color:#fff;font-size:16px;font-weight:600;transition:all .3s;box-shadow:0 4px 20px rgba(0,153,255,0.3)}
+.hero .cta:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,153,255,0.4)}
+.hero .stats{display:flex;gap:48px;justify-content:center;margin-top:48px}
+.hero .stat{text-align:center}
+.hero .stat .num{font-size:36px;font-weight:800;background:var(--grad1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero .stat .label{font-size:13px;color:var(--t3);margin-top:4px}
+.hero .scroll-hint{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);color:var(--t3);font-size:24px;animation:bounce 2s infinite}
+@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)}}
+
+/* Section common */
+section{padding:100px 32px;position:relative;z-index:1}
+.section-inner{max-width:1200px;margin:0 auto}
+.section-title{font-size:32px;font-weight:800;margin-bottom:8px;text-align:center}
+.section-title .accent{background:var(--grad1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.section-sub{text-align:center;color:var(--t2);font-size:15px;margin-bottom:48px}
+
+/* Experience Timeline */
+.timeline{position:relative;padding-left:32px}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--cyan),var(--purple),var(--green),transparent)}
+.tl-item{position:relative;margin-bottom:40px;padding-left:24px}
+.tl-item::before{content:'';position:absolute;left:-32px;top:6px;width:18px;height:18px;border-radius:50%;background:var(--bg);border:2px solid var(--cyan);box-shadow:0 0 12px rgba(0,212,255,0.4)}
+.tl-item:nth-child(2)::before{border-color:var(--purple);box-shadow:0 0 12px rgba(176,96,255,0.4)}
+.tl-item:nth-child(3)::before{border-color:var(--green);box-shadow:0 0 12px rgba(0,230,118,0.4)}
+.tl-item:nth-child(4)::before{border-color:var(--orange);box-shadow:0 0 12px rgba(255,136,0,0.4)}
+.tl-item:nth-child(5)::before{border-color:var(--t3);box-shadow:0 0 12px rgba(80,96,128,0.3)}
+.tl-company{font-size:18px;font-weight:700;color:var(--t1)}
+.tl-role{font-size:15px;color:var(--cyan);margin-top:2px}
+.tl-period{font-size:13px;color:var(--t3);margin-bottom:8px}
+.tl-desc{font-size:14px;color:var(--t2);line-height:1.7}
+
+/* Skills */
+.skill-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.skill-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;transition:all .3s}
+.skill-card:hover{background:var(--card-hover);border-color:var(--border-h);transform:translateY(-4px)}
+.skill-card .icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px}
+.skill-card h3{font-size:16px;font-weight:700;margin-bottom:8px}
+.skill-card p{font-size:13px;color:var(--t2);line-height:1.6}
+.skill-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.skill-tags span{font-size:11px;padding:3px 10px;border-radius:10px;background:rgba(60,100,200,0.15);color:var(--t2)}
+
+/* Projects */
+.project-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px}
+.project-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;transition:all .3s;position:relative;overflow:hidden}
+.project-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--accent-c,var(--cyan))}
+.project-card:hover{background:var(--card-hover);border-color:var(--border-h);transform:translateY(-4px)}
+.project-card .cat{font-size:11px;color:var(--accent-c,var(--cyan));font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.project-card h3{font-size:17px;font-weight:700;margin:8px 0 12px}
+.project-card .desc{font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:14px}
+.project-card .ptags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.project-card .ptags span{font-size:11px;padding:3px 10px;border-radius:10px;background:rgba(60,100,200,0.12);color:var(--t3)}
+.project-card .demo-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;transition:all .2s;border:1px solid var(--accent-c,var(--cyan));color:var(--accent-c,var(--cyan));background:transparent}
+.project-card .demo-btn:hover{background:var(--accent-c,var(--cyan));color:var(--bg)}
+
+/* Education */
+.edu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+edu-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;text-align:center;transition:all .3s}
+.edu-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;text-align:center;transition:all .3s}
+.edu-card:hover{background:var(--card-hover);border-color:var(--border-h)}
+.edu-card .school{font-size:16px;font-weight:700;color:var(--t1)}
+.edu-card .major{font-size:14px;color:var(--cyan);margin-top:6px}
+.edu-card .degree{font-size:13px;color:var(--t2);margin-top:4px}
+.edu-card .period{font-size:12px;color:var(--t3);margin-top:8px}
+
+/* Contact */
+.contact{text-align:center;padding:80px 32px}
+.contact h2{font-size:28px;font-weight:800;margin-bottom:16px}
+.contact .contact-items{display:flex;flex-wrap:wrap;gap:24px;justify-content:center;margin-top:32px}
+.contact .contact-item{display:flex;align-items:center;gap:10px;padding:12px 24px;border-radius:30px;border:1px solid var(--border);background:var(--card);font-size:14px;color:var(--t2);transition:all .2s}
+.contact .contact-item:hover{border-color:var(--border-h);color:var(--t1);transform:translateY(-2px)}
+.contact .contact-item .ci-icon{font-size:18px}
+footer{text-align:center;padding:32px;border-top:1px solid var(--border);font-size:13px;color:var(--t3)}
+
+/* Animations on scroll */
+.fade-in{opacity:0;transform:translateY(30px);transition:opacity .6s,transform .6s}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+
+/* Responsive */
+@media(max-width:768px){
+  nav .links{display:none;position:absolute;top:100%;left:0;width:100%;flex-direction:column;background:rgba(10,14,23,0.95);padding:20px;gap:16px;backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+  nav .links.show{display:flex}
+  nav .menu-btn{display:block}
+  .hero h1{font-size:32px}
+  .hero .subtitle{font-size:18px}
+  .hero .stats{gap:24px}
+  .hero .stat .num{font-size:28px}
+  section{padding:60px 20px}
+  .section-title{font-size:24px}
+  .project-grid{grid-template-columns:1fr}
+  .skill-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo">LI JING</div>
+    <button class="menu-btn" onclick="document.querySelector('nav .links').classList.toggle('show')">&#9776;</button>
+    <div class="links">
+      <a href="#about" onclick="document.querySelector('nav .links').classList.remove('show')">关于我</a>
+      <a href="#experience" onclick="document.querySelector('nav .links').classList.remove('show')">工作经历</a>
+      <a href="#skills" onclick="document.querySelector('nav .links').classList.remove('show')">技术能力</a>
+      <a href="#demos" onclick="document.querySelector('nav .links').classList.remove('show')">智能体Demo</a>
+      <a href="#projects" onclick="document.querySelector('nav .links').classList.remove('show')">重点项目</a>
+      <a href="#education" onclick="document.querySelector('nav .links').classList.remove('show')">教育背景</a>
+      <a href="#contact" onclick="document.querySelector('nav .links').classList.remove('show')">联系方式</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<div class="hero" id="top">
+  <div class="bg-grad"></div>
+  <div class="hero-content">
+    <div class="avatar-ring">
+      <div class="avatar-inner">李晶</div>
+    </div>
+    <h1>李 晶</h1>
+    <div class="subtitle">政企AI解决方案专家 / 智能体架构师</div>
+    <div class="tagline">11年+ AI与数字化前沿赛道深耕 | 央企×互联网大厂双重背景 | 5亿+项目操盘经验</div>
+    <div class="badges">
+      <span class="badge">人大AI硕士在读</span>
+      <span class="badge">中科院公共管理硕士</span>
+      <span class="badge">中国电子高级工程师</span>
+      <span class="badge">大模型ACP认证</span>
+      <span class="badge">信息系统项目管理师</span>
+      <span class="badge">PMP</span>
+    </div>
+    <a href="#demos" class="cta">查看智能体Demo &rarr;</a>
+    <div class="stats">
+      <div class="stat"><div class="num" data-count="11">0</div><div class="label">年+行业经验</div></div>
+      <div class="stat"><div class="num" data-count="5">0</div><div class="label">亿+项目操盘</div></div>
+      <div class="stat"><div class="num" data-count="11">0</div><div class="label">个智能体Demo</div></div>
+      <div class="stat"><div class="num" data-count="10">0</div><div class="label">余项标准编制</div></div>
+    </div>
+  </div>
+  <div class="scroll-hint">&#9660;</div>
+</div>
+
+<!-- About -->
+<section id="about">
+  <div class="section-inner">
+    <h2 class="section-title fade-in">关于<span class="accent">我</span></h2>
+    <p class="section-sub fade-in">从顶层设计到产品孵化，从技术架构到大项目交付</p>
+    <div style="max-width:800px;margin:0 auto;text-align:center;font-size:16px;color:var(--t2);line-height:1.8" class="fade-in">
+      <p>10年+深耕AI与数字化前沿赛道，横跨央企与互联网大厂双重背景。累计操盘国家级/省部级项目总额超5亿元，主导从顶层设计、技术架构规划到产品0-1孵化与大项目全周期交付的完整闭环。</p>
+      <br>
+      <p>主导国家级数字孪生城市项目，深耕BIM/CIM平台与数字孪生技术；持续研究3D/4D生成、世界模型、仿真推演、具身智能等前沿方向。中国人民大学人工智能硕士在读，研究方向涵盖三维重建、仿真推演与空间智能。</p>
+      <br>
+      <p>核心能力：城市级时空智能体架构设计、ReAct智能体框架落地、MCP原子化编排、行业Agent全链路构建（场景挖掘→产品设计→POC验证→商业转化）。</p>
+    </div>
+  </div>
+</section>
+
+<!-- Experience -->
+<section id="experience" style="background:var(--bg2)">
+  <div class="section-inner">
+    <h2 class="section-title fade-in">工作<span class="accent">经历</span></h2>
+    <p class="section-sub fade-in">从百度到中国电子，从互联网产品到央企AI架构</p>
+    <div class="timeline">
+      <div class="tl-item fade-in">
+        <div class="tl-company">中国电子 · 中电空间</div>
+        <div class="tl-role">创新业务部 产品总监 / 售前架构师</div>
+        <div class="tl-period">2023.03 - 至今</div>
+        <div class="tl-desc">
+          主导创新业务规划、AI产品线孵化及千万级重大售前项目。完成"城市仿真器产品"0-1落地；完成应急、气象、城管等领域智能体搭建并推广；孵化低空网格化产品实现商业销售。牵头编制10余项国际/地方/行业标准，获得授权发明专利2项，牵头申报省部级课题2项。主导核心产品MCP原子化改造与本体化数据架构升级，推动AI项目从技术验证走向商业合同签约。
+        </div>
+      </div>
+      <div class="tl-item fade-in">
+        <div class="tl-company">中国城市规划设计研究院</div>
+        <div class="tl-role">未来城市实验室 高级架构师</div>
+        <div class="tl-period">2019.03 - 2023.02</div>
+        <div class="tl-desc">
+          主导国家级数字孪生城市标杆项目全周期交付，完整主导总额超亿元的国家级数字孪生城市项目。设计并落地覆盖"规建管运"全流程的BIM/CIM平台及CIM+应用。参与多省市"数字孪生城市"顶层规划编制，实现从"咨询"到"交付"的闭环。
+        </div>
+      </div>
+      <div class="tl-item fade-in">
+        <div class="tl-company">新浪新闻</div>
+        <div class="tl-role">广告业务部 / 用户体验部 高级产品经理</div>
+        <div class="tl-period">2018.01 - 2019.03</div>
+        <div class="tl-desc">
+          独立设计AI广告智能产品，通过算法及大模型训练优化广告生成，助力广告主点击率提升20%+、ROI提升15%。统筹千万级用户UG增长，实现DAU用户增长10%+，留存率提升20%+。
+        </div>
+      </div>
+      <div class="tl-item fade-in">
+        <div class="tl-company">百度</div>
+        <div class="tl-role">百度联盟 / 百度糯米 产品运营</div>
+        <div class="tl-period">2016.04 - 2018.01</div>
+        <div class="tl-desc">
+          负责糯米产品商家运营、活动运营，以及百度feed流大客户运营、数据运营等。负责百度内容联盟产品设计和运营，优化feed流产品接入，实现商业化平台新增PV千万级/日。
+        </div>
+      </div>
+      <div class="tl-item fade-in">
+        <div class="tl-company">万全药业集团</div>
+        <div class="tl-role">IT部门 ERP专员</div>
+        <div class="tl-period">2015.06 - 2016.04</div>
+        <div class="tl-desc">
+          负责跟进整个集团ERP的优化实施及新模块的上线运维，包含财务、人力、研发、生产、销售等各部门的调研，跟随外部顾问进行系统优化、上线测试等。
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Skills -->
+<section id="skills">
+  <div class="section-inner">
+    <h2 class="section-title fade-in">技术<span class="accent">能力</span></h2>
+    <p class="section-sub fade-in">从AI基础设施到行业应用的全栈能力</p>
+    <div class="skill-grid">
+      <div class="skill-card fade-in">
+        <div class="icon" style="background:rgba(0,153,255,0.15);color:var(--blue)">&#129504;</div>
+        <h3>AI解决方案架构</h3>
+        <p>大模型应用架构设计、百舸/千帆平台对接、异构算力调度方案、AI基础设施规划</p>
+        <div class="skill-tags"><span>大模型</span><span>百舸千帆</span><span>异构算力</span><span>POC验证</span></div>
+      </div>
+      <div class="skill-card fade-in">
+        <div class="icon" style="background:rgba(0,212,255,0.15);color:var(--cyan)">&#129302;</div>
+        <h3>智能体架构设计</h3>
+        <p>ReAct框架落地、MCP原子化编排、多Agent协同、Loop Engineering、Vibe Coding</p>
+        <div class="skill-tags"><span>ReAct</span><span>MCP</span><span>Multi-Agent</span><span>Skill沉淀</span></div>
+      </div>
+      <div class="skill-card fade-in">
+        <div class="icon" style="background:rgba(0,230,118,0.15);color:var(--green)">&#127760;</div>
+        <h3>数字孪生 / CIM</h3>
+        <p>BIM/CIM平台架构、城市级数字孪生项目全周期交付、三维重建与仿真推演</p>
+        <div class="skill-tags"><span>BIM/CIM</span><span>数字孪生</span><span>三维重建</span><span>仿真推演</span></div>
+      </div>
+      <div class="skill-card fade-in">
+        <div class="icon" style="background:rgba(176,96,255,0.15);color:var(--purple)">&#128640;</div>
+        <h3>低空经济</h3>
+        <p>低空网格化产品设计、空天地海异构数据协同处理（已申专利）、低慢小目标探测仿真</p>
+        <div class="skill-tags"><span>低空网格</span><span>异构数据融合</span><span>目标探测仿真</span></div>
+      </div>
+      <div class="skill-card fade-in">
+        <div class="icon" style="background:rgba(255,136,0,0.15);color:var(--orange)">&#128202;</div>
+        <h3>数据治理与本体</h3>
+        <p>政务数据本体构建（OWL+JSON-LD）、一标五实、空间知识图谱、数据要素化</p>
+        <div class="skill-tags"><span>知识本体</span><span>空间知识图谱</span><span>数据要素化</span></div>
+      </div>
+      <div class="skill-card fade-in">
+        <div class="icon" style="background:rgba(255,204,0,0.15);color:var(--yellow)">&#128737;</div>
+        <h3>行业标准与科研</h3>
+        <p>牵头编制10余项国际/国家/行业标准、2项发明专利、7篇核心期刊论文、省部级课题负责人</p>
+        <div class="skill-tags"><span>标准编制</span><span>发明专利</span><span>课题申报</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Demos -->
+<section id="demos" style="background:var(--bg2)">
+  <div class="section-inner">
+    <h2 class="section-title fade-in">智能体<span class="accent">Demo</span></h2>
+    <p class="section-sub fade-in">已交付的智能体演示系统，点击即可体验</p>
+    <div class="project-grid">
+      <div class="project-card fade-in" style="--accent-c:#00d4ff">
+        <div class="cat">应急智能体</div>
+        <h3>昌平城管时空智能体演示</h3>
+        <div class="desc">基于ReAct框架的城市应急智能体集群演示，5标签架构（态势感知→态势推演→指挥调度→灾后复盘→总线调度），含暴雨推演地图联动、预案库、AI生成预案、人机协同确认机制</div>
+        <div class="ptags"><span>ReAct Agent</span><span>Leaflet地图</span><span>多Agent协同</span><span>应急推演</span><span>人机协同</span></div>
+        <a href="城管时空智能体演示.html" target="_blank" class="demo-btn">&#9654; 启动Demo</a>
+      </div>
+      <div class="project-card fade-in" style="--accent-c:#00e676">
+        <div class="cat">时空智能底座</div>
+        <h3>昌平区时空智能底座演示系统</h3>
+        <div class="desc">CIM+大模型+智能体城市级时空智能基础设施POC，4页面（总览/交通/应急/水务），模拟实时数据刷新、AI对话交互、SVG热力图、预警闪烁</div>
+        <div class="ptags"><span>CIM数字底座</span><span>AI透明机制</span><span>多领域智能体</span><span>POC验证</span></div>
+        <a href="昌平区时空智能底座演示系统.html" target="_blank" class="demo-btn">&#9654; 启动Demo</a>
+      </div>
+      <div class="project-card fade-in" style="--accent-c:#b060ff">
+        <div class="cat">3D可视化</div>
+        <h3>时空智能底座3D数字地球</h3>
+        <div class="desc">基于WebGL的三维数字地球可视化，展示城市级时空数据的三维呈现能力</div>
+        <div class="ptags"><span>WebGL</span><span>Three.js</span><span>3D地球</span><span>数字孪生</span></div>
+        <a href="时空智能底座3D数字地球.html" target="_blank" class="demo-btn">&#9654; 启动Demo</a>
+      </div>
+      <div class="project-card fade-in" style="--accent-c:#ff8800">
+        <div class="cat">能源+低空+智算</div>
+        <h3>庆阳三位一体智能体集群演示系统</h3>
+        <div class="desc">低空·能源·智算三位一体综合管理运营平台，8个领域智能体（低空4+能源智算4），含Harness总线编排引擎可视化、4个典型场景模拟、智能体思考链展示</div>
+        <div class="ptags"><span>Harness总线</span><span>DAG工作流</span><span>8智能体集群</span><span>算电协同</span></div>
+        <a href="庆阳三位一体智能体集群演示系统.html" target="_blank" class="demo-btn">&#9654; 启动Demo</a>
+      </div>
+      <div class="project-card fade-in" style="--accent-c:#ff3d3d">
+        <div class="cat">应急演练</div>
+        <h3>海外园区应急演练平台</h3>
+        <div class="desc">面向中东地区大型央企园区的全流程应急演练平台，5标签（场景配置→态势感知→演练推演→演练指挥→演练复盘），含Three.js三维场景、拖拉拽搭建、时间轴回放</div>
+        <div class="ptags"><span>Three.js 3D</span><span>应急演练</span><span>场景配置</span><span>过程回放</span></div>
+        <a href="海外园区应急演练平台.html" target="_blank" class="demo-btn">&#9654; 启动Demo</a>
+      </div>
+      <div class="project-card fade-in" style="--accent-c:#0099ff">
+        <div class="cat">自然资源</div>
+        <h3>河北省自然资源时空智能底座演示</h3>
+        <div class="desc">面向河北省自然资源的时空智能底座演示系统</div>
+        <div class="ptags"><span>自然资源</span><span>时空底座</span><span>省级平台</span></div>
+        <a href="河北省自然资源时空智能底座演示.html" target="_blank" class="demo-btn">&#9654; 启动Demo</a>
+      </div>
+      <div class="project-card fade-in" style="--accent-c:#ffcc00">
+        <div class="cat">数字孪生</div>
+        <h3>数字孪生街区演示系统</h3>
+        <div class="desc">街区级数字孪生演示系统，展示城市街区三维重建与实时态势感知</div>
+        <div class="ptags"><span>数字孪生</span><span>街区级</span><span>三维重建</span></div>
+        <a href="数字孪生街区演示系统.html" target="_blank" class="demo-btn">&#9654; 启动Demo</a>
+      </div>
+      <div class="project-card fade-in" style="--accent-c:#e91e63">
+        <div class="cat">AI行业应用</div>
+        <h3>AI金融风控智能体</h3>
+        <div class="desc">金融风控领域智能体Demo，展示AI在金融风控场景的应用能力</div>
+        <div class="ptags"><span>金融风控</span><span>AI Agent</span><span>智能风控</span></div>
+        <a href="AI金融风控智能体Demo.html" target="_blank" class="demo-btn">&#9654; 启动Demo</a>
+      </div>
+      <div class="project-card fade-in" style="--accent-c:#9c27b0">
+        <div class="cat">AI行业应用</div>
+        <h3>AI智慧养老智能体</h3>
+        <div class="desc">智慧养老领域智能体Demo，展示AI在养老服务场景的应用能力</div>
+        <div class="ptags"><span>智慧养老</span><span>AI Agent</span><span>适老化</span></div>
+        <a href="AI智慧养老智能体Demo.html" target="_blank" class="demo-btn">&#9654; 启动Demo</a>
+      </div>
+      <div class="project-card fade-in" style="--accent-c:#607d8b">
+        <div class="cat">AI行业应用</div>
+        <h3>AI工业智能制造智能体</h3>
+        <div class="desc">工业智能制造领域智能体Demo，展示AI在工业制造场景的应用能力</div>
+        <div class="ptags"><span>工业智造</span><span>AI Agent</span><span>智能产线</span></div>
+        <a href="AI工业智能制造智能体Demo.html" target="_blank" class="demo-btn">&#9654; 启动Demo</a>
+      </div>
+      <div class="project-card fade-in" style="--accent-c:#4caf50">
+        <div class="cat">知识管理</div>
+        <h3>个人知识图谱</h3>
+        <div class="desc">F盘24万+文件的可交互式HTML知识图谱，力导向图+分类导航+架构视图三视图联动，覆盖16个项目文件夹、18个知识领域、25条关联关系</div>
+        <div class="ptags"><span>知识图谱</span><span>力导向图</span><span>D3.js</span><span>文件治理</span></div>
+        <a href="个人知识图谱.html" target="_blank" class="demo-btn">&#9654; 启动Demo</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Projects -->
+<section id="projects">
+  <div class="section-inner">
+    <h2 class="section-title fade-in">重点<span class="accent">项目</span></h2>
+    <p class="section-sub fade-in">国家级/省部级项目精选</p>
+    <div class="project-grid">
+      <div class="project-card fade-in" style="--accent-c:var(--cyan)">
+        <div class="cat">课题负责人</div>
+        <h3>低慢小目标探测处置仿真平台和效能评估系统</h3>
+        <div class="desc">牵头获批面向低空场景下的"低慢小"目标探测与处置仿真，构建包含三维重建、感知仿真、处置策略推演、效能评估的完整闭环，为低空安全防控提供仿真基础设施。</div>
+        <div class="ptags"><span>三维重建</span><span>感知仿真</span><span>推演闭环</span><span>效能评估</span></div>
+      </div>
+      <div class="project-card fade-in" style="--accent-c:var(--green)">
+        <div class="cat">总架构师 / 产品负责人</div>
+        <h3>低空网格产品（已成功销售转化）</h3>
+        <div class="desc">基于三维网格编码与多源数据融合的低空经济核心产品，融合空天地海异构数据协同处理（已申发明专利），成功实现商业转化并完成首单销售。</div>
+        <div class="ptags"><span>三维网格编码</span><span>多源融合</span><span>商业转化</span></div>
+      </div>
+      <div class="project-card fade-in" style="--accent-c:var(--purple)">
+        <div class="cat">总负责人</div>
+        <h3>市应急、气象、城管智能体项目</h3>
+        <div class="desc">基于ReAct智能体框架完成应急态势感知、气象预警、仿真推演、指挥决策、城管违规识别等多个行业Agent设计与落地，采用MCP原子化编排实现跨域数据协同，独立完成场景挖掘、产品设计和POC验证。</div>
+        <div class="ptags"><span>ReAct框架</span><span>MCP编排</span><span>多行业Agent</span><span>POC验证</span></div>
+      </div>
+      <div class="project-card fade-in" style="--accent-c:var(--orange)">
+        <div class="cat">总架构师</div>
+        <h3>西部"能源+低空+智算"三位一体示范项目</h3>
+        <div class="desc">紧扣国家战略，打造"绿电&rarr;算力&rarr;Token&rarr;服务"闭环体系，主导方案可研与Demo汇报。8个领域智能体集群，Harness总线编排引擎。</div>
+        <div class="ptags"><span>三位一体</span><span>Harness总线</span><span>8智能体集群</span></div>
+      </div>
+      <div class="project-card fade-in" style="--accent-c:var(--blue)">
+        <div class="cat">总集负责人</div>
+        <h3>苏州市城市信息模型（CIM）基础平台（5119万）</h3>
+        <div class="desc">整合腾讯/阿里等多方生态，打造"1+10"二三维一体化底板，项目荣获地理信息产业优秀工程金奖。</div>
+        <div class="ptags"><span>CIM平台</span><span>二三维一体化</span><span>金奖项目</span></div>
+      </div>
+      <div class="project-card fade-in" style="--accent-c:var(--yellow)">
+        <div class="cat">产品负责人</div>
+        <h3>雄安规建管BIM平台（2000万）</h3>
+        <div class="desc">打造雄安新区BIM审查与CIM数字底座，实现规建管一体化全流程数字化闭环，支撑新区智能城市建设。</div>
+        <div class="ptags"><span>BIM审查</span><span>CIM底座</span><span>雄安新区</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Education -->
+<section id="education" style="background:var(--bg2)">
+  <div class="section-inner">
+    <h2 class="section-title fade-in">教育<span class="accent">背景</span></h2>
+    <p class="section-sub fade-in">人工智能 × 公共管理 × 工商管理的复合学历</p>
+    <div class="edu-grid">
+      <div class="edu-card fade-in">
+        <div class="school">中国人民大学</div>
+        <div class="major">人工智能</div>
+        <div class="degree">硕士</div>
+        <div class="period">2026.04 - 2027.12</div>
+      </div>
+      <div class="edu-card fade-in">
+        <div class="school">中国科学院大学</div>
+        <div class="major">公共管理</div>
+        <div class="degree">硕士</div>
+        <div class="period">2021.09 - 2023.06</div>
+      </div>
+      <div class="edu-card fade-in">
+        <div class="school">华南理工大学</div>
+        <div class="major">工商管理</div>
+        <div class="degree">本科</div>
+        <div class="period">2011.09 - 2015.06</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Contact -->
+<section class="contact" id="contact">
+  <div class="section-inner">
+    <h2 class="fade-in">联系<span class="accent" style="background:var(--grad1);-webkit-background-clip:text;-webkit-text-fill-color:transparent">我</span></h2>
+    <p class="section-sub fade-in">欢迎交流AI解决方案、智能体架构与合作机会</p>
+    <div class="contact-items fade-in">
+      <div class="contact-item">
+        <span class="ci-icon">&#128222;</span>
+        <span>18501990620</span>
+      </div>
+      <div class="contact-item">
+        <span class="ci-icon">&#9993;</span>
+        <span>505960975@qq.com</span>
+      </div>
+      <div class="contact-item">
+        <span class="ci-icon">&#128205;</span>
+        <span>北京</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>&copy; 2026 李晶 Li Jing. All rights reserved.</p>
+</footer>
+
+<script>
+// Particle background
+(function(){
+  const canvas=document.getElementById('particles');
+  const ctx=canvas.getContext('2d');
+  let W,H,particles=[];
+  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight}
+  resize();window.addEventListener('resize',resize);
+  const colors=['#0099ff','#00d4ff','#b060ff','#00e676'];
+  for(let i=0;i<60;i++){
+    particles.push({
+      x:Math.random()*W,y:Math.random()*H,
+      vx:(Math.random()-0.5)*0.3,vy:(Math.random()-0.5)*0.3,
+      r:Math.random()*2+0.5,
+      c:colors[Math.floor(Math.random()*colors.length)],
+      a:Math.random()*0.3+0.1
+    });
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0||p.x>W)p.vx*=-1;
+      if(p.y<0||p.y>H)p.vy*=-1;
+      ctx.beginPath();ctx.arc(p.x,p.y,Math.max(0.1,p.r),0,Math.PI*2);
+      ctx.fillStyle=p.c;ctx.globalAlpha=p.a;ctx.fill();
+    });
+    // Connect nearby particles
+    ctx.globalAlpha=1;
+    for(let i=0;i<particles.length;i++){
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x;
+        const dy=particles[i].y-particles[j].y;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<120){
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x,particles[i].y);
+          ctx.lineTo(particles[j].x,particles[j].y);
+          ctx.strokeStyle='rgba(80,140,255,'+(0.08*(1-dist/120))+')';
+          ctx.lineWidth=0.5;ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// Scroll fade-in
+const observer=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){e.target.classList.add('visible')}
+  });
+},{threshold:0.1});
+document.querySelectorAll('.fade-in').forEach(el=>observer.observe(el));
+
+// Number counter
+const counterObs=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const el=e.target;
+      const target=parseInt(el.dataset.count);
+      let cur=0;
+      const step=target/40;
+      const timer=setInterval(()=>{
+        cur+=step;
+        if(cur>=target){cur=target;clearInterval(timer)}
+        el.textContent=Math.floor(cur);
+      },20);
+      counterObs.unobserve(el);
+    }
+  });
+},{threshold:0.5});
+document.querySelectorAll('[data-count]').forEach(el=>counterObs.observe(el));
+
+// Nav background on scroll
+window.addEventListener('scroll',()=>{
+  const nav=document.querySelector('nav');
+  if(window.scrollY>50){nav.style.background='rgba(10,14,23,0.9)'}
+  else{nav.style.background='rgba(10,14,23,0.7)'}
+});
+</script>
+
+<!-- AIGC: {"Label":"value1","ContentProducer":"001191110000802100433B11010001191110000802100433B11010","ProduceID":"f5aeeb96-3419-4fe1-b53d-1c2281ca4781","ReservedCode1":"72dafc97cd38b92e5f3d5cdfd0dfbbe6","ContentPropagator":"001191110000802100433B11010001191110000802100433B11010","PropagateID":"55e563e1-0f18-4fa6-bc64-839e5fa58fa0","ReservedCode2":"2734827274df537123a472bf4de01eb5"} -->
+</body>
+</html>
