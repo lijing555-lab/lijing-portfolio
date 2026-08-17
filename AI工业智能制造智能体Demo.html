@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI工业智能制造智能体平台</title>
+<style>
+:root{
+  --bg:#0d1117;
+  --card:rgba(20,30,48,0.9);
+  --card-hover:rgba(28,40,62,0.95);
+  --primary:#FF6B35;
+  --secondary:#00E5FF;
+  --success:#3FB950;
+  --warning:#D29922;
+  --danger:#F85149;
+  --text:#e6edf3;
+  --text-dim:#8b949e;
+  --border:rgba(48,63,90,0.6);
+  --border-bright:rgba(0,229,255,0.3);
+  --radius:12px;
+  --font:'Segoe UI',system-ui,-apple-system,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden;height:100vh}
+/* scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:rgba(255,255,255,0.02)}
+::-webkit-scrollbar-thumb{background:rgba(0,229,255,0.2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(0,229,255,0.4)}
+
+/* ===== Layout ===== */
+#app{display:flex;flex-direction:column;height:100vh}
+.header{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:60px;background:linear-gradient(180deg,rgba(20,30,48,0.95),rgba(15,22,38,0.9));border-bottom:1px solid var(--border);position:relative;z-index:10}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--primary),var(--secondary),transparent)}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 20px rgba(255,107,53,0.4)}
+.header-title{font-size:18px;font-weight:600;background:linear-gradient(90deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1px}
+.header-right{display:flex;align-items:center;gap:20px}
+.clock{font-size:14px;color:var(--secondary);font-variant-numeric:tabular-nums;font-family:'Courier New',monospace}
+.status-indicator{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-dim)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success);animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:0.4}}
+
+.body-container{display:flex;flex:1;overflow:hidden}
+
+/* ===== Sidebar ===== */
+.sidebar{width:180px;background:rgba(13,17,23,0.8);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:12px 0;flex-shrink:0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:14px 20px;cursor:pointer;color:var(--text-dim);font-size:14px;transition:all .25s;position:relative;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(0,229,255,0.05);color:var(--text)}
+.nav-item.active{background:linear-gradient(90deg,rgba(255,107,53,0.1),transparent);color:var(--primary);border-left-color:var(--primary)}
+.nav-item.active::after{content:'';position:absolute;right:0;top:50%;transform:translateY(-50%);width:3px;height:30px;background:var(--primary);border-radius:2px;box-shadow:0 0 10px var(--primary)}
+.nav-icon{font-size:18px;width:24px;text-align:center}
+
+/* ===== Main Content ===== */
+.main-content{flex:1;overflow-y:auto;padding:16px;position:relative}
+.panel{display:none;animation:fadeIn .4s ease}
+.panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== Grid System ===== */
+.row{display:flex;gap:16px;margin-bottom:16px}
+.col{flex:1}
+.col-auto{flex:0 0 auto}
+
+/* ===== Cards ===== */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:all .25s;position:relative;overflow:hidden}
+.card:hover{border-color:var(--border-bright);box-shadow:0 0 20px rgba(0,229,255,0.08)}
+.card-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.card-title .dot{width:6px;height:6px;border-radius:50%;background:var(--secondary)}
+
+/* ===== KPI Cards ===== */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden;transition:all .3s}
+.kpi-card:hover{transform:translateY(-2px);border-color:var(--border-bright);box-shadow:0 4px 24px rgba(0,229,255,0.1)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--primary)}
+.kpi-card:nth-child(2)::before{background:var(--secondary)}
+.kpi-card:nth-child(3)::before{background:var(--success)}
+.kpi-card:nth-child(4)::before{background:var(--warning)}
+.kpi-label{font-size:12px;color:var(--text-dim);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.kpi-value{font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi-value .unit{font-size:14px;font-weight:400;color:var(--text-dim);margin-left:4px}
+.kpi-trend{font-size:12px;margin-top:6px;display:flex;align-items:center;gap:4px}
+.kpi-trend.up{color:var(--success)}
+.kpi-trend.down{color:var(--danger)}
+.kpi-icon{position:absolute;top:16px;right:16px;font-size:28px;opacity:0.15}
+
+/* ===== Production Lines ===== */
+.prod-line{background:rgba(13,17,23,0.5);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;transition:all .25s}
+.prod-line:hover{border-color:rgba(0,229,255,0.2);background:rgba(20,30,48,0.6)}
+.prod-line-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.prod-line-id{font-size:13px;font-weight:600;color:var(--secondary)}
+.prod-line-status{display:flex;align-items:center;gap:5px;font-size:12px;padding:2px 10px;border-radius:12px}
+.st-run{color:var(--success);background:rgba(63,185,80,0.1)}
+.st-idle{color:var(--warning);background:rgba(210,153,34,0.1)}
+.st-maint{color:var(--secondary);background:rgba(0,229,255,0.1)}
+.st-fault{color:var(--danger);background:rgba(248,81,73,0.1)}
+.status-led{width:7px;height:7px;border-radius:50%}
+.st-run .status-led{background:var(--success);box-shadow:0 0 6px var(--success);animation:pulse-dot 1.5s infinite}
+.st-idle .status-led{background:var(--warning);box-shadow:0 0 6px var(--warning)}
+.st-maint .status-led{background:var(--secondary);box-shadow:0 0 6px var(--secondary);animation:pulse-dot 1s infinite}
+.st-fault .status-led{background:var(--danger);box-shadow:0 0 6px var(--danger);animation:pulse-dot 0.5s infinite}
+.progress-bar{height:8px;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden;margin-bottom:6px}
+.progress-fill{height:100%;border-radius:4px;transition:width .6s ease;background:linear-gradient(90deg,var(--primary),var(--secondary))}
+.prod-line-stats{display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim)}
+.prod-line-stats span b{color:var(--text);font-weight:600}
+
+/* ===== Agent Panel ===== */
+.agent-panel{background:rgba(13,17,23,0.5);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px}
+.agent-thinking{font-size:13px;line-height:1.8;color:var(--text-dim);min-height:60px}
+.agent-thinking .step{display:inline-block;padding:2px 8px;margin:2px 4px 2px 0;border-radius:4px;background:rgba(0,229,255,0.08);color:var(--secondary);font-size:12px;border:1px solid rgba(0,229,255,0.15)}
+.agent-thinking .arrow{color:var(--primary);margin:0 2px}
+.typing-cursor{display:inline-block;width:8px;height:14px;background:var(--secondary);animation:blink .8s infinite;vertical-align:middle}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.schedule-section{margin-top:10px}
+.schedule-bar-label{font-size:12px;color:var(--text-dim);margin-bottom:5px;display:flex;justify-content:space-between}
+.schedule-progress{height:10px;background:rgba(255,255,255,0.05);border-radius:5px;overflow:hidden;margin-bottom:8px}
+.schedule-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--success),var(--secondary));transition:width 1s ease;position:relative}
+.schedule-fill::after{content:'';position:absolute;top:0;right:0;width:20px;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3));animation:shimmer 2s infinite}
+@keyframes shimmer{0%{transform:translateX(-20px)}100%{transform:translateX(20px)}}
+.schedule-list{list-style:none}
+.schedule-list li{padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;display:flex;justify-content:space-between;align-items:center}
+.schedule-list li:last-child{border-bottom:none}
+.schedule-list .badge{font-size:10px;padding:2px 8px;border-radius:8px}
+
+/* ===== Alert List ===== */
+.alert-list{max-height:320px;overflow-y:auto}
+.alert-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;margin-bottom:8px;background:rgba(13,17,23,0.4);border-left:3px solid;cursor:pointer;transition:all .2s;font-size:12px}
+.alert-item:hover{background:rgba(20,30,48,0.7);transform:translateX(3px)}
+.alert-critical{border-left-color:var(--danger)}
+.alert-warning{border-left-color:var(--warning)}
+.alert-info{border-left-color:var(--secondary)}
+.alert-type{font-size:10px;padding:1px 8px;border-radius:8px;font-weight:600;white-space:nowrap}
+.alert-critical .alert-type{background:rgba(248,81,73,0.15);color:var(--danger)}
+.alert-warning .alert-type{background:rgba(210,153,34,0.15);color:var(--warning)}
+.alert-info .alert-type{background:rgba(0,229,255,0.15);color:var(--secondary)}
+.alert-msg{flex:1;color:var(--text-dim)}
+.alert-time{font-size:11px;color:var(--text-dim);white-space:nowrap}
+
+/* ===== Equipment List ===== */
+.equip-list{max-height:480px;overflow-y:auto}
+.equip-item{background:rgba(13,17,23,0.4);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px}
+.equip-item:hover{border-color:rgba(0,229,255,0.2);background:rgba(20,30,48,0.6)}
+.equip-item.selected{border-color:var(--primary);background:rgba(255,107,53,0.06)}
+.equip-ring{position:relative;width:42px;height:42px;flex-shrink:0}
+.equip-ring svg{transform:rotate(-90deg)}
+.equip-ring .ring-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:10px;font-weight:600;color:var(--text)}
+.equip-info{flex:1;min-width:0}
+.equip-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.equip-meta{font-size:11px;color:var(--text-dim);display:flex;gap:12px}
+
+/* ===== Detail Info ===== */
+.detail-section{margin-bottom:14px}
+.detail-label{font-size:12px;color:var(--text-dim);margin-bottom:6px}
+
+/* ===== Maintenance Timeline ===== */
+.timeline{position:relative;padding:20px 0 10px}
+.timeline-track{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;position:relative;margin:0 20px}
+.timeline-progress{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--secondary),var(--success));position:relative}
+.timeline-progress::after{content:'';position:absolute;right:0;top:50%;transform:translate(50%,-50%);width:12px;height:12px;border-radius:50%;background:var(--success);box-shadow:0 0 10px var(--success)}
+.timeline-risk{position:absolute;top:0;width:2px;height:100%;background:var(--danger)}
+.timeline-risk::after{content:'';position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:10px;height:10px;border-radius:50%;background:var(--danger);box-shadow:0 0 8px var(--danger);animation:pulse-dot 1s infinite}
+.timeline-labels{display:flex;justify-content:space-between;margin:0 20px;margin-top:10px;font-size:10px;color:var(--text-dim)}
+.timeline-point{position:absolute;top:50%;transform:translate(-50%,-50%);width:8px;height:8px;border-radius:50%;background:var(--secondary)}
+.timeline-point.done{background:var(--success)}
+.timeline-point.future{background:var(--warning);opacity:0.6}
+
+/* ===== Vibration Chart Placeholder ===== */
+.chart-container{position:relative;background:rgba(13,17,23,0.4);border-radius:8px;padding:8px}
+
+/* ===== Work Order Card ===== */
+.work-order{background:linear-gradient(135deg,rgba(255,107,53,0.08),rgba(0,229,255,0.05));border:1px solid rgba(255,107,53,0.2);border-radius:8px;padding:14px;margin-top:10px}
+.work-order-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.work-order-id{font-size:13px;font-weight:600;color:var(--primary)}
+.work-order-urgent{font-size:10px;padding:2px 10px;border-radius:8px;background:rgba(248,81,73,0.15);color:var(--danger)}
+.work-order-normal{font-size:10px;padding:2px 10px;border-radius:8px;background:rgba(210,153,34,0.15);color:var(--warning)}
+.work-order-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid var(--border)}
+.work-order-row:last-child{border-bottom:none}
+.work-order-row span:first-child{color:var(--text-dim)}
+.work-order-row span:last-child{color:var(--text);font-weight:500}
+
+/* ===== Quality ===== */
+.qc-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.quality-kpi{display:flex;align-items:center;gap:20px}
+.quality-big{font-size:42px;font-weight:700;color:var(--success);font-variant-numeric:tabular-nums}
+.quality-big .pct{font-size:20px}
+.defect-bars{display:flex;align-items:flex-end;gap:10px;height:120px;padding-top:20px}
+.defect-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%}
+.defect-bar{width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,var(--primary),rgba(255,107,53,0.3));transition:all .3s;min-height:4px;position:relative}
+.defect-bar:hover{filter:brightness(1.3)}
+.defect-bar-val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text);font-weight:600}
+.defect-bar-label{font-size:10px;color:var(--text-dim);text-align:center;line-height:1.3}
+
+.qc-stream{max-height:400px;overflow-y:auto}
+.qc-card{background:rgba(13,17,23,0.4);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;display:flex;gap:10px;animation:slideIn .4s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+.qc-img{width:50px;height:50px;border-radius:6px;background:linear-gradient(135deg,rgba(0,229,255,0.1),rgba(255,107,53,0.1));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:1px solid var(--border)}
+.qc-info{flex:1;font-size:12px}
+.qc-result{font-weight:600;margin-bottom:3px}
+.qc-ok{color:var(--success)}
+.qc-ng{color:var(--danger)}
+.qc-card.ng{border-color:rgba(248,81,73,0.3);background:rgba(248,81,73,0.04)}
+.qc-conf{color:var(--text-dim);font-size:11px}
+
+/* ===== Fishbone ===== */
+.fishbone{position:relative;width:100%;height:260px;display:flex;align-items:center;justify-content:center}
+.fb-spine{position:absolute;left:10%;right:25%;top:50%;height:2px;background:var(--secondary)}
+.fb-head{position:absolute;right:8%;top:50%;transform:translateY(-50%);width:60px;height:60px;border-radius:50%;background:rgba(248,81,73,0.1);border:2px solid var(--danger);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--danger);text-align:center}
+.fb-branch{position:absolute;width:120px;display:flex;flex-direction:column}
+.fb-branch-title{font-size:12px;font-weight:600;color:var(--primary);margin-bottom:4px}
+.fb-branch-item{font-size:11px;color:var(--text-dim);padding:1px 0}
+.fb-branch::after{content:'';position:absolute;width:2px;background:rgba(0,229,255,0.3)}
+.fb-top{top:5%}
+.fb-top::after{top:100%;left:50%;height:calc(50% - 0px)}
+.fb-bottom{bottom:5%}
+.fb-bottom::after{bottom:100%;left:50%;height:calc(50% - 0px)}
+
+/* ===== Safety Dashboard ===== */
+.safety-gauge{position:relative;width:280px;height:160px;margin:0 auto}
+.gauge-arc{width:100%;height:100%}
+.gauge-needle{position:absolute;bottom:10px;left:50%;width:3px;height:100px;background:var(--text);transform-origin:bottom center;transform:rotate(-90deg);transition:transform 1s cubic-bezier(0.34,1.56,0.64,1);border-radius:2px}
+.gauge-needle::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:14px;height:14px;border-radius:50%;background:var(--text);box-shadow:0 0 10px rgba(255,255,255,0.3)}
+.gauge-label{position:absolute;bottom:0;left:50%;transform:translateX(-50%);font-size:16px;font-weight:700}
+.gauge-zones{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-around;font-size:10px;color:var(--text-dim)}
+
+/* ===== Workshop Grid ===== */
+.workshop-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.zone{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.zone:hover{transform:scale(1.05)}
+.zone-safe{background:rgba(63,185,80,0.12);border:1px solid rgba(63,185,80,0.3);color:var(--success)}
+.zone-warn{background:rgba(210,153,34,0.12);border:1px solid rgba(210,153,34,0.3);color:var(--warning)}
+.zone-danger{background:rgba(248,81,73,0.12);border:1px solid rgba(248,81,73,0.3);color:var(--danger);animation:pulse-danger 1.5s infinite}
+@keyframes pulse-danger{0%,100%{box-shadow:0 0 0 0 rgba(248,81,73,0.4)}50%{box-shadow:0 0 0 8px rgba(248,81,73,0)}}
+.zone-id{font-size:14px;margin-bottom:2px}
+.zone-status{font-size:10px;opacity:0.8}
+
+/* ===== Video Analysis ===== */
+.video-frame{position:relative;background:#000;border-radius:8px;overflow:hidden;aspect-ratio:16/9;border:1px solid var(--border)}
+.video-placeholder{position:absolute;inset:0;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:14px}
+.video-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,229,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.03) 1px,transparent 1px);background-size:30px 30px}
+.detection-box{position:absolute;border:2px solid;animation:scan 2s infinite}
+@keyframes scan{0%,100%{opacity:0.8}50%{opacity:0.3}}
+.det-helmet{top:15%;left:20%;width:80px;height:100px;border-color:var(--danger)}
+.det-label{position:absolute;top:-20px;left:-2px;font-size:10px;padding:2px 6px;border-radius:3px;white-space:nowrap}
+.det-helmet .det-label{background:var(--danger);color:#fff}
+.det-intrusion{bottom:20%;right:15%;width:90px;height:70px;border-color:var(--warning)}
+.det-intrusion .det-label{background:var(--warning);color:#000}
+.video-scanline{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--secondary),transparent);animation:scanline 3s linear infinite}
+@keyframes scanline{0%{top:0}100%{top:100%}}
+
+/* ===== Safety Event List ===== */
+.event-list{max-height:300px;overflow-y:auto}
+.event-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;margin-bottom:6px;background:rgba(13,17,23,0.4);font-size:12px;transition:all .2s}
+.event-item:hover{background:rgba(20,30,48,0.6)}
+.event-time{color:var(--text-dim);font-size:11px;white-space:nowrap;font-family:'Courier New',monospace}
+.event-area{color:var(--secondary);font-size:11px;white-space:nowrap}
+.event-type{flex:1;color:var(--text-dim)}
+.event-status{font-size:10px;padding:1px 8px;border-radius:8px;white-space:nowrap}
+
+/* ===== Pareto Chart ===== */
+.pareto-chart{display:flex;align-items:flex-end;gap:8px;height:160px;padding:20px 0 0;position:relative}
+.pareto-bar{flex:1;display:flex;flex-direction:column;align-items:center;height:100%}
+.pareto-bar-fill{width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,var(--primary),rgba(255,107,53,0.2));min-height:4px;position:relative;transition:all .3s}
+.pareto-bar-val{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600}
+.pareto-bar-label{font-size:10px;color:var(--text-dim);margin-top:4px;text-align:center;line-height:1.3}
+
+/* ===== Training List ===== */
+.training-list{list-style:none}
+.training-list li{padding:8px 10px;border-radius:6px;margin-bottom:6px;background:rgba(13,17,23,0.4);font-size:12px;display:flex;align-items:center;justify-content:space-between;transition:all .2s}
+.training-list li:hover{background:rgba(20,30,48,0.6)}
+.training-list .tname{color:var(--text)}
+.training-list .tbadge{font-size:10px;padding:2px 8px;border-radius:8px}
+
+/* ===== Utility ===== */
+.flex{display:flex}
+.gap-8{gap:8px}
+.gap-16{gap:16px}
+.mt-8{margin-top:8px}
+.mt-12{margin-top:12px}
+.mt-16{margin-top:16px}
+.text-sm{font-size:12px}
+.text-dim{color:var(--text-dim)}
+.text-primary{color:var(--primary)}
+.text-secondary{color:var(--secondary)}
+.text-success{color:var(--success)}
+.text-danger{color:var(--danger)}
+.text-warning{color:var(--warning)}
+.text-center{text-align:center}
+.full-w{width:100%}
+canvas{display:block}
+.badge{font-size:10px;padding:2px 8px;border-radius:8px}
+.badge-primary{background:rgba(255,107,53,0.15);color:var(--primary)}
+.badge-secondary{background:rgba(0,229,255,0.15);color:var(--secondary)}
+.badge-success{background:rgba(63,185,80,0.15);color:var(--success)}
+.badge-warning{background:rgba(210,153,34,0.15);color:var(--warning)}
+.badge-danger{background:rgba(248,81,73,0.15);color:var(--danger)}
+
+/* Responsive */
+@media(max-width:1200px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .qc-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="logo">🤖</div>
+      <div class="header-title">AI工业智能制造智能体平台</div>
+    </div>
+    <div class="header-right">
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="status-indicator">
+        <span class="status-dot"></span>
+        <span>5条产线运行中</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="body-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="nav-item active" data-panel="overview" onclick="switchPanel('overview')">
+        <span class="nav-icon">🏭</span><span>生产总览</span>
+      </div>
+      <div class="nav-item" data-panel="equipment" onclick="switchPanel('equipment')">
+        <span class="nav-icon">⚙️</span><span>设备运维</span>
+      </div>
+      <div class="nav-item" data-panel="quality" onclick="switchPanel('quality')">
+        <span class="nav-icon">🔬</span><span>质量管控</span>
+      </div>
+      <div class="nav-item" data-panel="safety" onclick="switchPanel('safety')">
+        <span class="nav-icon">🚨</span><span>安全监控</span>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+
+      <!-- ===== Panel 1: Production Overview ===== -->
+      <div class="panel active" id="panel-overview">
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">📦 今日产量</div>
+            <div class="kpi-value" id="kpi-output">0<span class="unit">件</span></div>
+            <div class="kpi-trend up">↑ 8.3% vs 昨日</div>
+            <div class="kpi-icon">📦</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">⚙️ 设备OEE</div>
+            <div class="kpi-value" id="kpi-oee">0<span class="unit">%</span></div>
+            <div class="kpi-trend up">↑ 2.1%</div>
+            <div class="kpi-icon">⚙️</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">✅ 良品率</div>
+            <div class="kpi-value" id="kpi-yield">0<span class="unit">%</span></div>
+            <div class="kpi-trend down">↓ 0.3%</div>
+            <div class="kpi-icon">✅</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">⚡ 能耗效率</div>
+            <div class="kpi-value" id="kpi-energy">0<span class="unit">%</span></div>
+            <div class="kpi-trend up">↑ 5.7%</div>
+            <div class="kpi-icon">⚡</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <!-- Left: Production Lines -->
+          <div class="col" style="flex:1.2">
+            <div class="card">
+              <div class="card-title"><span class="dot"></span>生产线状态看板</div>
+              <div id="prod-lines"></div>
+            </div>
+          </div>
+          <!-- Right: Agent + Alerts -->
+          <div class="col" style="flex:1">
+            <div class="card">
+              <div class="card-title"><span class="dot"></span>智能体调度面板</div>
+              <div class="agent-panel">
+                <div class="detail-label">🤖 生产Agent 思考链</div>
+                <div class="agent-thinking" id="agent-thinking-1"></div>
+              </div>
+              <div class="schedule-section">
+                <div class="schedule-bar-label"><span>今日排产完成率</span><span id="schedule-pct">78%</span></div>
+                <div class="schedule-progress"><div class="schedule-fill" id="schedule-fill" style="width:78%"></div></div>
+                <div class="detail-label mt-12">📅 明日排产预览</div>
+                <ul class="schedule-list" id="schedule-list"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <!-- Trend Chart -->
+          <div class="col" style="flex:1.5">
+            <div class="card">
+              <div class="card-title"><span class="dot"></span>24小时生产趋势</div>
+              <canvas id="trend-chart" width="800" height="220"></canvas>
+            </div>
+          </div>
+          <!-- Alerts -->
+          <div class="col" style="flex:1">
+            <div class="card">
+              <div class="card-title"><span class="dot"></span>实时告警列表</div>
+              <div class="alert-list" id="alert-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Panel 2: Equipment ===== -->
+      <div class="panel" id="panel-equipment">
+        <div class="row">
+          <div class="col" style="flex:0 0 340px">
+            <div class="card">
+              <div class="card-title"><span class="dot"></span>关键设备列表</div>
+              <div class="equip-list" id="equip-list"></div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card" id="equip-detail">
+              <div class="card-title"><span class="dot"></span>设备详情 · <span id="detail-equip-name">CNC加工中心-A01</span></div>
+              <div class="row">
+                <div class="col">
+                  <div class="detail-label">设备健康画像（六维雷达）</div>
+                  <canvas id="radar-chart" width="320" height="280"></canvas>
+                </div>
+                <div class="col">
+                  <div class="detail-label">预测性维护时间线</div>
+                  <div class="timeline">
+                    <div class="timeline-track">
+                      <div class="timeline-progress" style="width:60%"></div>
+                      <div class="timeline-risk" style="left:78%"></div>
+                      <div class="timeline-point done" style="left:15%"></div>
+                      <div class="timeline-point done" style="left:40%"></div>
+                      <div class="timeline-point" style="left:60%"></div>
+                      <div class="timeline-point future" style="left:85%"></div>
+                    </div>
+                    <div class="timeline-labels">
+                      <span>15天前</span><span>7天前</span><span>当前</span><span>+3天</span><span>+7天(风险)</span>
+                    </div>
+                  </div>
+                  <div class="detail-label mt-12">振动趋势图</div>
+                  <canvas id="vibration-chart" width="380" height="120"></canvas>
+                </div>
+              </div>
+              <div class="agent-panel mt-12">
+                <div class="detail-label">🔧 维护Agent 推理日志</div>
+                <div class="agent-thinking" id="agent-thinking-2"></div>
+              </div>
+              <div class="work-order">
+                <div class="work-order-header">
+                  <span class="work-order-id">📋 自动生成维护工单 #MO-20260817-001</span>
+                  <span class="work-order-urgent">紧急</span>
+                </div>
+                <div class="work-order-row"><span>设备编号</span><span>CNC-A01</span></div>
+                <div class="work-order-row"><span>故障类型</span><span>轴承外圈磨损（预测）</span></div>
+                <div class="work-order-row"><span>建议时间</span><span>2026-08-19 02:00-06:00</span></div>
+                <div class="work-order-row"><span>所需备件</span><span>SKF 6204轴承 ×2、密封圈套件 ×1</span></div>
+                <div class="work-order-row"><span>维护人员</span><span>张工（机械）、李工（电气）</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Panel 3: Quality ===== -->
+      <div class="panel" id="panel-quality">
+        <div class="card mb-16" style="margin-bottom:16px">
+          <div class="card-title"><span class="dot"></span>质量KPI汇总</div>
+          <div class="quality-kpi">
+            <div>
+              <div class="quality-big" id="quality-rate">99.2<span class="pct">%</span></div>
+              <div class="text-dim text-sm">综合良品率</div>
+            </div>
+            <div style="flex:1">
+              <div class="detail-label">不良类型分布</div>
+              <div class="defect-bars" id="defect-bars"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="qc-grid">
+          <div class="card">
+            <div class="card-title"><span class="dot"></span>实时AI视觉检测流</div>
+            <div class="qc-stream" id="qc-stream"></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="dot"></span>SPC控制图 (X-R)</div>
+            <canvas id="spc-chart" width="420" height="200"></canvas>
+            <div class="text-sm text-dim mt-8" style="text-align:center">数据点每5秒更新，出界点标红闪烁</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <div class="card">
+              <div class="card-title"><span class="dot"></span>缺陷帕累托分析</div>
+              <div class="pareto-chart" id="pareto-chart"></div>
+              <canvas id="pareto-cumline" width="420" height="60" style="margin-top:4px"></canvas>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card">
+              <div class="card-title"><span class="dot"></span>质量Agent 分析报告</div>
+              <div class="agent-panel">
+                <div class="agent-thinking" id="agent-thinking-3"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-16">
+          <div class="card-title"><span class="dot"></span>质量根因分析 · 鱼骨图</div>
+          <div class="fishbone" id="fishbone"></div>
+        </div>
+      </div>
+
+      <!-- ===== Panel 4: Safety ===== -->
+      <div class="panel" id="panel-safety">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title"><span class="dot"></span>安全风险等级</div>
+          <div class="safety-gauge">
+            <svg class="gauge-arc" viewBox="0 0 280 160" width="280" height="160">
+              <path d="M 20 140 A 120 120 0 0 1 260 140" fill="none" stroke="rgba(63,185,80,0.3)" stroke-width="20" stroke-dasharray="94.2 999"/>
+              <path d="M 20 140 A 120 120 0 0 1 260 140" fill="none" stroke="rgba(210,153,34,0.3)" stroke-width="20" stroke-dasharray="94.2 999" stroke-dashoffset="-94.2"/>
+              <path d="M 20 140 A 120 120 0 0 1 260 140" fill="none" stroke="rgba(255,107,53,0.3)" stroke-width="20" stroke-dasharray="94.2 999" stroke-dashoffset="-188.4"/>
+              <path d="M 20 140 A 120 120 0 0 1 260 140" fill="none" stroke="rgba(248,81,73,0.3)" stroke-width="20" stroke-dasharray="94.2 999" stroke-dashoffset="-282.6"/>
+            </svg>
+            <div class="gauge-needle" id="gauge-needle"></div>
+            <div class="gauge-label" id="gauge-label" style="bottom:-10px">中等风险</div>
+            <div class="gauge-zones">
+              <span style="color:var(--success)">低</span>
+              <span style="color:var(--warning)">中</span>
+              <span style="color:var(--primary)">高</span>
+              <span style="color:var(--danger)">极高</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col" style="flex:1">
+            <div class="card">
+              <div class="card-title"><span class="dot"></span>车间安全状态网格</div>
+              <div class="workshop-grid" id="workshop-grid"></div>
+            </div>
+          </div>
+          <div class="col" style="flex:1">
+            <div class="card">
+              <div class="card-title"><span class="dot"></span>安全事件列表</div>
+              <div class="event-list" id="event-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <div class="card">
+              <div class="card-title"><span class="dot"></span>AI视频分析 · 3号车间</div>
+              <div class="video-frame">
+                <div class="video-placeholder">
+                  <div class="video-grid"></div>
+                  <div class="video-scanline"></div>
+                  <div class="detection-box det-helmet"><span class="det-label">人员未戴安全帽 95%</span></div>
+                  <div class="detection-box det-intrusion"><span class="det-label">设备区域入侵 88%</span></div>
+                  <div style="position:absolute;bottom:8px;left:8px;font-size:11px;color:var(--secondary);z-index:2">● REC | CAM-03 | 2026-08-17 14:32:18</div>
+                  <div style="position:absolute;top:8px;right:8px;font-size:11px;color:var(--danger);z-index:2">⚠ 检测到2项异常</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card">
+              <div class="card-title"><span class="dot"></span>安全Agent 处置流程</div>
+              <div class="agent-panel">
+                <div class="agent-thinking" id="agent-thinking-4"></div>
+              </div>
+              <div class="detail-label mt-12">📚 安全培训推荐</div>
+              <ul class="training-list">
+                <li><span class="tname">PPE正确佩戴规范</span><span class="badge badge-danger">必修</span></li>
+                <li><span class="tname">设备区域准入管理</span><span class="badge badge-warning">推荐</span></li>
+                <li><span class="tname">应急疏散路线培训</span><span class="badge badge-secondary">选修</span></li>
+                <li><span class="tname">危险源识别与上报</span><span class="badge badge-danger">必修</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ========================================
+   AI工业智能制造智能体平台
+   单文件 Demo
+   ======================================== */
+
+/* ===== Global State ===== */
+var State = {
+  currentPanel: 'overview',
+  prodLines: [],
+  alerts: [],
+  equipments: [],
+  selectedEquip: 0,
+  qcResults: [],
+  spcData: [],
+  events: [],
+  trendsData: [],
+  gaugeAngle: -45
+};
+
+/* ===== Mock Data ===== */
+var mockData = {
+  prodLines: [
+    {id:'L01',status:'run',progress:82,output:1240,tact:12.5},
+    {id:'L02',status:'run',progress:67,output:980,tact:15.2},
+    {id:'L03',status:'maint',progress:0,output:0,tact:0},
+    {id:'L04',status:'run',progress:91,output:1560,tact:10.8},
+    {id:'L05',status:'idle',progress:0,output:0,tact:0}
+  ],
+  alerts: [
+    {level:'critical',type:'设备告警',msg:'CNC-A01 振动幅值超阈值 7.2mm/s',time:'14:28'},
+    {level:'warning',type:'质量告警',msg:'产线L02 尺寸超差连续3件',time:'14:15'},
+    {level:'warning',type:'设备告警',msg:'Robot-B02 温度趋势上升',time:'13:52'},
+    {level:'info',type:'物料告警',msg:'原料仓W-03 库存低于安全线',time:'13:30'},
+    {level:'critical',type:'安全告警',msg:'3号车间人员未戴安全帽',time:'14:32'},
+    {level:'warning',type:'设备告警',msg:'空压机 压力波动±0.3MPa',time:'12:45'},
+    {level:'info',type:'物料告警',msg:'AGV-03 路径拥堵延误5min',time:'12:20'}
+  ],
+  equipments: [
+    {name:'CNC加工中心-A01',status:'run',health:72,lastMaint:'7天前',nextMaint:'+7天',vib:7.2,temp:58,noise:72,power:85,eff:91,precision:88},
+    {name:'机器人-B02',status:'run',health:88,lastMaint:'3天前',nextMaint:'+14天',vib:3.1,temp:45,noise:65,power:78,eff:95,precision:96},
+    {name:'注塑机-C03',status:'run',health:95,lastMaint:'1天前',nextMaint:'+21天',vib:1.8,temp:52,noise:80,power:92,eff:97,precision:99},
+    {name:'AGV搬运-D04',status:'idle',health:90,lastMaint:'5天前',nextMaint:'+10天',vib:2.5,temp:38,noise:55,power:60,eff:93,precision:91},
+    {name:'空压机-E05',status:'run',health:65,lastMaint:'12天前',nextMaint:'+3天',vib:5.8,temp:68,noise:88,power:88,eff:82,precision:85},
+    {name:'焊接机器人-F06',status:'run',health:80,lastMaint:'6天前',nextMaint:'+8天',vib:4.2,temp:62,noise:75,power:80,eff:89,precision:92},
+    {name:'涂装线-G07',status:'maint',health:0,lastMaint:'今日',nextMaint:'+30天',vib:0,temp:25,noise:30,power:10,eff:0,precision:0},
+    {name:'检测设备-H08',status:'run',health:93,lastMaint:'2天前',nextMaint:'+18天',vib:1.2,temp:40,noise:50,power:65,eff:96,precision:98}
+  ],
+  schedule: [
+    {item:'产线L01 - 零件A x500',status:'done'},
+    {item:'产线L04 - 零件C x800',status:'done'},
+    {item:'产线L02 - 零件B x300',status:'run'},
+    {item:'产线L03 - 零件D x200',status:'pending'},
+    {item:'产线L05 - 零件E x600',status:'pending'}
+  ],
+  defects: [
+    {type:'尺寸超差',count:32,pct:38},
+    {type:'表面缺陷',count:28,pct:33},
+    {type:'装配错误',count:12,pct:14},
+    {type:'功能异常',count:8,pct:10},
+    {type:'材料缺陷',count:4,pct:5}
+  ],
+  workshopZones: [
+    {id:'A区',status:'safe',label:'正常'},
+    {id:'B区',status:'safe',label:'正常'},
+    {id:'C区',status:'warn',label:'注意'},
+    {id:'D区',status:'safe',label:'正常'},
+    {id:'E区',status:'danger',label:'危险'},
+    {id:'F区',status:'safe',label:'正常'},
+    {id:'G区',status:'warn',label:'注意'},
+    {id:'H区',status:'safe',label:'正常'}
+  ],
+  safetyEvents: [
+    {time:'14:32',area:'3号车间',type:'人员未戴安全帽',status:'处理中'},
+    {time:'14:05',area:'1号车间',type:'叉车超速',status:'已处理'},
+    {time:'13:40',area:'E区',type:'设备区域入侵',status:'已处理'},
+    {time:'13:15',area:'2号车间',type:'通道堵塞',status:'已处理'},
+    {time:'12:50',area:'原料仓',type:'危化品未归位',status:'已处理'},
+    {time:'12:20',area:'D区',type:'地面油污',status:'已处理'},
+    {time:'11:45',area:'3号车间',type:'灭火器遮挡',status:'已处理'},
+    {time:'11:10',area:'1号车间',type:'紧急出口堵塞',status:'已处理'},
+    {time:'10:30',area:'G区',type:'噪音超标',status:'已处理'},
+    {time:'09:15',area:'2号车间',type:'人员违规吸烟',status:'已处理'}
+  ]
+};
+
+/* ===== Utility Functions ===== */
+function $(id){return document.getElementById(id)}
+function rand(min,max){return Math.random()*(max-min)+min}
+function randInt(min,max){return Math.floor(rand(min,max+1))}
+function pad(n){return n<10?'0'+n:n}
+
+/* ===== Clock ===== */
+function updateClock(){
+  var d=new Date();
+  $('clock').textContent=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+}
+setInterval(updateClock,1000);
+updateClock();
+
+/* ===== Panel Switching ===== */
+function switchPanel(name){
+  State.currentPanel=name;
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
+  $('panel-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active')});
+  document.querySelector('[data-panel="'+name+'"]').classList.add('active');
+  // Trigger panel-specific renders
+  if(name==='overview'){renderTrendChart()}
+  if(name==='equipment'){renderRadarChart();renderVibrationChart()}
+  if(name==='quality'){renderSPCChart();renderParetoCumLine()}
+  if(name==='safety'){animateGauge()}
+}
+
+/* ===== KPI Number Animation ===== */
+function animateNumber(el,target,duration,suffix,decimals){
+  if(!el)return;
+  decimals=decimals||0;
+  var start=0,startTime=null;
+  function step(ts){
+    if(!startTime)startTime=ts;
+    var progress=Math.min((ts-startTime)/duration,1);
+    var eased=1-Math.pow(1-progress,3);
+    var val=start+(target-start)*eased;
+    el.innerHTML=val.toFixed(decimals)+'<span class="unit">'+(suffix||'')+'</span>';
+    if(progress<1)requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function initKPIs(){
+  animateNumber($('kpi-output'),4820,1500,'件',0);
+  animateNumber($('kpi-oee'),87.3,1500,'%',1);
+  animateNumber($('kpi-yield'),99.2,1500,'%',1);
+  animateNumber($('kpi-energy'),92.5,1500,'%',1);
+}
+
+/* ===== Production Lines ===== */
+function renderProdLines(){
+  var html='';
+  mockData.prodLines.forEach(function(l){
+    var statusMap={'run':['运行','st-run'],'idle':['待机','st-idle'],'maint':['维护','st-maint'],'fault':['故障','st-fault']};
+    var st=statusMap[l.status];
+    html+='<div class="prod-line">'+
+      '<div class="prod-line-header">'+
+        '<span class="prod-line-id">产线 '+l.id+'</span>'+
+        '<span class="prod-line-status '+st[1]+'"><span class="status-led"></span>'+st[0]+'</span>'+
+      '</div>'+
+      '<div class="progress-bar"><div class="progress-fill" style="width:'+l.progress+'%"></div></div>'+
+      '<div class="prod-line-stats">'+
+        '<span>产量 <b>'+l.output+'</b> 件</span>'+
+        '<span>节拍 <b>'+(l.tact>0?l.tact.toFixed(1):'--')+'</b> s</span>'+
+        '<span>进度 <b>'+l.progress+'</b>%</span>'+
+      '</div>'+
+    '</div>';
+  });
+  $('prod-lines').innerHTML=html;
+}
+
+function updateProdLines(){
+  mockData.prodLines.forEach(function(l){
+    if(l.status==='run'){
+      l.progress=Math.min(l.progress+randInt(1,4),100);
+      l.output+=randInt(2,8);
+      l.tact+=rand(-0.3,0.3);
+      if(l.tact<8)l.tact=8;
+    }
+  });
+  renderProdLines();
+}
+
+/* ===== Agent Thinking Chain (Typewriter) ===== */
+var thinkingTexts={
+  'agent-thinking-1':'监测到产线L03节拍下降15% → 分析原因：刀具磨损加剧 → 查询维护记录：上次换刀已超寿命周期 → 建议安排预防性维护 → 已自动生成维护工单MO-0817-003',
+  'agent-thinking-2':'采集振动数据（采样率10kHz） → FFT频谱分析 → 检测到轴承特征频率异常（BPFO=97.3Hz） → 对比历史故障库 → 匹配度87%：轴承外圈磨损 → 预测7天内故障概率65% → 建议安排维护',
+  'agent-thinking-3':'检测到尺寸超差批次增加 → 关联分析：同一刀具CNC-A01加工 → 刀具补偿值偏移0.03mm → 建议调整CNC补偿参数 → 预计影响后续50件 → 已通知工艺工程师审核',
+  'agent-thinking-4':'检测到3号车间人员未佩戴安全帽 → 识别人员ID：工号#2031 → 发送实时提醒通知 → 记录违规事件 → 通知安全主管王主任 → 生成整改工单SO-0817-005'
+};
+
+function startTypewriter(elId,text){
+  var el=$(elId);
+  if(!el)return;
+  el.innerHTML='';
+  var idx=0;
+  var steps=text.split('→');
+  var stepIdx=0,charIdx=0;
+  function typeNext(){
+    if(stepIdx>=steps.length){
+      el.innerHTML+='<span class="typing-cursor"></span>';
+      setTimeout(function(){
+        el.innerHTML='';
+        stepIdx=0;charIdx=0;
+        typeNext();
+      },4000);
+      return;
+    }
+    var step=steps[stepIdx].trim();
+    if(charIdx===0){
+      el.innerHTML+='<span class="step" id="tw-'+stepIdx+'"></span>';
+      if(stepIdx>0)el.innerHTML+='<span class="arrow">→</span>';
+    }
+    var stepEl=document.getElementById('tw-'+stepIdx);
+    if(!stepEl){
+      stepIdx++;charIdx=0;
+      setTimeout(typeNext,50);
+      return;
+    }
+    if(charIdx<step.length){
+      stepEl.textContent=step.substring(0,charIdx+1);
+      charIdx++;
+      setTimeout(typeNext,40);
+    }else{
+      stepIdx++;charIdx=0;
+      setTimeout(typeNext,300);
+    }
+  }
+  typeNext();
+}
+
+/* ===== Schedule List ===== */
+function renderScheduleList(){
+  var statusMap={'done':['已完成','badge-success'],'run':['进行中','badge-secondary'],'pending':['待排产','badge-warning']};
+  var html='';
+  mockData.schedule.forEach(function(s){
+    var st=statusMap[s.status];
+    html+='<li><span>'+s.item+'</span><span class="badge '+st[1]+'">'+st[0]+'</span></li>';
+  });
+  $('schedule-list').innerHTML=html;
+}
+
+/* ===== Alerts ===== */
+function renderAlerts(){
+  var html='';
+  mockData.alerts.forEach(function(a){
+    html+='<div class="alert-item alert-'+a.level+'">'+
+      '<span class="alert-type">'+a.type+'</span>'+
+      '<span class="alert-msg">'+a.msg+'</span>'+
+      '<span class="alert-time">'+a.time+'</span>'+
+    '</div>';
+  });
+  $('alert-list').innerHTML=html;
+}
+
+/* ===== Trend Chart (Canvas) ===== */
+function renderTrendChart(){
+  var canvas=$('trend-chart');
+  if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  var w=canvas.width,h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  // generate data
+  var hours=24;
+  var target=[],actual=[];
+  for(var i=0;i<hours;i++){
+    target.push(200);
+    actual.push(180+Math.sin(i*0.5)*30+rand(-15,15)+i*2);
+  }
+  // grid
+  ctx.strokeStyle='rgba(48,63,90,0.3)';
+  ctx.lineWidth=1;
+  for(i=0;i<=4;i++){
+    var y=20+i*((h-40)/4);
+    ctx.beginPath();ctx.moveTo(40,y);ctx.lineTo(w-10,y);ctx.stroke();
+  }
+  // y labels
+  ctx.fillStyle='#8b949e';ctx.font='10px sans-serif';ctx.textAlign='right';
+  for(i=0;i<=4;i++){
+    y=20+i*((h-40)/4);
+    ctx.fillText((250-i*50)+'',35,y+3);
+  }
+  // x labels
+  ctx.textAlign='center';
+  for(i=0;i<hours;i+=3){
+    var x=40+i*((w-50)/(hours-1));
+    ctx.fillText(i+':00',x,h-5);
+  }
+  // target line
+  ctx.strokeStyle='rgba(210,153,34,0.5)';
+  ctx.lineWidth=1.5;
+  ctx.setLineDash([5,3]);
+  ctx.beginPath();
+  for(i=0;i<hours;i++){
+    x=40+i*((w-50)/(hours-1));
+    y=h-20-(target[i]/250)*(h-40);
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // actual line
+  var grad=ctx.createLinearGradient(0,20,0,h-20);
+  grad.addColorStop(0,'rgba(255,107,53,0.3)');
+  grad.addColorStop(1,'rgba(255,107,53,0)');
+  ctx.fillStyle=grad;
+  ctx.beginPath();
+  for(i=0;i<hours;i++){
+    x=40+i*((w-50)/(hours-1));
+    y=h-20-(actual[i]/250)*(h-40);
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.lineTo(40+(hours-1)*((w-50)/(hours-1)),h-20);
+  ctx.lineTo(40,h-20);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle='#FF6B35';
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  for(i=0;i<hours;i++){
+    x=40+i*((w-50)/(hours-1));
+    y=h-20-(actual[i]/250)*(h-40);
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  // legend
+  ctx.fillStyle='#FF6B35';ctx.font='11px sans-serif';ctx.textAlign='left';
+  ctx.fillText('● 实际产量',w-180,30);
+  ctx.fillStyle='rgba(210,153,34,0.8)';
+  ctx.fillText('--- 目标产量',w-100,30);
+}
+
+/* ===== Equipment List ===== */
+function renderEquipList(){
+  var html='';
+  mockData.equipments.forEach(function(e,i){
+    var healthColor=e.health>80?'#3FB950':e.health>60?'#D29922':'#F85149';
+    var statusText={'run':'运行','idle':'待机','maint':'维护'}[e.status]||'--';
+    html+='<div class="equip-item'+(i===State.selectedEquip?' selected':'')+'" onclick="selectEquip('+i+')">'+
+      '<div class="equip-ring">'+
+        '<svg width="42" height="42">'+
+          '<circle cx="21" cy="21" r="17" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/>'+
+          '<circle cx="21" cy="21" r="17" fill="none" stroke="'+healthColor+'" stroke-width="4" stroke-dasharray="'+(e.health/100*106.8)+' 106.8" stroke-linecap="round"/>'+
+        '</svg>'+
+        '<span class="ring-text" style="color:'+healthColor+'">'+e.health+'</span>'+
+      '</div>'+
+      '<div class="equip-info">'+
+        '<div class="equip-name">'+e.name+'</div>'+
+        '<div class="equip-meta"><span>'+statusText+'</span><span>上次维护: '+e.lastMaint+'</span></div>'+
+      '</div>'+
+    '</div>';
+  });
+  $('equip-list').innerHTML=html;
+}
+
+function selectEquip(idx){
+  State.selectedEquip=idx;
+  renderEquipList();
+  var e=mockData.equipments[idx];
+  $('detail-equip-name').textContent=e.name;
+  renderRadarChart();
+  renderVibrationChart();
+}
+
+/* ===== Radar Chart ===== */
+function renderRadarChart(){
+  var canvas=$('radar-chart');
+  if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  var w=canvas.width,h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  var cx=w/2,cy=h/2;
+  var radius=Math.min(w,h)/2-40;
+  var e=mockData.equipments[State.selectedEquip];
+  var dims=[
+    {label:'振动',val:Math.max(0,100-e.vib*10)},
+    {label:'温度',val:Math.max(0,100-e.temp*0.8)},
+    {label:'噪音',val:Math.max(0,100-e.noise*0.8)},
+    {label:'能耗',val:e.power},
+    {label:'效率',val:e.eff},
+    {label:'精度',val:e.precision}
+  ];
+  // grid circles
+  ctx.strokeStyle='rgba(48,63,90,0.3)';
+  for(var r=1;r<=4;r++){
+    ctx.beginPath();
+    for(var i=0;i<6;i++){
+      var ang=-Math.PI/2+i*(Math.PI/3);
+      var x=cx+Math.cos(ang)*radius*r/4;
+      var y=cy+Math.sin(ang)*radius*r/4;
+      if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+  }
+  // axes
+  ctx.strokeStyle='rgba(48,63,90,0.2)';
+  for(i=0;i<6;i++){
+    ang=-Math.PI/2+i*(Math.PI/3);
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+Math.cos(ang)*radius,cy+Math.sin(ang)*radius);
+    ctx.stroke();
+  }
+  // data polygon
+  ctx.fillStyle='rgba(255,107,53,0.15)';
+  ctx.strokeStyle='#FF6B35';
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  for(i=0;i<6;i++){
+    ang=-Math.PI/2+i*(Math.PI/3);
+    var r=radius*dims[i].val/100;
+    x=cx+Math.cos(ang)*r;
+    y=cy+Math.sin(ang)*r;
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // points
+  ctx.fillStyle='#FF6B35';
+  for(i=0;i<6;i++){
+    ang=-Math.PI/2+i*(Math.PI/3);
+    r=radius*dims[i].val/100;
+    x=cx+Math.cos(ang)*r;
+    y=cy+Math.sin(ang)*r;
+    ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();
+  }
+  // labels
+  ctx.fillStyle='#e6edf3';ctx.font='12px sans-serif';ctx.textAlign='center';
+  for(i=0;i<6;i++){
+    ang=-Math.PI/2+i*(Math.PI/3);
+    x=cx+Math.cos(ang)*(radius+18);
+    y=cy+Math.sin(ang)*(radius+18)+4;
+    ctx.fillText(dims[i].label,x,y);
+    ctx.fillStyle='#8b949e';ctx.font='10px sans-serif';
+    ctx.fillText(dims[i].val.toFixed(0),x,y+13);
+    ctx.fillStyle='#e6edf3';ctx.font='12px sans-serif';
+  }
+}
+
+/* ===== Vibration Chart ===== */
+function renderVibrationChart(){
+  var canvas=$('vibration-chart');
+  if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  var w=canvas.width,h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  // grid
+  ctx.strokeStyle='rgba(48,63,90,0.2)';ctx.lineWidth=1;
+  for(var i=0;i<=4;i++){
+    var y=i*h/4;
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
+  }
+  // waveform
+  ctx.strokeStyle='#00E5FF';ctx.lineWidth=1.5;
+  ctx.beginPath();
+  var e=mockData.equipments[State.selectedEquip];
+  var amp=e.vib/10;
+  for(i=0;i<w;i++){
+    var val=Math.sin(i*0.08)*2*Math.sin(i*0.02)*Math.exp(-Math.abs((i-w*0.6)/40))*3*amp+Math.sin(i*0.15)*0.5+rand(-0.3,0.3);
+    var y=h/2-val*12;
+    if(i===0)ctx.moveTo(i,y);else ctx.lineTo(i,y);
+  }
+  ctx.stroke();
+  // anomaly peak
+  var peakX=w*0.6;
+  ctx.fillStyle='rgba(248,81,73,0.1)';
+  ctx.fillRect(peakX-15,0,30,h);
+  ctx.fillStyle='#F85149';ctx.font='10px sans-serif';ctx.textAlign='center';
+  ctx.fillText('⚠ 异常峰值',peakX,15);
+  // threshold line
+  ctx.strokeStyle='rgba(248,81,73,0.4)';ctx.setLineDash([4,3]);
+  ctx.beginPath();ctx.moveTo(0,h*0.2);ctx.lineTo(w,h*0.2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,h*0.8);ctx.lineTo(w,h*0.8);ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+/* ===== Quality Defect Bars ===== */
+function renderDefectBars(){
+  var html='';
+  var max=Math.max.apply(null,mockData.defects.map(function(d){return d.count}));
+  mockData.defects.forEach(function(d){
+    var h=d.count/max*100;
+    html+='<div class="defect-bar-col">'+
+      '<div class="defect-bar" style="height:'+h+'%"><span class="defect-bar-val">'+d.count+'</span></div>'+
+      '<div class="defect-bar-label">'+d.type+'</div>'+
+    '</div>';
+  });
+  $('defect-bars').innerHTML=html;
+}
+
+/* ===== QC Stream ===== */
+var qcProducts=['⚙️','🔩','🔧','💿','🖥️','📦'];
+var qcDefects=['尺寸超差','表面划痕','装配偏差','功能异常','材料裂纹'];
+
+function generateQCResult(){
+  var isNG=Math.random()<0.15;
+  var product=qcProducts[randInt(0,qcProducts.length-1)];
+  var defect=isNG?qcDefects[randInt(0,qcDefects.length-1)]:'';
+  var confidence=(isNG?rand(88,99):rand(96,99.9)).toFixed(1);
+  return {product:product,isNG:isNG,defect:defect,confidence:confidence,time:new Date()};
+}
+
+function addQCResult(){
+  var r=generateQCResult();
+  var html='<div class="qc-card'+(r.isNG?' ng':'')+'">'+
+    '<div class="qc-img">'+r.product+'</div>'+
+    '<div class="qc-info">'+
+      '<div class="qc-result '+(r.isNG?'qc-ng':'qc-ok')+'">'+(r.isNG?'NG - '+r.defect:'OK')+'</div>'+
+      '<div class="qc-conf">置信度 '+r.confidence+'% · '+pad(r.time.getHours())+':'+pad(r.time.getMinutes())+':'+pad(r.time.getSeconds())+'</div>'+
+    '</div>'+
+  '</div>';
+  var stream=$('qc-stream');
+  if(!stream)return;
+  stream.insertAdjacentHTML('afterbegin',html);
+  while(stream.children.length>10)stream.removeChild(stream.lastChild);
+}
+
+/* ===== SPC Chart ===== */
+var spcPoints=[];
+function initSPCData(){
+  spcPoints=[];
+  for(var i=0;i<15;i++){
+    spcPoints.push(rand(24,26));
+  }
+}
+function renderSPCChart(){
+  var canvas=$('spc-chart');
+  if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  var w=canvas.width,h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  var cl=25,ucl=27,lcl=23;
+  var padL=35,padR=10,padT=15,padB=25;
+  var chartW=w-padL-padR,chartH=h-padT-padB;
+  function yVal(v){return padT+((ucl-v)/(ucl-lcl))*chartH}
+  // grid
+  ctx.strokeStyle='rgba(48,63,90,0.2)';ctx.lineWidth=1;
+  for(var i=0;i<=4;i++){
+    var y=padT+i*chartH/4;
+    ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR,y);ctx.stroke();
+  }
+  // UCL/LCL/CL
+  ctx.strokeStyle='rgba(248,81,73,0.5)';ctx.setLineDash([5,3]);
+  ctx.beginPath();ctx.moveTo(padL,yVal(ucl));ctx.lineTo(w-padR,yVal(ucl));ctx.stroke();
+  ctx.beginPath();ctx.moveTo(padL,yVal(lcl));ctx.lineTo(w-padR,yVal(lcl));ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle='rgba(0,229,255,0.4)';
+  ctx.beginPath();ctx.moveTo(padL,yVal(cl));ctx.lineTo(w-padR,yVal(cl));ctx.stroke();
+  // labels
+  ctx.fillStyle='#8b949e';ctx.font='10px sans-serif';ctx.textAlign='right';
+  ctx.fillText('UCL=27',padL-3,yVal(ucl)+3);
+  ctx.fillText('CL=25',padL-3,yVal(cl)+3);
+  ctx.fillText('LCL=23',padL-3,yVal(lcl)+3);
+  // data
+  ctx.textAlign='center';
+  for(i=0;i<spcPoints.length;i++){
+    var x=padL+i*(chartW/(spcPoints.length-1));
+    var y=yVal(spcPoints[i]);
+    var outOfControl=spcPoints[i]>ucl||spcPoints[i]<lcl;
+    if(outOfControl){
+      ctx.fillStyle='rgba(248,81,73,0.3)';
+      ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#F85149';
+      ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();
+      // blink effect
+      if(Math.floor(Date.now()/500)%2===0){
+        ctx.strokeStyle='#F85149';ctx.lineWidth=2;
+        ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);ctx.stroke();
+      }
+    }else{
+      ctx.fillStyle='#00E5FF';
+      ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();
+    }
+    // line
+    if(i>0){
+      var prevX=padL+(i-1)*(chartW/(spcPoints.length-1));
+      var prevY=yVal(spcPoints[i-1]);
+      ctx.strokeStyle='rgba(0,229,255,0.4)';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(prevX,prevY);ctx.lineTo(x,y);ctx.stroke();
+    }
+  }
+}
+
+function updateSPC(){
+  if(spcPoints.length>=20)spcPoints.shift();
+  var val=rand(24,26.5);
+  if(Math.random()<0.1)val=rand(27.1,27.5);
+  spcPoints.push(val);
+  renderSPCChart();
+}
+
+/* ===== Pareto Chart ===== */
+function renderParetoChart(){
+  var html='';
+  var max=Math.max.apply(null,mockData.defects.map(function(d){return d.count}));
+  var cum=0;
+  var total=mockData.defects.reduce(function(s,d){return s+d.count},0);
+  mockData.defects.forEach(function(d){
+    cum+=d.count;
+    var h=d.count/max*100;
+    var cumPct=(cum/total*100).toFixed(0);
+    html+='<div class="pareto-bar">'+
+      '<div class="pareto-bar-fill" style="height:'+h+'%"><span class="pareto-bar-val">'+d.count+'</span></div>'+
+      '<div class="pareto-bar-label">'+d.type+'<br>('+cumPct+'%)</div>'+
+    '</div>';
+  });
+  $('pareto-chart').innerHTML=html;
+}
+
+function renderParetoCumLine(){
+  var canvas=$('pareto-cumline');
+  if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  var w=canvas.width,h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  var total=mockData.defects.reduce(function(s,d){return s+d.count},0);
+  var cum=0,points=[];
+  mockData.defects.forEach(function(d,i){
+    cum+=d.count;
+    points.push(cum/total*100);
+  });
+  ctx.strokeStyle='#00E5FF';ctx.lineWidth=2;
+  ctx.beginPath();
+  var pad=20;
+  for(var i=0;i<points.length;i++){
+    var x=pad+i*((w-pad*2)/(points.length-1));
+    var y=h-(points[i]/100)*(h-10)-5;
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  // 80% line
+  ctx.strokeStyle='rgba(248,81,73,0.4)';ctx.setLineDash([4,3]);
+  ctx.beginPath();ctx.moveTo(pad,h-(80/100)*(h-10)-5);ctx.lineTo(w-pad,h-(80/100)*(h-10)-5);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#8b949e';ctx.font='9px sans-serif';ctx.textAlign='left';
+  ctx.fillText('80%',2,h-(80/100)*(h-10)-5);
+}
+
+/* ===== Fishbone Diagram ===== */
+function renderFishbone(){
+  var branches=[
+    {title:'人',items:['操作技能不足','疲劳作业','未按SOP执行'],top:true,pos:12},
+    {title:'机',items:['刀具磨损','设备精度下降','参数设置偏差'],top:true,pos:38},
+    {title:'料',items:['材料批次差异','来料尺寸波动'],top:false,pos:12},
+    {title:'法',items:['工艺路线不合理','缺少首件确认'],top:false,pos:38},
+    {title:'环',items:['温度湿度波动','车间粉尘超标'],top:true,pos:62},
+    {title:'测',items:['量具未校准','检测基准偏移'],top:false,pos:62}
+  ];
+  var html='<div class="fb-spine"></div><div class="fb-head">尺寸<br>超差</div>';
+  branches.forEach(function(b){
+    var style='left:'+b.pos+'%;'+(b.top?'top:8px':'bottom:8px');
+    html+='<div class="fb-branch '+(b.top?'fb-top':'fb-bottom')+'" style="'+style+'">'+
+      '<div class="fb-branch-title">'+b.title+'</div>'+
+      b.items.map(function(it){return '<div class="fb-branch-item">• '+it+'</div>'}).join('')+
+    '</div>';
+  });
+  $('fishbone').innerHTML=html;
+}
+
+/* ===== Safety Gauge ===== */
+function animateGauge(){
+  var angle=rand(-90,45);
+  var riskLevel=randInt(1,3);
+  var labels=['低风险','中等风险','高风险','极高风险'];
+  var colors=['var(--success)','var(--warning)','var(--primary)','var(--danger)'];
+  $('gauge-needle').style.transform='rotate('+(-45+randInt(10,60))+'deg)';
+  setTimeout(function(){
+    var el=$('gauge-label');
+    if(el){
+      el.textContent=labels[riskLevel];
+      el.style.color=colors[riskLevel];
+    }
+  },500);
+}
+
+/* ===== Workshop Grid ===== */
+function renderWorkshopGrid(){
+  var html='';
+  mockData.workshopZones.forEach(function(z){
+    html+='<div class="zone zone-'+z.status+'">'+
+      '<div class="zone-id">'+z.id+'</div>'+
+      '<div class="zone-status">'+z.label+'</div>'+
+    '</div>';
+  });
+  $('workshop-grid').innerHTML=html;
+}
+
+/* ===== Safety Events ===== */
+function renderSafetyEvents(){
+  var html='';
+  mockData.safetyEvents.forEach(function(e){
+    var statusClass=e.status==='处理中'?'badge-warning':'badge-success';
+    html+='<div class="event-item">'+
+      '<span class="event-time">'+e.time+'</span>'+
+      '<span class="event-area">'+e.area+'</span>'+
+      '<span class="event-type">'+e.type+'</span>'+
+      '<span class="badge '+statusClass+'">'+e.status+'</span>'+
+    '</div>';
+  });
+  $('event-list').innerHTML=html;
+}
+
+/* ===== Initialize Everything ===== */
+function init(){
+  // KPIs
+  initKPIs();
+  // Production lines
+  renderProdLines();
+  // Schedule
+  renderScheduleList();
+  // Alerts
+  renderAlerts();
+  // Trend chart
+  renderTrendChart();
+  // Equipment
+  renderEquipList();
+  // Quality
+  renderDefectBars();
+  renderParetoChart();
+  renderParetoCumLine();
+  renderFishbone();
+  initSPCData();
+  renderSPCChart();
+  // Safety
+  renderWorkshopGrid();
+  renderSafetyEvents();
+  // Start typewriters
+  startTypewriter('agent-thinking-1',thinkingTexts['agent-thinking-1']);
+  startTypewriter('agent-thinking-2',thinkingTexts['agent-thinking-2']);
+  startTypewriter('agent-thinking-3',thinkingTexts['agent-thinking-3']);
+  startTypewriter('agent-thinking-4',thinkingTexts['agent-thinking-4']);
+  // Initial QC results
+  for(var i=0;i<5;i++)addQCResult();
+  // Gauge
+  animateGauge();
+}
+
+/* ===== Timers ===== */
+setInterval(updateProdLines,2000);
+setInterval(addQCResult,2000);
+setInterval(updateSPC,5000);
+setInterval(function(){
+  if(State.currentPanel==='quality')renderSPCChart();
+},500);
+
+/* ===== Start ===== */
+init();
+</script>
+
+
+
+<!-- AIGC: {"Label":"value1","ContentProducer":"001191110000802100433B11010001191110000802100433B11010","ProduceID":"42079fae-b453-41ca-a31c-ac4eb389af9b","ReservedCode1":"72dafc97cd38b92e5f3d5cdfd0dfbbe6","ContentPropagator":"001191110000802100433B11010001191110000802100433B11010","PropagateID":"4df6fd72-f7c8-4f74-806d-317bb366fa71","ReservedCode2":"2734827274df537123a472bf4de01eb5"} -->
+</body>
+</html>
