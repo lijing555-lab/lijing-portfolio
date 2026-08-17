@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>昌平区时空智能底座演示系统</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:14px}
+body{font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif;background:#0a1628;color:#e2e8f0;overflow:hidden;height:100vh}
+.app{display:flex;height:100vh}
+
+/* ===== Sidebar ===== */
+.sidebar{width:220px;min-width:220px;background:linear-gradient(180deg,#06101f 0%,#0b1a30 100%);color:#fff;display:flex;flex-direction:column;border-right:1px solid rgba(59,130,246,.15);z-index:10}
+.sidebar-logo{padding:20px 16px;border-bottom:1px solid rgba(59,130,246,.12);display:flex;align-items:center;gap:10px}
+.sidebar-logo .logo-icon{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;letter-spacing:-0.5px}
+.sidebar-logo .logo-text{font-size:14px;font-weight:600;line-height:1.3}
+.sidebar-logo .logo-sub{font-size:10px;opacity:.45;margin-top:2px}
+.nav-list{flex:1;padding:10px 0;overflow-y:auto}
+.nav-group-title{font-size:10px;color:rgba(59,130,246,.5);padding:14px 18px 6px;letter-spacing:2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;cursor:pointer;transition:all .2s;border-left:3px solid transparent;font-size:13px;color:rgba(148,163,184,.7);position:relative}
+.nav-item:hover{background:rgba(59,130,246,.08);color:rgba(148,163,184,.95)}
+.nav-item.active{background:rgba(59,130,246,.15);border-left-color:#3b82f6;color:#fff}
+.nav-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.sidebar-footer{padding:12px 16px;border-top:1px solid rgba(59,130,246,.1);font-size:10px;color:rgba(148,163,184,.25);text-align:center}
+
+/* ===== Main ===== */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#0a1628}
+.topbar{height:50px;background:rgba(15,23,42,.6);border-bottom:1px solid rgba(59,130,246,.12);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;backdrop-filter:blur(8px)}
+.topbar-title{font-size:15px;font-weight:600;color:#e2e8f0;display:flex;align-items:center;gap:8px}
+.topbar-title::before{content:'';width:3px;height:16px;background:#3b82f6;border-radius:2px}
+.topbar-right{display:flex;align-items:center;gap:14px;font-size:12px;color:#64748b}
+.topbar-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,.5);animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+
+.content{flex:1;overflow-y:auto;padding:18px 22px 24px}
+.page{display:none}
+.page.active{display:block}
+
+/* ===== KPI ===== */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.kpi-card{background:rgba(15,23,42,.7);border-radius:10px;padding:16px 18px;border:1px solid rgba(59,130,246,.15);position:relative;overflow:hidden;transition:all .2s}
+.kpi-card:hover{border-color:rgba(59,130,246,.35);transform:translateY(-1px)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#2563eb,#60a5fa)}
+.kpi-label{font-size:11px;color:#64748b;margin-bottom:6px}
+.kpi-value{font-size:24px;font-weight:700;color:#60a5fa;font-variant-numeric:tabular-nums}
+.kpi-value .unit{font-size:12px;font-weight:500;color:#64748b;margin-left:2px}
+.kpi-change{font-size:10px;margin-top:4px;color:#22c55e}
+
+/* ===== Architecture ===== */
+.arch-section{background:rgba(15,23,42,.7);border-radius:10px;padding:20px;border:1px solid rgba(59,130,246,.15);margin-bottom:18px}
+.arch-title{font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.arch-title::before{content:'';width:3px;height:14px;background:#3b82f6;border-radius:2px}
+.arch-container{position:relative;width:100%;max-width:720px;margin:0 auto;height:300px}
+.arch-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:140px;height:140px;border-radius:50%;background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 0 50px rgba(37,99,235,.4);z-index:2;text-align:center}
+.arch-center .main-label{font-size:14px;font-weight:700;line-height:1.4}
+.arch-center .sub-label{font-size:10px;opacity:.75;margin-top:3px}
+.arch-ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:260px;height:260px;border:1.5px dashed rgba(59,130,246,.25);border-radius:50%;pointer-events:none}
+.arch-node{position:absolute;width:130px;height:70px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;z-index:2;text-align:center;cursor:pointer;transition:all .2s;border:1px solid rgba(59,130,246,.3)}
+.arch-node:hover{transform:scale(1.06);box-shadow:0 0 20px rgba(59,130,246,.3)}
+.arch-node.traffic{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:#fbbf24;top:8px;left:50%;transform:translateX(-50%)}
+.arch-node.emergency{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35);color:#f87171;left:15px;bottom:25px}
+.arch-node.water{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.35);color:#60a5fa;right:15px;bottom:25px}
+.arch-node .node-icon{font-size:20px}
+.arch-node .node-label{font-size:11px;font-weight:600}
+.arch-line{stroke:rgba(59,130,246,.25);stroke-width:1.5;stroke-dasharray:6 4;fill:none}
+.arch-n-label{position:absolute;font-size:10px;color:#64748b;background:rgba(15,23,42,.8);padding:2px 8px;border-radius:4px;white-space:nowrap;border:1px solid rgba(59,130,246,.1)}
+
+/* ===== Agent Entry ===== */
+.agent-entry-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.agent-entry{background:rgba(15,23,42,.7);border-radius:10px;padding:18px;border:1px solid rgba(59,130,246,.15);cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:14px}
+.agent-entry:hover{border-color:rgba(59,130,246,.4);transform:translateY(-2px);box-shadow:0 4px 16px rgba(59,130,246,.15)}
+.agent-entry .entry-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:1px solid rgba(59,130,246,.2)}
+.agent-entry.traffic-entry .entry-icon{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3)}
+.agent-entry.emergency-entry .entry-icon{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3)}
+.agent-entry.water-entry .entry-icon{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.3)}
+.agent-entry .entry-info{flex:1}
+.agent-entry .entry-title{font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:3px}
+.agent-entry .entry-desc{font-size:10px;color:#64748b;line-height:1.5}
+.agent-entry .entry-arrow{color:#475569;font-size:16px;transition:transform .2s}
+.agent-entry:hover .entry-arrow{transform:translateX(4px);color:#3b82f6}
+
+/* ===== Sub-page Layout ===== */
+.sub-layout{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr;gap:14px;height:calc(100vh - 50px - 36px)}
+.sub-layout .top-map{grid-column:1/-1;grid-row:1;min-height:180px}
+.sub-layout .left-panel{grid-column:1;grid-row:2;overflow-y:auto}
+.sub-layout .right-panel{grid-column:2;grid-row:2;overflow-y:auto}
+
+/* ===== Panel ===== */
+.panel{background:rgba(15,23,42,.7);border-radius:10px;border:1px solid rgba(59,130,246,.15);overflow:hidden;margin-bottom:14px}
+.panel-head{padding:10px 14px;border-bottom:1px solid rgba(59,130,246,.1);display:flex;align-items:center;justify-content:space-between}
+.panel-head .panel-title{font-size:12px;font-weight:600;color:#e2e8f0;display:flex;align-items:center;gap:6px}
+.panel-head .panel-title::before{content:'';width:2px;height:11px;background:#3b82f6;border-radius:1px}
+.panel-head .badge{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:500}
+.badge-live{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.25)}
+.badge-ai{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.25)}
+.badge-warn{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.25)}
+.panel-body{padding:12px 14px}
+
+/* ===== Heatmap ===== */
+.heatmap-wrapper{background:rgba(15,23,42,.7);border-radius:10px;border:1px solid rgba(59,130,246,.15);overflow:hidden}
+.heatmap-canvas{width:100%;height:180px;display:block}
+
+/* ===== Metric ===== */
+.metric-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(59,130,246,.08)}
+.metric-item:last-child{border-bottom:none}
+.metric-label{font-size:11px;color:#64748b}
+.metric-value{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.metric-value.green{color:#22c55e}
+.metric-value.yellow{color:#fbbf24}
+.metric-value.red{color:#ef4444}
+.metric-value.blue{color:#60a5fa}
+
+/* ===== AI Transparency Panel ===== */
+.ai-panel{background:rgba(15,23,42,.9);border-radius:10px;border:1px solid rgba(59,130,246,.2);margin-bottom:14px;overflow:hidden}
+.ai-panel-head{padding:10px 14px;border-bottom:1px solid rgba(59,130,246,.12);display:flex;align-items:center;gap:8px}
+.ai-panel-head .ai-icon{width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg,#2563eb,#1d4ed8);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.ai-panel-head .ai-title{font-size:12px;font-weight:600;color:#60a5fa}
+.ai-output{padding:12px 14px;font-size:11.5px;line-height:1.8;color:#cbd5e1;max-height:200px;overflow-y:auto}
+
+/* Transparency Blocks */
+.t-block{margin-bottom:10px;padding:10px 12px;border-radius:8px;border-left:3px solid}
+.t-block:last-child{margin-bottom:0}
+.t-source{background:rgba(59,130,246,.08);border-left-color:#3b82f6}
+.t-think{background:rgba(139,92,246,.08);border-left-color:#8b5cf6}
+.t-action{background:rgba(34,197,94,.08);border-left-color:#22c55e}
+.t-block-label{font-size:10px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.t-source .t-block-label{color:#60a5fa}
+.t-think .t-block-label{color:#a78bfa}
+.t-action .t-block-label{color:#4ade80}
+.t-block-content{font-size:11px;color:#94a3b8;line-height:1.7}
+.t-block-content b{color:#cbd5e1;font-weight:500}
+
+/* Chat */
+.chat-input-row{display:flex;gap:6px;padding:8px 14px 12px;border-top:1px solid rgba(59,130,246,.1)}
+.chat-input{flex:1;background:rgba(15,23,42,.8);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:7px 10px;font-size:11px;outline:none;color:#e2e8f0;transition:border-color .2s}
+.chat-input:focus{border-color:#3b82f6}
+.chat-input::placeholder{color:#475569}
+.chat-send{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:11px;cursor:pointer;transition:opacity .2s;white-space:nowrap}
+.chat-send:hover{opacity:.9}
+
+/* ===== Warning ===== */
+.warning-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid rgba(59,130,246,.08)}
+.warning-item:last-child{border-bottom:none}
+.warn-dot{width:8px;height:8px;border-radius:50%;margin-top:3px;flex-shrink:0;animation:blink-warn 1.2s infinite}
+.warn-dot.red{background:#ef4444;box-shadow:0 0 6px rgba(239,68,68,.5)}
+.warn-dot.yellow{background:#f59e0b;box-shadow:0 0 6px rgba(245,158,11,.5)}
+@keyframes blink-warn{0%,100%{opacity:1}50%{opacity:.3}}
+.warn-info .warn-title{font-size:11px;font-weight:600;color:#e2e8f0;margin-bottom:1px}
+.warn-info .warn-desc{font-size:10px;color:#64748b}
+.warn-info .warn-time{font-size:9px;color:#475569;margin-top:1px}
+
+/* ===== Resource Grid ===== */
+.resource-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.resource-card{background:rgba(15,23,42,.8);border-radius:8px;padding:10px;text-align:center;border:1px solid rgba(59,130,246,.12)}
+.resource-card .r-val{font-size:16px;font-weight:700;color:#60a5fa}
+.resource-card .r-label{font-size:9px;color:#64748b;margin-top:2px}
+
+/* ===== Emergency Map ===== */
+.emergency-map{width:100%;height:180px;position:relative;background:linear-gradient(135deg,#0c1929,#0f1d32);border-radius:8px;overflow:hidden;border:1px solid rgba(59,130,246,.15)}
+.risk-point{position:absolute;width:10px;height:10px;border-radius:50%;background:#ef4444;animation:risk-pulse 1.5s infinite}
+@keyframes risk-pulse{0%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}70%{box-shadow:0 0 0 8px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+.risk-label{position:absolute;font-size:9px;color:#f87171;background:rgba(15,23,42,.85);padding:1px 4px;border-radius:3px;white-space:nowrap}
+
+/* ===== Water SVG ===== */
+.water-svg-wrap{width:100%;height:180px;background:rgba(15,23,42,.5);border-radius:8px;overflow:hidden;border:1px solid rgba(59,130,246,.15)}
+.station-dot{fill:#3b82f6;animation:blink-warn 1.5s infinite}
+
+/* ===== Pipe Status ===== */
+.pipe-row{display:flex;gap:12px;padding:8px 0}
+.pipe-item{flex:1;text-align:center;padding:10px;border-radius:8px}
+.pipe-item.normal{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2)}
+.pipe-item.warning{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2)}
+.pipe-item.alert{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2)}
+.pipe-item .pipe-count{font-size:18px;font-weight:700}
+.pipe-item.normal .pipe-count{color:#22c55e}
+.pipe-item.warning .pipe-count{color:#fbbf24}
+.pipe-item.alert .pipe-count{color:#ef4444}
+.pipe-item .pipe-label{font-size:10px;color:#64748b;margin-top:3px}
+
+/* ===== Auth Badge ===== */
+.auth-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;padding:2px 6px;border-radius:4px;font-weight:500}
+.auth-auto{background:rgba(34,197,94,.12);color:#4ade80;border:1px solid rgba(34,197,94,.25)}
+.auth-manual{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.25)}
+.auth-pending{background:rgba(107,114,128,.12);color:#9ca3af;border:1px solid rgba(107,114,128,.25)}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(59,130,246,.2);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:rgba(59,130,246,.35)}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">CIM</div>
+      <div><div class="logo-text">时空智能底座</div><div class="logo-sub">Changping District</div></div>
+    </div>
+    <nav class="nav-list">
+      <div class="nav-group-title">系统导航</div>
+      <div class="nav-item active" data-page="overview" onclick="switchPage('overview')"><span class="nav-icon">◉</span><span>总览</span></div>
+      <div class="nav-group-title">时空智能体</div>
+      <div class="nav-item" data-page="traffic" onclick="switchPage('traffic')"><span class="nav-icon">⬡</span><span>交通智能体</span></div>
+      <div class="nav-item" data-page="emergency" onclick="switchPage('emergency')"><span class="nav-icon">◈</span><span>应急智能体</span></div>
+      <div class="nav-item" data-page="water" onclick="switchPage('water')"><span class="nav-icon">◆</span><span>水务智能体</span></div>
+    </nav>
+    <div class="sidebar-footer">北京市昌平区 · 时空智能底座 v1.0</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-title" id="topTitle">昌平区时空智能底座</div>
+      <div class="topbar-right"><div class="topbar-dot"></div><span>系统运行正常</span><span id="topTime"></span></div>
+    </header>
+    <div class="content">
+
+      <!-- ========== Page 1: Overview ========== -->
+      <div class="page active" id="page-overview">
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-label">城市三维建模覆盖率</div><div class="kpi-value">95<span class="unit">%</span></div><div class="kpi-change">▲ 较上季度提升3.2%</div></div>
+          <div class="kpi-card"><div class="kpi-label">时空数据融合时效</div><div class="kpi-value">2.8<span class="unit">s</span></div><div class="kpi-change">▲ 优于3s目标</div></div>
+          <div class="kpi-card"><div class="kpi-label">智能体决策响应</div><div class="kpi-value">28<span class="unit">s</span></div><div class="kpi-change">▲ 优于30s目标</div></div>
+          <div class="kpi-card"><div class="kpi-label">协同效率提升</div><div class="kpi-value">62<span class="unit">%+</span></div><div class="kpi-change">▲ 较传统模式显著提升</div></div>
+        </div>
+        <div class="arch-section">
+          <div class="arch-title">1+3+N 体系架构</div>
+          <div class="arch-container">
+            <div class="arch-ring"></div>
+            <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" viewBox="0 0 720 300">
+              <line class="arch-line" x1="360" y1="80" x2="360" y2="115"/>
+              <line class="arch-line" x1="190" y1="220" x2="285" y2="185"/>
+              <line class="arch-line" x1="530" y1="220" x2="435" y2="185"/>
+            </svg>
+            <div class="arch-center"><div class="main-label">时空智能<br>底座</div><div class="sub-label">CIM + 大模型</div></div>
+            <div class="arch-node traffic" onclick="switchPage('traffic')"><div class="node-icon">⬡</div><div class="node-label">交通时空智能体</div></div>
+            <div class="arch-node emergency" onclick="switchPage('emergency')"><div class="node-icon">◈</div><div class="node-label">应急时空智能体</div></div>
+            <div class="arch-node water" onclick="switchPage('water')"><div class="node-icon">◆</div><div class="node-label">水务时空智能体</div></div>
+            <div class="arch-n-label" style="top:88px;left:50%;transform:translateX(-50%)">N+ 交通应用场景</div>
+            <div class="arch-n-label" style="left:88px;top:200px">N+ 应急应用场景</div>
+            <div class="arch-n-label" style="right:88px;top:200px">N+ 水务应用场景</div>
+          </div>
+        </div>
+        <div class="agent-entry-row">
+          <div class="agent-entry traffic-entry" onclick="switchPage('traffic')"><div class="entry-icon">⬡</div><div class="entry-info"><div class="entry-title">交通时空智能体</div><div class="entry-desc">态势感知 · 拥堵预测 · 信号优化</div></div><div class="entry-arrow">→</div></div>
+          <div class="agent-entry emergency-entry" onclick="switchPage('emergency')"><div class="entry-icon">◈</div><div class="entry-info"><div class="entry-title">应急时空智能体</div><div class="entry-desc">风险识别 · 灾害预警 · 指挥调度</div></div><div class="entry-arrow">→</div></div>
+          <div class="agent-entry water-entry" onclick="switchPage('water')"><div class="entry-icon">◆</div><div class="entry-info"><div class="entry-title">水务时空智能体</div><div class="entry-desc">水情监测 · 防洪排涝 · 管网调度</div></div><div class="entry-arrow">→</div></div>
+        </div>
+      </div>
+
+      <!-- ========== Page 2: Traffic ========== -->
+      <div class="page" id="page-traffic">
+        <div class="sub-layout">
+          <div class="top-map heatmap-wrapper">
+            <div class="panel-head"><span class="panel-title">回天地区交通态势热力图</span><span class="badge badge-live">实时</span></div>
+            <canvas class="heatmap-canvas" id="trafficCanvas"></canvas>
+          </div>
+          <div class="left-panel">
+            <div class="panel">
+              <div class="panel-head"><span class="panel-title">实时数据指标</span><span class="badge badge-live">实时</span></div>
+              <div class="panel-body">
+                <div class="metric-item"><span class="metric-label">路网平均速度</span><span class="metric-value yellow" id="t-speed">28.3 km/h</span></div>
+                <div class="metric-item"><span class="metric-label">拥堵指数</span><span class="metric-value red" id="t-index">1.85</span></div>
+                <div class="metric-item"><span class="metric-label">在线检测器</span><span class="metric-value blue">1,286</span></div>
+                <div class="metric-item"><span class="metric-label">今日事件数</span><span class="metric-value yellow">3</span></div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><span class="panel-title">数据来源</span></div>
+              <div class="panel-body" style="font-size:10px;color:#64748b;line-height:1.8">
+                ▸ 交通委路网检测器（1286个断面）<br>
+                ▸ 浮动车GPS（日均120万条）<br>
+                ▸ 手机信令（移动/联通）<br>
+                ▸ 视频AI检测（368路）<br>
+                ▸ 公交IC卡（日均82万次）
+              </div>
+            </div>
+          </div>
+          <div class="right-panel">
+            <div class="ai-panel">
+              <div class="ai-panel-head"><div class="ai-icon">AI</div><span class="ai-title">交通时空智能体 · 决策透明</span></div>
+              <div class="ai-output" id="trafficAI">
+                <div class="t-block t-source">
+                  <div class="t-block-label">[ 数据来源 ]</div>
+                  <div class="t-block-content">立汤路天通苑段检测器 #T1082 报告拥堵指数 2.1（严重拥堵），数据采集时间 07:32:15；视频AI检测确认排队长度 &gt;800m（摄像头 CP-037 置信度92%）；浮动车轨迹分析显示该段平均车速 12km/h。</div>
+                </div>
+                <div class="t-block t-think">
+                  <div class="t-block-label">[ 思考过程 ]</div>
+                  <div class="t-block-content">1. 识别根因：早高峰天通苑北站出站客流集中，出租车+私家车叠加致立汤路南向北严重拥堵<br>2. 空间关联分析：拥堵已扩散至太平庄中二街交叉口，影响范围约1.2km<br>3. 时序预测：如不干预，预计30min内扩散至北七家路口<br>4. 方案评估：已生成3套候选方案，按缓解效果排序</div>
+                </div>
+                <div class="t-block t-action">
+                  <div class="t-block-label">[ 执行建议 ]</div>
+                  <div class="t-block-content">
+                    <b>方案1（推荐）</b>：天通苑北站信号配时优化，南北绿信比 45%→55% <span class="auth-badge auth-auto">已授权自动执行</span><br>
+                    <b>方案2</b>：北七家路口发布绕行诱导 <span class="auth-badge auth-manual">需值班员确认</span><br>
+                    <b>方案3</b>：调度公交加开区间车 <span class="auth-badge auth-pending">待公交集团确认</span>
+                  </div>
+                </div>
+              </div>
+              <div class="chat-input-row">
+                <input class="chat-input" id="trafficInput" placeholder="输入问题，如：立汤路拥堵原因？" onkeydown="if(event.key==='Enter')sendTrafficChat()">
+                <button class="chat-send" onclick="sendTrafficChat()">发送</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== Page 3: Emergency ========== -->
+      <div class="page" id="page-emergency">
+        <div class="sub-layout">
+          <div class="top-map">
+            <div class="emergency-map" id="emergencyMap">
+              <svg width="100%" height="100%" viewBox="0 0 800 200" style="position:absolute;inset:0">
+                <path d="M100,100 Q200,40 300,80 T500,60 T700,90 T800,70" fill="none" stroke="rgba(59,130,246,.2)" stroke-width="2"/>
+                <path d="M50,150 Q200,120 350,140 T550,130 T750,150" fill="none" stroke="rgba(59,130,246,.15)" stroke-width="1.5"/>
+                <text x="60" y="60" fill="rgba(59,130,246,.35)" font-size="11">流村镇</text>
+                <text x="250" y="50" fill="rgba(59,130,246,.35)" font-size="11">南口镇</text>
+                <text x="450" y="40" fill="rgba(59,130,246,.35)" font-size="11">十三陵镇</text>
+                <text x="620" y="55" fill="rgba(59,130,246,.35)" font-size="11">兴寿镇</text>
+                <text x="350" y="175" fill="rgba(59,130,246,.25)" font-size="10">昌平城区</text>
+              </svg>
+              <div class="risk-point" style="left:15%;top:28%"></div><div class="risk-label" style="left:17%;top:22%">流村镇 地质</div>
+              <div class="risk-point" style="left:32%;top:22%;background:#f59e0b;box-shadow:0 0 6px rgba(245,158,11,.5)"></div><div class="risk-label" style="left:34%;top:16%;color:#fbbf24">南口镇 暴雨</div>
+              <div class="risk-point" style="left:55%;top:18%"></div><div class="risk-label" style="left:57%;top:12%">十三陵 洪水</div>
+              <div class="risk-point" style="left:75%;top:30%;background:#f59e0b;box-shadow:0 0 6px rgba(245,158,11,.5)"></div><div class="risk-label" style="left:77%;top:24%;color:#fbbf24">兴寿镇 地质</div>
+            </div>
+          </div>
+          <div class="left-panel">
+            <div class="panel">
+              <div class="panel-head"><span class="panel-title">预警信息</span><span class="badge badge-warn">3条</span></div>
+              <div class="panel-body">
+                <div class="warning-item"><div class="warn-dot red"></div><div class="warn-info"><div class="warn-title">暴雨黄色预警 - 流村镇</div><div class="warn-desc">预计3h降雨量达40-60mm</div><div class="warn-time">来源：区气象局 14:25</div></div></div>
+                <div class="warning-item"><div class="warn-dot red"></div><div class="warn-info"><div class="warn-title">地质灾害预警 - 南口镇</div><div class="warn-desc">山区滑坡风险等级Ⅱ级</div><div class="warn-time">来源：市地质研究所 14:10</div></div></div>
+                <div class="warning-item"><div class="warn-dot yellow"></div><div class="warn-info"><div class="warn-title">山洪预警 - 十三陵镇</div><div class="warn-desc">蟒山流域来水量持续上升</div><div class="warn-time">来源：水文站 S-012 13:55</div></div></div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><span class="panel-title">应急资源</span></div>
+              <div class="panel-body">
+                <div class="resource-grid">
+                  <div class="resource-card"><div class="r-val">12</div><div class="r-label">救援队伍</div></div>
+                  <div class="resource-card"><div class="r-val">8</div><div class="r-label">安置点</div></div>
+                  <div class="resource-card"><div class="r-val">35</div><div class="r-label">物资(吨)</div></div>
+                  <div class="resource-card"><div class="r-val">6</div><div class="r-label">医疗队</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="right-panel">
+            <div class="ai-panel">
+              <div class="ai-panel-head"><div class="ai-icon">AI</div><span class="ai-title">应急时空智能体 · 决策透明</span></div>
+              <div class="ai-output" id="emergencyAI">
+                <div class="t-block t-source">
+                  <div class="t-block-label">[ 数据来源 ]</div>
+                  <div class="t-block-content">区气象局14:25发布暴雨黄色预警，流村镇3h降雨量预计40-60mm；市地质研究所14:10发布南口镇地质灾害Ⅱ级预警；水文站S-012 13:55报告蟒山流域来水量持续上升，当前水位92.1m。</div>
+                </div>
+                <div class="t-block t-think">
+                  <div class="t-block-label">[ 思考过程 ]</div>
+                  <div class="t-block-content">1. 风险研判：暴雨中心由西南向东北移动，流村镇→南口镇为高风险区域<br>2. 影响评估：预计影响2.3万人，地质灾害风险点7处需重点关注<br>3. 方案生成：基于《昌平区防汛应急预案》第3.2节，启动三级响应<br>4. 资源匹配：距流村最近的救援3队（4.2km）和救援7队（5.8km）可在15min内到达</div>
+                </div>
+                <div class="t-block t-action">
+                  <div class="t-block-label">[ 执行建议 ]</div>
+                  <div class="t-block-content">
+                    <b>方案1</b>：启动三级应急响应，流村镇转移危险区域群众 <span class="auth-badge auth-manual">需指挥长确认</span><br>
+                    <b>方案2</b>：调度救援3队、7队至流村前置 <span class="auth-badge auth-auto">已授权自动执行</span><br>
+                    <b>方案3</b>：流村安置点开启，调拨棉被500条、食品300箱 <span class="auth-badge auth-auto">已授权自动执行</span><br>
+                    <b>方案4</b>：通过短信/大喇叭发布转移通知 <span class="auth-badge auth-pending">待通信保障组确认</span>
+                  </div>
+                </div>
+              </div>
+              <div class="chat-input-row">
+                <input class="chat-input" id="emergencyInput" placeholder="输入问题，如：暴雨影响范围？" onkeydown="if(event.key==='Enter')sendEmergencyChat()">
+                <button class="chat-send" onclick="sendEmergencyChat()">发送</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== Page 4: Water ========== -->
+      <div class="page" id="page-water">
+        <div class="sub-layout">
+          <div class="top-map">
+            <div class="water-svg-wrap">
+              <svg width="100%" height="100%" viewBox="0 0 800 200">
+                <rect x="300" y="50" width="200" height="80" rx="4" fill="rgba(59,130,246,.12)" stroke="rgba(59,130,246,.3)" stroke-width="1.5"/>
+                <text x="400" y="95" text-anchor="middle" fill="#60a5fa" font-size="12" font-weight="600">十三陵水库</text>
+                <text x="400" y="115" text-anchor="middle" fill="#64748b" font-size="9">水位 92.3m</text>
+                <path d="M300,90 Q200,85 100,95" fill="none" stroke="rgba(59,130,246,.35)" stroke-width="3" stroke-linecap="round"/>
+                <text x="140" y="80" fill="rgba(59,130,246,.4)" font-size="9">入库河道</text>
+                <path d="M500,90 Q600,95 700,85" fill="none" stroke="rgba(59,130,246,.25)" stroke-width="2.5" stroke-linecap="round"/>
+                <text x="620" y="80" fill="rgba(59,130,246,.4)" font-size="9">泄洪通道</text>
+                <circle class="station-dot" cx="250" cy="82" r="4"/>
+                <circle class="station-dot" cx="400" cy="68" r="4"/>
+                <circle class="station-dot" cx="550" cy="88" r="4"/>
+                <circle class="station-dot" cx="180" cy="92" r="4"/>
+                <text x="250" y="75" text-anchor="middle" fill="#64748b" font-size="8">雨量站</text>
+                <text x="400" y="62" text-anchor="middle" fill="#64748b" font-size="8">水位站</text>
+                <text x="550" y="80" text-anchor="middle" fill="#64748b" font-size="8">流量站</text>
+                <text x="180" y="86" text-anchor="middle" fill="#64748b" font-size="8">地质站</text>
+                <line x1="80" y1="170" x2="720" y2="170" stroke="rgba(59,130,246,.15)" stroke-width="1"/>
+                <text x="400" y="188" text-anchor="middle" fill="rgba(59,130,246,.3)" font-size="9">下游河道：桃峪口 → 辛庄 → 南邵</text>
+              </svg>
+            </div>
+          </div>
+          <div class="left-panel">
+            <div class="panel">
+              <div class="panel-head"><span class="panel-title">水情监测数据</span><span class="badge badge-live">实时</span></div>
+              <div class="panel-body">
+                <div class="metric-item"><span class="metric-label">水库水位</span><span class="metric-value yellow" id="w-level">92.3 m</span></div>
+                <div class="metric-item"><span class="metric-label">入库流量</span><span class="metric-value red" id="w-inflow">156 m³/s</span></div>
+                <div class="metric-item"><span class="metric-label">出库流量</span><span class="metric-value blue" id="w-outflow">80 m³/s</span></div>
+                <div class="metric-item"><span class="metric-label">蓄水量</span><span class="metric-value blue">4820 万m³</span></div>
+                <div class="metric-item"><span class="metric-label">距汛限水位</span><span class="metric-value yellow">1.7 m</span></div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><span class="panel-title">管网状态</span></div>
+              <div class="panel-body">
+                <div class="pipe-row">
+                  <div class="pipe-item normal"><div class="pipe-count">187</div><div class="pipe-label">正常</div></div>
+                  <div class="pipe-item warning"><div class="pipe-count">12</div><div class="pipe-label">预警</div></div>
+                  <div class="pipe-item alert"><div class="pipe-count">5</div><div class="pipe-label">告警</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="right-panel">
+            <div class="ai-panel">
+              <div class="ai-panel-head"><div class="ai-icon">AI</div><span class="ai-title">水务时空智能体 · 决策透明</span></div>
+              <div class="ai-output" id="waterAI">
+                <div class="t-block t-source">
+                  <div class="t-block-label">[ 数据来源 ]</div>
+                  <div class="t-block-content">水位站 W-001 报告当前水位92.3m（汛限94.0m），入库流量156m³/s持续上升；雨量站 R-015 报告上游6h累计降雨68mm；气象预报未来6h降雨40-60mm；管网监测系统报告回龙观3处DN800雨水管满管。</div>
+                </div>
+                <div class="t-block t-think">
+                  <div class="t-block-label">[ 思考过程 ]</div>
+                  <div class="t-block-content">1. 来水预报：基于降雨-径流模型预测6h入库峰值约220m³/s<br>2. 调洪演算：若维持当前出库80m³/s，6h后水位将达93.8m（距汛限0.2m）<br>3. 方案对比：方案A加大泄量至120m³/s，6h水位92.8m安全可控；方案B维持80m³/s，有超汛限风险<br>4. 下游评估：泄量120m³/s时下游桃峪口河道水位仍低于警戒线0.8m</div>
+                </div>
+                <div class="t-block t-action">
+                  <div class="t-block-label">[ 执行建议 ]</div>
+                  <div class="t-block-content">
+                    <b>方案1（推荐）</b>：主泄洪洞开度调至80%，泄量提升至120m³/s <span class="auth-badge auth-manual">需水务局确认</span><br>
+                    <b>方案2</b>：预通知下游3村镇做好转移准备 <span class="auth-badge auth-auto">已授权自动执行</span><br>
+                    <b>方案3</b>：回龙观3处管网告警点派遣抢修队 <span class="auth-badge auth-auto">已授权自动执行</span><br>
+                    <b>方案4</b>：关闭回龙观体育公园地下停车场 <span class="auth-badge auth-manual">需值班员确认</span>
+                  </div>
+                </div>
+              </div>
+              <div class="chat-input-row">
+                <input class="chat-input" id="waterInput" placeholder="输入问题，如：泄洪方案？" onkeydown="if(event.key==='Enter')sendWaterChat()">
+                <button class="chat-send" onclick="sendWaterChat()">发送</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Navigation =====
+function switchPage(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelector('[data-page="'+page+'"]').classList.add('active');
+  const titles={overview:'昌平区时空智能底座',traffic:'交通时空智能体',emergency:'应急时空智能体',water:'水务时空智能体'};
+  document.getElementById('topTitle').textContent=titles[page]||'';
+  if(page==='traffic') setTimeout(drawTrafficHeatmap,100);
+}
+
+// ===== Clock =====
+function updateClock(){
+  const d=new Date();
+  document.getElementById('topTime').textContent=d.toLocaleString('zh-CN',{hour12:false});
+}
+updateClock();setInterval(updateClock,1000);
+
+// ===== Traffic Heatmap =====
+function drawTrafficHeatmap(){
+  const c=document.getElementById('trafficCanvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  c.width=c.offsetWidth;c.height=c.offsetHeight;
+  const w=c.width,h=c.height;
+  // Dark base
+  ctx.fillStyle='#0c1929';ctx.fillRect(0,0,w,h);
+  // Grid
+  ctx.strokeStyle='rgba(59,130,246,.08)';ctx.lineWidth=1;
+  for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}
+  for(let y=0;y<h;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
+  // Roads
+  ctx.strokeStyle='rgba(59,130,246,.25)';ctx.lineWidth=3;
+  [[0.15,0.3,0.85,0.3],[0.2,0.55,0.8,0.55],[0.3,0.1,0.3,0.9],[0.55,0.1,0.55,0.9],[0.7,0.15,0.7,0.85]].forEach(r=>{
+    ctx.beginPath();ctx.moveTo(r[0]*w,r[1]*h);ctx.lineTo(r[2]*w,r[3]*h);ctx.stroke();
+  });
+  // Congestion hotspots
+  const spots=[
+    {x:0.32,y:0.52,r:35,c:'rgba(239,68,68,.55)'},{x:0.33,y:0.28,r:25,c:'rgba(245,158,11,.45)'},
+    {x:0.55,y:0.53,r:30,c:'rgba(245,158,11,.4)'},{x:0.7,y:0.3,r:20,c:'rgba(34,197,94,.3)'},
+    {x:0.5,y:0.3,r:22,c:'rgba(245,158,11,.35)'}
+  ];
+  spots.forEach(s=>{
+    const g=ctx.createRadialGradient(s.x*w,s.y*h,0,s.x*w,s.y*h,s.r);
+    g.addColorStop(0,s.c);g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+  });
+  // Labels
+  ctx.fillStyle='rgba(148,163,184,.5)';ctx.font='10px Microsoft YaHei';
+  ctx.fillText('立汤路',0.28*w,0.27*h);ctx.fillText('回龙观',0.48*w,0.48*h);
+  ctx.fillText('天通苑',0.28*w,0.48*h);ctx.fillText('北七家',0.52*w,0.27*h);
+}
+
+// ===== AI Chat =====
+const trafficReplies={
+  '拥堵':'<div class="t-block t-source"><div class="t-block-label">[ 数据来源 ]</div><div class="t-block-content">立汤路天通苑段检测器#T1082报告拥堵指数2.1，视频AI检测排队长度&gt;800m（置信度92%），浮动车分析平均车速12km/h。数据采集时间：'+new Date().toLocaleTimeString('zh-CN',{hour12:false})+'</div></div><div class="t-block t-think"><div class="t-block-label">[ 思考过程 ]</div><div class="t-block-content">1. 根因：早高峰天通苑北站出站客流叠加<br>2. 扩散：已影响太平庄中二街，范围约1.2km<br>3. 预测：不干预则30min内扩散至北七家<br>4. 评估：3套方案按效果排序</div></div><div class="t-block t-action"><div class="t-block-label">[ 执行建议 ]</div><div class="t-block-content"><b>方案1</b>：信号配时优化，南北绿信比45%→55% <span class="auth-badge auth-auto">已授权自动执行</span><br><b>方案2</b>：发布绕行诱导 <span class="auth-badge auth-manual">需值班员确认</span><br><b>方案3</b>：调度公交区间车 <span class="auth-badge auth-pending">待公交集团确认</span></div></div>',
+  '信号':'<div class="t-block t-source"><div class="t-block-label">[ 数据来源 ]</div><div class="t-block-content">当前天通苑北站信号配时数据来自交通委信号控制系统，周期120s，南北绿信比45%。对比历史数据：该时段绿信比50%时通行效率提升18%。</div></div><div class="t-block t-think"><div class="t-block-label">[ 思考过程 ]</div><div class="t-block-content">1. 分析：当前配时偏重东西向，南北向流量已超设计值30%<br>2. 仿真：绿信比调至55%后，南向北延误降低22%<br>3. 关联：需同步调整下游2个路口，形成绿波</div></div><div class="t-block t-action"><div class="t-block-label">[ 执行建议 ]</div><div class="t-block-content"><b>建议</b>：天通苑北站及下游2路口同步调整绿信比至55% <span class="auth-badge auth-auto">已授权自动执行</span></div></div>',
+  'default':'<div class="t-block t-source"><div class="t-block-label">[ 数据来源 ]</div><div class="t-block-content">回天地区交通数据综合分析，数据来源：交通委路网检测器1286个断面、浮动车GPS日均120万条、视频AI检测368路。</div></div><div class="t-block t-think"><div class="t-block-label">[ 思考过程 ]</div><div class="t-block-content">1. 当前回天地区整体拥堵指数1.85（中度拥堵）<br>2. 立汤路为最严重瓶颈，拥堵指数2.1<br>3. 建议重点关注3个关键路口</div></div><div class="t-block t-action"><div class="t-block-label">[ 执行建议 ]</div><div class="t-block-content"><b>建议</b>：持续监测立汤路态势，如指数超2.5将自动触发二级响应 <span class="auth-badge auth-auto">已授权自动执行</span></div></div>'
+};
+const emergencyReplies={
+  '暴雨':'<div class="t-block t-source"><div class="t-block-label">[ 数据来源 ]</div><div class="t-block-content">区气象局'+new Date().toLocaleTimeString('zh-CN',{hour12:false})+'发布暴雨黄色预警，预计3h降雨40-60mm；市地质研究所同步发布地质灾害Ⅱ级预警。</div></div><div class="t-block t-think"><div class="t-block-label">[ 思考过程 ]</div><div class="t-block-content">1. 暴雨中心由西南向东北移动<br>2. 流村镇、南口镇为高风险区域<br>3. 预计影响2.3万人，7处地灾隐患点需关注<br>4. 参考《昌平区防汛应急预案》3.2节</div></div><div class="t-block t-action"><div class="t-block-label">[ 执行建议 ]</div><div class="t-block-content"><b>方案1</b>：启动三级应急响应 <span class="auth-badge auth-manual">需指挥长确认</span><br><b>方案2</b>：调度救援3队、7队前置 <span class="auth-badge auth-auto">已授权自动执行</span><br><b>方案3</b>：开启安置点调拨物资 <span class="auth-badge auth-auto">已授权自动执行</span></div></div>',
+  '物资':'<div class="t-block t-source"><div class="t-block-label">[ 数据来源 ]</div><div class="t-block-content">应急物资管理系统实时数据：流村安置点库存数据（更新于14:20）、区级仓库库存数据（更新于14:00）。</div></div><div class="t-block t-think"><div class="t-block-label">[ 思考过程 ]</div><div class="t-block-content">1. 流村安置点容量500人，当前已安置80人<br>2. 棉被库存充足，食品可供300人3天<br>3. 区级仓库30min内可送达额外物资</div></div><div class="t-block t-action"><div class="t-block-label">[ 执行建议 ]</div><div class="t-block-content"><b>建议</b>：预调帐篷100顶至流村安置点 <span class="auth-badge auth-auto">已授权自动执行</span></div></div>',
+  'default':'<div class="t-block t-source"><div class="t-block-label">[ 数据来源 ]</div><div class="t-block-content">应急时空智能体综合研判，数据来源：区气象局、市地质研究所、水文站、应急物资管理系统。</div></div><div class="t-block t-think"><div class="t-block-label">[ 思考过程 ]</div><div class="t-block-content">1. 当前二级应急响应已启动<br>2. 暴雨预计持续至22时<br>3. 4支救援队伍已前置部署</div></div><div class="t-block t-action"><div class="t-block-label">[ 执行建议 ]</div><div class="t-block-content"><b>建议</b>：保持通信畅通，确保转移群众安全 <span class="auth-badge auth-auto">已授权自动执行</span></div></div>'
+};
+const waterReplies={
+  '泄洪':'<div class="t-block t-source"><div class="t-block-label">[ 数据来源 ]</div><div class="t-block-content">水位站W-001报告水位92.3m，入库156m³/s；调洪演算基于水文模型计算，模型验证精度R²=0.92。</div></div><div class="t-block t-think"><div class="t-block-label">[ 思考过程 ]</div><div class="t-block-content">1. 维持出库80m³/s，6h后水位达93.8m（距汛限0.2m，有风险）<br>2. 加大泄量至120m³/s，6h水位可控在92.8m<br>3. 下游桃峪口河道水位低于警戒线0.8m</div></div><div class="t-block t-action"><div class="t-block-label">[ 执行建议 ]</div><div class="t-block-content"><b>方案1（推荐）</b>：泄量提升至120m³/s <span class="auth-badge auth-manual">需水务局确认</span><br><b>方案2</b>：通知下游3村镇 <span class="auth-badge auth-auto">已授权自动执行</span></div></div>',
+  '降雨':'<div class="t-block t-source"><div class="t-block-label">[ 数据来源 ]</div><div class="t-block-content">区气象局降雨预报数据、雨量站R-015实测6h累计68mm。</div></div><div class="t-block t-think"><div class="t-block-label">[ 思考过程 ]</div><div class="t-block-content">1. 降雨带由西南向东北移动<br>2. 预计未来3h降雨40-60mm<br>3. 若1h雨强超50mm将升级红色预警</div></div><div class="t-block t-action"><div class="t-block-label">[ 执行建议 ]</div><div class="t-block-content"><b>建议</b>：持续监测雨情，1h雨强超50mm自动升级预警 <span class="auth-badge auth-auto">已授权自动执行</span></div></div>',
+  '管网':'<div class="t-block t-source"><div class="t-block-label">[ 数据来源 ]</div><div class="t-block-content">管网监测系统报告5处告警：回龙观3处DN800雨水管满管、天通苑2处DN600污水管溢流风险。</div></div><div class="t-block t-think"><div class="t-block-label">[ 思考过程 ]</div><div class="t-block-content">1. 回龙观3处满管与暴雨直接相关<br>2. 天通苑2处溢流风险需紧急处置<br>3. 地下停车场倒灌风险需关注</div></div><div class="t-block t-action"><div class="t-block-label">[ 执行建议 ]</div><div class="t-block-content"><b>方案1</b>：3组抢修队赶赴现场 <span class="auth-badge auth-auto">已授权自动执行</span><br><b>方案2</b>：关闭回龙观体育公园地下停车场 <span class="auth-badge auth-manual">需值班员确认</span></div></div>',
+  'default':'<div class="t-block t-source"><div class="t-block-label">[ 数据来源 ]</div><div class="t-block-content">十三陵水库运行数据综合分析，来源：水位站W-001、入库流量站F-003、气象预报。</div></div><div class="t-block t-think"><div class="t-block-label">[ 思考过程 ]</div><div class="t-block-content">1. 当前水位92.3m，距汛限1.7m，调蓄空间充足<br>2. 入库流量持续上升需关注<br>3. 防洪Ⅳ级响应已启动</div></div><div class="t-block t-action"><div class="t-block-label">[ 执行建议 ]</div><div class="t-block-content"><b>建议</b>：持续监测并动态调整泄洪方案 <span class="auth-badge auth-auto">已授权自动执行</span></div></div>'
+};
+
+function doChat(inputEl,outputEl,replies){
+  const q=inputEl.value.trim();if(!q)return;
+  const output=outputEl;
+  let reply=replies.default;
+  for(const key in replies){if(key!=='default'&&q.includes(key)){reply=replies[key];break}}
+  output.innerHTML='<div style="color:#60a5fa;font-size:11px;margin-bottom:8px;padding:4px 8px;background:rgba(59,130,246,.1);border-radius:4px;display:inline-block">用户提问：'+q+'</div>'+reply;
+  inputEl.value='';output.scrollTop=0;
+}
+function sendTrafficChat(){doChat(document.getElementById('trafficInput'),document.getElementById('trafficAI'),trafficReplies)}
+function sendEmergencyChat(){doChat(document.getElementById('emergencyInput'),document.getElementById('emergencyAI'),emergencyReplies)}
+function sendWaterChat(){doChat(document.getElementById('waterInput'),document.getElementById('waterAI'),waterReplies)}
+
+// ===== Simulated data refresh =====
+function jitter(val,range){return(val+Math.random()*range-range/2).toFixed(1)}
+setInterval(()=>{
+  const sp=document.getElementById('t-speed');
+  const idx=document.getElementById('t-index');
+  if(sp)sp.textContent=jitter(28.3,4)+' km/h';
+  if(idx)idx.textContent=jitter(1.85,0.3);
+  const lv=document.getElementById('w-level');
+  const inf=document.getElementById('w-inflow');
+  const out=document.getElementById('w-outflow');
+  if(lv)lv.textContent=jitter(92.3,0.5)+' m';
+  if(inf)inf.textContent=Math.round(156+Math.random()*20-10)+' m³/s';
+  if(out)out.textContent=Math.round(80+Math.random()*8-4)+' m³/s';
+},3000);
+</script>
+</body>
+</html>
