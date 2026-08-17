@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>个人知识图谱 - F盘资料整理</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0d1117;color:#c9d1d9;overflow:hidden;height:100vh;display:flex}
+
+/* ===== LEFT NAV ===== */
+#nav{width:280px;min-width:280px;height:100vh;background:#161b22;border-right:1px solid #21262d;display:flex;flex-direction:column;z-index:200}
+#nav-header{padding:18px 20px 14px;border-bottom:1px solid #21262d}
+#nav-header h1{font-size:16px;color:#4A7C59;font-weight:600;letter-spacing:1px}
+#nav-header p{font-size:11px;color:#484f58;margin-top:4px}
+#nav-search{padding:10px 16px;border-bottom:1px solid #21262d}
+#nav-search input{width:100%;padding:7px 12px;background:#0d1117;border:1px solid #21262d;border-radius:6px;color:#c9d1d9;font-size:12px;outline:none}
+#nav-search input:focus{border-color:#4A7C59}
+#nav-search input::placeholder{color:#484f58}
+#nav-tree{flex:1;overflow-y:auto;padding:8px 0}
+#nav-tree::-webkit-scrollbar{width:4px}
+#nav-tree::-webkit-scrollbar-thumb{background:#21262d;border-radius:2px}
+.nav-group{margin-bottom:2px}
+.nav-group-title{display:flex;align-items:center;gap:8px;padding:8px 16px;font-size:12px;font-weight:600;color:#8b949e;cursor:pointer;user-select:none;letter-spacing:0.5px;text-transform:uppercase}
+.nav-group-title:hover{color:#c9d1d9}
+.nav-group-title .arrow{font-size:10px;transition:transform .2s;color:#484f58}
+.nav-group-title .arrow.collapsed{transform:rotate(-90deg)}
+.nav-group-title .cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.nav-children{overflow:hidden;transition:max-height .3s ease}
+.nav-children.collapsed{max-height:0!important}
+.nav-item{display:flex;align-items:center;gap:8px;padding:6px 16px 6px 38px;font-size:13px;color:#8b949e;cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+.nav-item:hover{color:#c9d1d9;background:rgba(74,124,89,0.06)}
+.nav-item.active{color:#e6edf3;background:rgba(74,124,89,0.1);border-left-color:#4A7C59}
+.nav-item .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.nav-item .label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav-item .badge{font-size:10px;color:#484f58;background:#21262d;padding:1px 6px;border-radius:8px}
+
+/* ===== VIEW SWITCH ===== */
+#view-tabs{position:absolute;top:16px;left:50%;transform:translateX(-50%);display:flex;gap:0;background:#161b22;border:1px solid #21262d;border-radius:8px;overflow:hidden;z-index:100}
+.view-tab{padding:7px 18px;font-size:12px;color:#8b949e;cursor:pointer;transition:all .15s;border:none;background:none}
+.view-tab:hover{color:#c9d1d9}
+.view-tab.active{color:#e6edf3;background:#4A7C59}
+
+/* ===== MAIN CONTENT ===== */
+#main{flex:1;position:relative;overflow:hidden}
+#graph-canvas{display:block;width:100%;height:100%}
+
+/* ===== ARCHITECTURE VIEW ===== */
+#arch-view{display:none;width:100%;height:100%;overflow:auto;padding:30px 40px}
+#arch-view::-webkit-scrollbar{width:6px;height:6px}
+#arch-view::-webkit-scrollbar-thumb{background:#21262d;border-radius:3px}
+.arch-section{margin-bottom:28px}
+.arch-section-title{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #21262d}
+.arch-section-title .icon{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff}
+.arch-cards{display:flex;flex-wrap:wrap;gap:12px}
+.arch-card{background:#161b22;border:1px solid #21262d;border-radius:8px;padding:14px 18px;width:calc(50% - 6px);cursor:pointer;transition:all .2s;position:relative}
+.arch-card:hover{border-color:#4A7C59;background:#1c2333;transform:translateY(-1px)}
+.arch-card.active{border-color:#4A7C59;background:rgba(74,124,89,0.08)}
+.arch-card h3{font-size:14px;color:#e6edf3;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.arch-card h3 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.arch-card .desc{font-size:12px;color:#8b949e;line-height:1.6;margin-bottom:8px}
+.arch-card .kws{display:flex;flex-wrap:wrap;gap:4px}
+.arch-card .kw{font-size:10px;color:#7CB893;background:rgba(74,124,89,0.12);padding:2px 8px;border-radius:10px;border:1px solid rgba(74,124,89,0.2)}
+.arch-card .rel-badge{position:absolute;top:10px;right:12px;font-size:10px;color:#484f58;background:#21262d;padding:2px 8px;border-radius:8px}
+.arch-sub-cards{margin-top:12px;padding-left:20px;border-left:2px solid #21262d}
+.arch-sub-card{background:#0d1117;border:1px solid #1b2028;border-radius:6px;padding:10px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s}
+.arch-sub-card:hover{border-color:#4A7C59;background:#161b22}
+.arch-sub-card h4{font-size:13px;color:#c9d1d9;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.arch-sub-card h4 .dot{width:6px;height:6px;border-radius:50%}
+.arch-sub-card .desc{font-size:11px;color:#6e7681;line-height:1.5}
+
+/* ===== RELATIONSHIP MAP ===== */
+.rel-map{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:20px;margin-bottom:28px}
+.rel-map h3{font-size:14px;color:#e6edf3;margin-bottom:14px}
+.rel-row{display:flex;align-items:center;gap:6px;padding:5px 0;font-size:12px}
+.rel-from{color:#4A7C59;font-weight:500;min-width:120px;text-align:right}
+.rel-arrow{color:#484f58;font-size:13px}
+.rel-type{color:#D4A843;font-size:11px;background:rgba(212,168,67,0.1);padding:1px 8px;border-radius:8px}
+.rel-arrow2{color:#484f58;font-size:13px}
+.rel-to{color:#6BA3D6;font-weight:500;min-width:120px}
+
+/* ===== DETAIL PANEL ===== */
+#detail{position:fixed;right:0;top:0;width:420px;height:100vh;background:#161b22;border-left:1px solid #21262d;padding:0;overflow-y:auto;transform:translateX(100%);transition:transform .3s ease;z-index:300;box-shadow:-4px 0 20px rgba(0,0,0,0.3)}
+#detail.open{transform:translateX(0)}
+#detail-header{position:sticky;top:0;background:#161b22;padding:20px 24px 16px;border-bottom:1px solid #21262d;z-index:1}
+#detail-close{position:absolute;top:14px;right:16px;background:none;border:none;color:#8b949e;font-size:18px;cursor:pointer;line-height:1}
+#detail-close:hover{color:#e6edf3}
+#detail-header h2{font-size:18px;color:#e6edf3;margin-bottom:4px}
+#detail-header .category{font-size:11px;color:#484f58}
+#detail-body{padding:20px 24px}
+.d-section{margin-bottom:18px}
+.d-section-title{font-size:11px;color:#484f58;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:600}
+.d-desc{font-size:13px;color:#8b949e;line-height:1.8}
+.d-kws{display:flex;flex-wrap:wrap;gap:5px}
+.d-kw{font-size:11px;color:#7CB893;background:rgba(74,124,89,0.12);padding:3px 10px;border-radius:12px;border:1px solid rgba(74,124,89,0.2)}
+.d-list-item{padding:4px 0 4px 12px;border-left:2px solid #21262d;font-size:12px;color:#8b949e;line-height:1.6;cursor:default}
+.d-list-item:hover{border-left-color:#4A7C59;color:#c9d1d9}
+.d-rel-item{display:inline-flex;align-items:center;gap:4px;background:#0d1117;border:1px solid #21262d;color:#6BA3D6;padding:4px 12px;border-radius:16px;font-size:12px;margin:3px;cursor:pointer;transition:all .15s}
+.d-rel-item:hover{border-color:#6BA3D6;background:rgba(107,163,214,0.08)}
+.d-rel-item .rel-type{font-size:10px;color:#D4A843}
+
+/* ===== STATS BAR ===== */
+#stats-bar{position:absolute;bottom:0;left:0;right:0;padding:8px 20px;background:rgba(13,17,23,0.9);border-top:1px solid #21262d;display:flex;gap:20px;font-size:11px;color:#484f58;z-index:50}
+#stats-bar span b{color:#8b949e}
+</style>
+</head>
+<body>
+
+<!-- LEFT NAV -->
+<div id="nav">
+  <div id="nav-header">
+    <h1>个人知识图谱</h1>
+    <p>F盘资料整理 | 2026-07-01</p>
+  </div>
+  <div id="nav-search">
+    <input type="text" placeholder="搜索领域、关键词、文件..." id="globalSearch">
+  </div>
+  <div id="nav-tree"></div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="view-tabs">
+    <button class="view-tab active" onclick="switchView('graph')">图谱视图</button>
+    <button class="view-tab" onclick="switchView('arch')">架构视图</button>
+  </div>
+  <canvas id="graph-canvas"></canvas>
+  <div id="arch-view"></div>
+  <div id="stats-bar">
+    <span>知识领域 <b>18</b></span>
+    <span>关联关系 <b>25</b></span>
+    <span>项目文件夹 <b>16</b></span>
+    <span>重复文件组 <b>3,984</b></span>
+    <span>浪费空间 <b>33.5 GB</b></span>
+  </div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div id="detail">
+  <div id="detail-header">
+    <button id="detail-close" onclick="closeDetail()">&times;</button>
+    <h2 id="detail-title"></h2>
+    <div class="category" id="detail-cat"></div>
+  </div>
+  <div id="detail-body"></div>
+</div>
+
+<script>
+const KG = {"metadata":{"source":"F:\\ drive directory structure","generated":"2026-07-01"},"domains":[{"id":"cim","name":"城市信息模型(CIM)","description":"CIM平台建设、顶层设计、可行性研究、数据标准与应用实践，涵盖苏州、雄安、深圳、四川、相城、秦皇岛等多地项目","parent":null,"category":"核心领域","keywords":["CIM","城市信息模型","CIM平台","BIM","GIS","IOT","规建管","空间编码","建模轻量化"],"related_domains":["digital_twin","smart_city","bim","standards","urban_renewal"],"source_folders":["F:\\苏州CIM平台","F:\\顶层设计","F:\\雄安项目","F:\\其他项目"],"key_files":["苏州市CIM平台顶层设计成果","可行性研究报告","基于CIM的场景化应用解决方案","CIM平台数据标准（规划报批、施工图审查、竣工验收、建模轻量化）","3Dmax建模规范","雄安BIM管理平台一期系统手册","中建城市信息模型CIM产业研究报告202104010.docx","基于城市信息模型（CIM）的智慧园区建设指南.pdf","基于城市信息模型（CIM）的智慧社区建设指南.pdf"]},{"id":"digital_twin","name":"数字孪生","description":"数字孪生城市理论、技术、白皮书、案例与实践，包括仿真推演、平台技术要求、产业图谱和创新应用场景","parent":null,"category":"核心领域","keywords":["数字孪生","数字孪生城市","仿真推演","产业图谱","模型构建","城市大脑"],"related_domains":["cim","smart_city","white_papers","standards"],"source_folders":["F:\\白皮书\\数字孪生白皮书","F:\\苏州CIM平台\\CIM和数字经济研究"],"key_files":["数字孪生城市白皮书（2020-2023系列）","数字孪生世界白皮书2023.pdf","数字孪生发展研究报告(华为&信通院）.pdf","数字孪生城市产业图谱研究报告.pdf","数字孪生城市仿真推演系统功能要求（2022年）.pdf","数字孪生城市创新应用场景研究报告（2023）.pdf","数字孪生城市技术应用典型实践案例汇编.pdf","数字孪生平台技术要求（发布稿）.pdf","数字孪生模型构建理论及应用.pdf","城市数字孪生标准化白皮书（2022版）.pdf","中国数字孪生行业研究报告2023.pdf"]},{"id":"smart_city","name":"智慧城市","description":"智慧城市整体解决方案、城市大脑、智慧园区、智慧物业、智慧社区等城市级智能化应用","parent":null,"category":"核心领域","keywords":["智慧城市","城市大脑","智慧园区","智慧社区","智慧物业","AI赋能","数字化转型"],"related_domains":["cim","digital_twin","white_papers","urban_renewal"],"source_folders":["F:\\其他项目","F:\\白皮书"],"key_files":["AI赋能智慧城市白皮书.pdf","城市大脑白皮书3.0（阿里）.pdf","城市大脑发展白皮书（2022）.pdf","咸宁智慧物业","妈湾智能城市","园区数智化转型毕马威.pdf","基于城市信息模型（CIM）的智慧园区建设指南.pdf","基于城市信息模型（CIM）的智慧社区建设指南.pdf","《零碳智慧园区白皮书》（2022版）.pdf"]},{"id":"digital_economy","name":"数字经济与数据要素","description":"数字经济研究、数据要素、数据资产化、数据交易与数商产业","parent":null,"category":"核心领域","keywords":["数字经济","数据要素","数据资产化","数据交易","数商产业","数字中国","数字治理"],"related_domains":["cim","white_papers","ai"],"source_folders":["F:\\苏州CIM平台\\数字经济课题","F:\\苏州CIM平台\\CIM和数字经济研究","F:\\白皮书"],"key_files":["数字经济课题","CIM和数字经济研究","数据要素白皮书（2023年）.pdf","《数据资产化之路——数据资产的估值与行业实践》.pdf","中国数字经济发展报告2022.pdf","全球数字经济白皮书.pdf","数字中国发展报告2021.pdf","国家大数据政策文件汇编（2022年）.pdf"]},{"id":"ai","name":"人工智能与大模型","description":"AI大模型、AIGC、ChatGPT、生成式AI、知识图谱与大模型融合、智算中心","parent":null,"category":"核心领域","keywords":["AI","大模型","AIGC","ChatGPT","生成式AI","GPT","大语言模型","预训练模型","知识图谱","智算中心"],"related_domains":["white_papers","digital_economy","learning"],"source_folders":["F:\\白皮书\\人工智能","F:\\学习资料"],"key_files":["2022中国大模型发展白皮书.pdf","2023年中国AI大模型行业白皮书.pdf","2024全球生成式AI专利报告-en_cn.pdf","ChatGPT研究框架（2023）-国泰君安.pdf","预训练大模型白皮书.pdf","大模型技术白皮书2023版.pdf","知识图谱与大模型融合实践研究报告.pdf","面向AI大模型的智算中心网络演进白皮书.pdf","清华大学：大语言模型综合性能评估报告.pdf"]},{"id":"bim","name":"BIM与建筑数字化","description":"BIM管理平台、BIM数据标准、3D建模规范、施工图审查与竣工验收数字化","parent":"cim","category":"核心领域","keywords":["BIM","BIM管理平台","3Dmax","施工图审查","竣工验收","建模轻量化","规建管一体化"],"related_domains":["cim","standards"],"source_folders":["F:\\雄安项目\\雄安BIM管理平台一期","F:\\1_标准规范","F:\\顶层设计"],"key_files":["雄安BIM管理平台一期系统手册","雄安BIM管理平台一期需求分析","CIM平台数据标准（规划报批、施工图审查、竣工验收、建模轻量化）","3Dmax建模规范","BIM数据标准"]},{"id":"urban_renewal","name":"城市更新与古城保护","description":"历史城区保护与更新、城市体检、古城数字化、广州白云区城市更新项目","parent":null,"category":"核心领域","keywords":["城市更新","古城保护","城市体检","历史城区","数字化保护","空间编码"],"related_domains":["cim","smart_city","digital_twin"],"source_folders":["F:\\苏州CIM平台\\历史城区驾驶舱","F:\\雄安项目\\城市体检","F:\\其他项目\\广州白云区城市更新","F:\\苏州CIM平台\\自资部城市体检数字化研究"],"key_files":["历史城区驾驶舱视频","古城保护相关文档","城市体检数字化研究","广州白云区城市更新"]},{"id":"suzhou_cim","name":"苏州CIM平台","description":"苏州市CIM平台建设全周期：历史城区驾驶舱、常熟智慧园区专项规划、相城区CIM试点、自资部城市体检数字化研究","parent":"cim","category":"项目实践","keywords":["苏州","CIM平台","历史城区","常熟","相城区","城市体检","数字经济"],"related_domains":["cim","urban_renewal","digital_economy"],"source_folders":["F:\\苏州CIM平台"],"key_files":["历史城区驾驶舱视频","常熟智慧园区专项规划","数字经济课题","CIM和数字经济研究","相城区CIM试点","自资部城市体检数字化研究","文章（学术论文）"]},{"id":"xiongan","name":"雄安项目","description":"雄安BIM管理平台一期与二期、规建管一体化、城市体检、写书、原型图与需求分析","parent":"cim","category":"项目实践","keywords":["雄安","BIM管理平台","规建管一体化","雄安二期","城市体检","原型图"],"related_domains":["cim","bim","urban_renewal"],"source_folders":["F:\\雄安项目"],"key_files":["雄安BIM管理平台一期系统手册","雄安BIM管理平台一期需求分析","雄安BIM管理平台一期验收方案","雄安二期","雄安城市信息模型CIM的发展路径探讨.pdf"]},{"id":"top_design","name":"顶层设计与可行性研究","description":"CIM平台顶层设计成果、可行性研究报告、自然资源信息化顶层设计、深圳CIM平台技术文档","parent":"cim","category":"项目实践","keywords":["顶层设计","可行性研究","信息化规划","深圳CIM","自然资源信息化","空间编码"],"related_domains":["cim","standards"],"source_folders":["F:\\顶层设计"],"key_files":["苏州市CIM平台顶层设计成果","可行性研究报告","自然资源信息化顶层设计","深圳CIM平台技术文档","基于CIM的场景化应用解决方案","3Dmax建模规范","古城保护"]},{"id":"other_projects","name":"其他城市项目","description":"四川省CIM平台、咸宁智慧物业、妈湾智能城市、广州白云区城市更新、秦皇岛等地CIM与智慧城市项目","parent":"smart_city","category":"项目实践","keywords":["四川省CIM","咸宁智慧物业","妈湾智能城市","广州白云区","秦皇岛","智慧园区"],"related_domains":["cim","smart_city"],"source_folders":["F:\\其他项目"],"key_files":["四川省CIM平台","相城区CIM试点","咸宁智慧物业","妈湾智能城市","广州白云区城市更新"]},{"id":"white_papers","name":"行业白皮书与研究报告","description":"涵盖信通院白皮书合集（2020-2023）、数字孪生白皮书、AI/大模型白皮书、各行业研究报告","parent":null,"category":"知识储备","keywords":["白皮书","研究报告","信通院","行业报告","产业报告"],"related_domains":["digital_twin","ai","digital_economy","standards"],"source_folders":["F:\\白皮书"],"key_files":["2023年中国信息通信研究院集智白皮书合集","数字孪生城市白皮书（2020-2023系列）","数字孪生世界白皮书2023.pdf","中国AI大模型工业应用指数.pdf","大模型技术白皮书2023版.pdf","云计算白皮书（2020-2023系列）","大数据白皮书（2020-2023系列）","人工智能全域变革图景展望2023.pdf"]},{"id":"standards","name":"行业标准与规范","description":"CIM数据标准、国土空间规划标准、BIM数据标准、实景三维中国技术大纲、城市体检标准","parent":null,"category":"知识储备","keywords":["标准","规范","CIM数据标准","国土空间规划","实景三维","施工图审查","竣工验收","建模轻量化"],"related_domains":["cim","bim","digital_twin"],"source_folders":["F:\\1_标准规范"],"key_files":["CIM平台数据标准","国土空间调查规程","实景三维中国技术大纲","数字孪生城市软件人机交互技术总体要求","数字孪生城市仿真推演系统功能要求（2022年）","数字孪生平台技术要求（发布稿）","数字孪生城市平台技术要求2023发布稿"]},{"id":"learning","name":"技术学习与课程资料","description":"Python数据分析、PyTorch、Transformer/BERT/GPT、Sora、数据科学、统计学习","parent":null,"category":"知识储备","keywords":["Python","PyTorch","Transformer","BERT","GPT","Sora","数据科学","统计学习","Kaggle","机器学习"],"related_domains":["ai","academic"],"source_folders":["F:\\学习资料"],"key_files":["Python数据分析","PyTorch教程","Transformer/BERT/GPT","Sora技术解析","The Elements of Statistical Learning","Kaggle Book"]},{"id":"books","name":"书籍收藏","description":"电子书籍，包括《智能简史》等","parent":null,"category":"知识储备","keywords":["书籍","智能简史"],"related_domains":["ai"],"source_folders":["F:\\书籍"],"key_files":["《智能简史》.pdf"]},{"id":"academic","name":"学术研究","description":"国科大科技创新政策分析课题、人大高瓴AI学院课程、学术论文与写作","parent":null,"category":"学术研究","keywords":["学术研究","科技创新政策","公共科技政策","模式识别","计算机视觉","深度学习","定量评估"],"related_domains":["ai","learning"],"source_folders":["F:\\国科大研究生","F:\\人大高瓴人工智能学院","F:\\苏州CIM平台\\文章","F:\\雄安项目\\写书","F:\\雄安项目\\文章"],"key_files":["科技创新政策分析课题（合稿、定量评估、清华出版社）","公共科技政策导论","深度学习课程资料","数字图像处理","钱学森城市学金奖提名奖.pdf","雄安城市信息模型CIM的发展路径探讨.pdf"]},{"id":"rencai_ai","name":"人大高瓴AI学院课程","description":"模式识别与计算机视觉、深度学习课程、数字图像处理","parent":"academic","category":"学术研究","keywords":["模式识别","计算机视觉","深度学习","数字图像处理","人大高瓴"],"related_domains":["academic","ai","learning"],"source_folders":["F:\\人大高瓴人工智能学院"],"key_files":["深度学习课程资料（LSTM、RNN、全连接神经网络、机器学习）","数字图像处理"]},{"id":"ucast_grad","name":"国科大研究生课题","description":"科技创新政策分析课题、公共科技政策导论、定量评估、清华出版社合作","parent":"academic","category":"学术研究","keywords":["国科大","科技创新政策","定量评估","公共科技政策","清华出版社"],"related_domains":["academic"],"source_folders":["F:\\国科大研究生"],"key_files":["科技创新政策分析课题（合稿、定量评估、清华出版社）","公共科技政策导论"]},{"id":"personal","name":"个人资料与职业档案","description":"个人简历（AI业务总监、智慧城市解决方案、售前解决方案、数据要素方向）、学历学位证、职称证书、读博计划","parent":null,"category":"个人档案","keywords":["简历","AI业务总监","智慧城市解决方案","售前解决方案","数据要素","学历","职称","读博"],"related_domains":["cim","digital_economy","ai"],"source_folders":["F:\\个人资料"],"key_files":["简历（AI业务总监方向）","简历（智慧城市解决方案方向）","简历（售前解决方案方向）","简历（数据要素方向）","学历学位证","职称证书","高项证书.png","附件4：读博计划书.docx"]},{"id":"video_demos","name":"视频Demo与演示素材","description":"历史城区驾驶舱录屏、百花山视频、雪球短视频素材、项目演示视频","parent":null,"category":"个人档案","keywords":["视频","demo","录屏","驾驶舱","演示"],"related_domains":["suzhou_cim"],"source_folders":["F:\\苏州CIM平台\\历史城区驾驶舱视频","F:\\苏州CIM平台\\录屏","F:\\雪球","F:\\视频demo"],"key_files":["历史城区驾驶舱视频","录屏","雪球（多个mp4短视频文件）","孪生视频0706.zip"]}],"relationships":[{"from":"cim","to":"digital_twin","type":"技术依赖","description":"CIM是数字孪生城市的核心数据底座，数字孪生是CIM的演进方向"},{"from":"cim","to":"bim","type":"数据融合","description":"CIM融合BIM/GIS/IOT多源数据，BIM是CIM建筑细粒度数据的核心来源"},{"from":"cim","to":"smart_city","type":"应用支撑","description":"CIM平台为智慧城市提供空间数据底座，支撑智慧园区、智慧社区等应用场景"},{"from":"cim","to":"standards","type":"标准遵循","description":"CIM平台建设严格遵循CIM数据标准、BIM标准和国土空间规划标准"},{"from":"cim","to":"urban_renewal","type":"场景应用","description":"CIM支撑城市更新与古城保护的数字化管理、城市体检和空间分析"},{"from":"digital_twin","to":"smart_city","type":"技术赋能","description":"数字孪生技术为智慧城市提供仿真推演和态势感知能力"},{"from":"digital_twin","to":"standards","type":"标准遵循","description":"数字孪生城市建设遵循平台技术要求、仿真推演功能要求等标准规范"},{"from":"ai","to":"digital_twin","type":"技术驱动","description":"AI大模型为数字孪生提供智能分析、语义理解和预测推演能力"},{"from":"ai","to":"smart_city","type":"技术赋能","description":"AI赋能智慧城市，提供城市大脑、智能决策等核心能力"},{"from":"ai","to":"digital_economy","type":"产业驱动","description":"AI大模型是数字经济的核心技术引擎，驱动数据要素价值释放"},{"from":"digital_economy","to":"cim","type":"价值延伸","description":"CIM平台沉淀的城市数据是数字经济的重要数据要素来源"},{"from":"suzhou_cim","to":"xiongan","type":"经验迁移","description":"苏州CIM与雄安BIM管理平台在实践中互相借鉴顶层设计和应用场景经验"},{"from":"suzhou_cim","to":"top_design","type":"方案支撑","description":"苏州CIM平台的顶层设计和可行性研究为其他城市CIM建设提供模板"},{"from":"xiongan","to":"bim","type":"实践标杆","description":"雄安BIM管理平台是BIM在规建管一体化领域的标杆实践"},{"from":"white_papers","to":"digital_twin","type":"知识积累","description":"白皮书系列（2020-2023）记录了数字孪生城市从概念到实践的演进脉络"},{"from":"white_papers","to":"ai","type":"知识积累","description":"AI白皮书系列记录了大模型从预训练到AIGC应用的发展趋势"},{"from":"white_papers","to":"digital_economy","type":"知识积累","description":"数字经济与数据要素白皮书为政策制定和产业实践提供参考"},{"from":"academic","to":"ai","type":"理论基础","description":"学术研究（深度学习、计算机视觉、模式识别）为AI大模型发展提供理论基础"},{"from":"learning","to":"ai","type":"技能支撑","description":"Python/PyTorch/Transformer等技术学习是掌握AI大模型开发的必备技能"},{"from":"personal","to":"cim","type":"职业关联","description":"个人职业方向（智慧城市解决方案、AI业务总监）与CIM/数字孪生/数据要素领域高度相关"},{"from":"personal","to":"digital_economy","type":"职业关联","description":"数据要素方向简历反映了从CIM向数据要素领域的职业拓展"},{"from":"personal","to":"academic","type":"学术关联","description":"读博计划、国科大研究生课题与当前智慧城市/AI领域的职业实践相呼应"},{"from":"video_demos","to":"suzhou_cim","type":"成果展示","description":"驾驶舱录屏和项目演示视频是苏州CIM平台建设成果的可视化展示"},{"from":"other_projects","to":"cim","type":"实践拓展","description":"四川、秦皇岛、广州等地CIM项目是CIM方法论在不同城市的实践拓展"},{"from":"rencai_ai","to":"ucast_grad","type":"学术衔接","description":"人大AI学院课程与国科大科技政策研究形成'技术+政策'的学术能力组合"},{"from":"books","to":"ai","type":"知识补充","description":"《智能简史》等书籍为理解AI发展脉络提供历史和哲学视角"}]};
+
+const catColors = {"核心领域":"#4A7C59","项目实践":"#6BA3D6","知识储备":"#D4A843","学术研究":"#C75B5B","个人档案":"#8B6BB5"};
+const colorMap = {};
+KG.domains.forEach(d => { colorMap[d.id] = catColors[d.category] || '#4A7C59'; });
+
+const nodeMap = {};
+KG.domains.forEach(d => { nodeMap[d.id] = d; });
+
+// ===== BUILD NAV TREE =====
+const categories = ["核心领域","项目实践","知识储备","学术研究","个人档案"];
+const catIcons = {"核心领域":"◆","项目实践":"▶","知识储备":"■","学术研究":"●","个人档案":"★"};
+
+function buildNavTree() {
+  const tree = document.getElementById('nav-tree');
+  tree.innerHTML = '';
+  categories.forEach(cat => {
+    const items = KG.domains.filter(d => d.category === cat && !d.parent);
+    const children = KG.domains.filter(d => d.category === cat && d.parent);
+    if (items.length === 0) return;
+    const group = document.createElement('div');
+    group.className = 'nav-group';
+    const title = document.createElement('div');
+    title.className = 'nav-group-title';
+    title.innerHTML = `<span class="cat-dot" style="background:${catColors[cat]}"></span><span style="flex:1">${cat}</span><span class="arrow">▼</span>`;
+    group.appendChild(title);
+    const childContainer = document.createElement('div');
+    childContainer.className = 'nav-children';
+    childContainer.style.maxHeight = '1000px';
+    items.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'nav-item';
+      el.dataset.id = item.id;
+      el.innerHTML = `<span class="dot" style="background:${colorMap[item.id]}"></span><span class="label">${item.name}</span><span class="badge">${item.key_files.length}</span>`;
+      el.onclick = () => selectDomain(item.id);
+      childContainer.appendChild(el);
+      // sub-items
+      const subs = children.filter(c => c.parent === item.id);
+      subs.forEach(sub => {
+        const sel = document.createElement('div');
+        sel.className = 'nav-item';
+        sel.dataset.id = sub.id;
+        sel.style.paddingLeft = '54px';
+        sel.innerHTML = `<span class="dot" style="background:${colorMap[sub.id]}"></span><span class="label">${sub.name}</span><span class="badge">${sub.key_files.length}</span>`;
+        sel.onclick = () => selectDomain(sub.id);
+        childContainer.appendChild(sel);
+      });
+    });
+    group.appendChild(childContainer);
+    tree.appendChild(group);
+    title.onclick = () => {
+      const arrow = title.querySelector('.arrow');
+      arrow.classList.toggle('collapsed');
+      childContainer.classList.toggle('collapsed');
+    };
+  });
+}
+buildNavTree();
+
+let activeId = null;
+
+function selectDomain(id) {
+  activeId = id;
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.id === id);
+  });
+  const domain = nodeMap[id];
+  if (domain) {
+    showDetail(domain);
+    if (currentView === 'graph') {
+      selectedGraphNode = graphNodes.find(n => n.id === id) || null;
+    }
+  }
+}
+
+// ===== DETAIL PANEL =====
+function showDetail(d) {
+  const panel = document.getElementById('detail');
+  const relEdges = KG.relationships.filter(r => r.from === d.id || r.to === d.id);
+  document.getElementById('detail-title').textContent = d.name;
+  document.getElementById('detail-cat').textContent = d.category + (d.parent ? ' > ' + nodeMap[d.parent].name : '');
+  const body = document.getElementById('detail-body');
+  body.innerHTML = `
+    <div class="d-section"><div class="d-section-title">描述</div><div class="d-desc">${d.description}</div></div>
+    <div class="d-section"><div class="d-section-title">关键词</div><div class="d-kws">${d.keywords.map(k=>`<span class="d-kw">${k}</span>`).join('')}</div></div>
+    <div class="d-section"><div class="d-section-title">来源目录</div>${d.source_folders.map(f=>`<div class="d-list-item">${f}</div>`).join('')}</div>
+    <div class="d-section"><div class="d-section-title">关键文件 (${d.key_files.length})</div>${d.key_files.map(f=>`<div class="d-list-item">${f}</div>`).join('')}</div>
+    <div class="d-section"><div class="d-section-title">关联领域 (${relEdges.length})</div><div>${relEdges.map(e => {
+      const other = e.from === d.id ? e.to : e.from;
+      const otherD = nodeMap[other];
+      return `<span class="d-rel-item" onclick="selectDomain('${other}')"><span style="color:${colorMap[other]}">●</span> ${otherD?otherD.name:other} <span class="rel-type">${e.type}</span></span>`;
+    }).join('')}</div></div>
+  `;
+  panel.classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detail').classList.remove('open');
+  activeId = null;
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  selectedGraphNode = null;
+}
+
+// ===== SEARCH =====
+document.getElementById('globalSearch').addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  document.querySelectorAll('.nav-item').forEach(el => {
+    const id = el.dataset.id;
+    const d = nodeMap[id];
+    if (!d) return;
+    const match = !q || d.name.toLowerCase().includes(q) || d.keywords.some(k=>k.toLowerCase().includes(q)) || d.key_files.some(f=>f.toLowerCase().includes(q));
+    el.style.display = match ? '' : 'none';
+  });
+  // expand all groups when searching
+  if (q) {
+    document.querySelectorAll('.nav-children').forEach(c => c.classList.remove('collapsed'));
+    document.querySelectorAll('.nav-group-title .arrow').forEach(a => a.classList.remove('collapsed'));
+  }
+});
+
+// ===== GRAPH VIEW =====
+const canvas = document.getElementById('graph-canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+let graphNodes = [];
+let selectedGraphNode = null;
+
+function resizeCanvas() {
+  const main = document.getElementById('main');
+  W = canvas.width = main.clientWidth;
+  H = canvas.height = main.clientHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function initGraphNodes() {
+  graphNodes = KG.domains.map((d, i) => {
+    const angle = (i / KG.domains.length) * Math.PI * 2 - Math.PI / 2;
+    const r = Math.min(W, H) * 0.3;
+    return {
+      ...d, x: W/2 + Math.cos(angle)*r + (Math.random()-.5)*40,
+      y: H/2 + Math.sin(angle)*r + (Math.random()-.5)*40,
+      vx:0, vy:0,
+      radius: d.parent ? 16 : 26,
+      color: colorMap[d.id]
+    };
+  });
+}
+initGraphNodes();
+
+const graphNodeMap = {};
+graphNodes.forEach(n => graphNodeMap[n.id] = n);
+const graphEdges = KG.relationships.filter(r=>graphNodeMap[r.from]&&graphNodeMap[r.to]).map(r=>({
+  source:graphNodeMap[r.from],target:graphNodeMap[r.to],type:r.type,desc:r.description
+}));
+
+let gHovered = null, gDragging = null;
+
+function forceStep() {
+  for(let i=0;i<graphNodes.length;i++){
+    for(let j=i+1;j<graphNodes.length;j++){
+      let dx=graphNodes[j].x-graphNodes[i].x, dy=graphNodes[j].y-graphNodes[i].y;
+      let dist=Math.sqrt(dx*dx+dy*dy)||1;
+      let force=(180-dist)*0.002;
+      if(dist<90)force-=0.4;
+      graphNodes[i].vx-=(dx/dist)*force; graphNodes[i].vy-=(dy/dist)*force;
+      graphNodes[j].vx+=(dx/dist)*force; graphNodes[j].vy+=(dy/dist)*force;
+    }
+  }
+  graphEdges.forEach(e=>{
+    let dx=e.target.x-e.source.x,dy=e.target.y-e.source.y;
+    let dist=Math.sqrt(dx*dx+dy*dy)||1;
+    let force=(dist-200)*0.003;
+    e.source.vx+=(dx/dist)*force;e.source.vy+=(dy/dist)*force;
+    e.target.vx-=(dx/dist)*force;e.target.vy-=(dy/dist)*force;
+  });
+  graphNodes.forEach(n=>{
+    n.vx+=(W/2-n.x)*0.0003; n.vy+=(H/2-n.y)*0.0003;
+    n.vx*=0.88; n.vy*=0.88;
+    if(n!==gDragging){n.x+=n.vx;n.y+=n.vy;}
+  });
+}
+
+function drawGraph() {
+  if(currentView!=='graph'){requestAnimationFrame(drawGraph);return;}
+  ctx.clearRect(0,0,W,H);
+  graphEdges.forEach(e=>{
+    const hl=gHovered&&(e.source===gHovered||e.target===gHovered)||selectedGraphNode&&(e.source===selectedGraphNode||e.target===selectedGraphNode);
+    const dim=(gHovered||selectedGraphNode)&&!hl;
+    ctx.beginPath();ctx.moveTo(e.source.x,e.source.y);ctx.lineTo(e.target.x,e.target.y);
+    ctx.strokeStyle=dim?'rgba(50,60,80,0.15)':hl?'rgba(74,124,89,0.7)':'rgba(60,80,100,0.25)';
+    ctx.lineWidth=hl?2:1;ctx.stroke();
+    if(hl){
+      const mx=(e.source.x+e.target.x)/2,my=(e.source.y+e.target.y)/2;
+      ctx.fillStyle='rgba(74,124,89,0.85)';ctx.font='11px Microsoft YaHei';ctx.textAlign='center';
+      ctx.fillText(e.type,mx,my-5);
+    }
+  });
+  graphNodes.forEach(n=>{
+    const focus=gHovered||selectedGraphNode;
+    const isHov=gHovered===n;const isSel=selectedGraphNode===n;
+    const isConn=focus&&graphEdges.some(e=>(e.source===focus&&e.target===n)||(e.target===focus&&e.source===n));
+    const dim=focus&&!isHov&&!isSel&&!isConn;
+    const r=isHov?n.radius*1.25:n.radius;
+    const glow=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,r+10);
+    glow.addColorStop(0,n.color+'25');glow.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(n.x,n.y,r+6,0,Math.PI*2);ctx.fillStyle=glow;ctx.fill();
+    ctx.beginPath();ctx.arc(n.x,n.y,r,0,Math.PI*2);
+    ctx.fillStyle=isHov||isSel?n.color:n.color+(dim?'35':'BB');ctx.fill();
+    ctx.strokeStyle=isHov||isSel?'#fff':n.color+'50';ctx.lineWidth=isHov||isSel?2:1;ctx.stroke();
+    if(n.parent){ctx.beginPath();ctx.arc(n.x,n.y,r-4,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=1;ctx.stroke();}
+    ctx.fillStyle=dim?'rgba(200,210,220,0.15)':'rgba(255,255,255,0.92)';
+    ctx.font=`${n.parent?'11':'13'}px Microsoft YaHei`;ctx.textAlign='center';ctx.textBaseline='middle';
+    const nm=n.name.length>8?n.name.substring(0,7)+'…':n.name;
+    ctx.fillText(nm,n.x,n.y);
+  });
+  forceStep();
+  requestAnimationFrame(drawGraph);
+}
+
+function getGraphNode(x,y){
+  for(let i=graphNodes.length-1;i>=0;i--){
+    const dx=x-graphNodes[i].x,dy=y-graphNodes[i].y;
+    if(dx*dx+dy*dy<graphNodes[i].radius*graphNodes[i].radius*1.5)return graphNodes[i];
+  }
+  return null;
+}
+
+canvas.addEventListener('mousemove',e=>{
+  const n=getGraphNode(e.offsetX,e.offsetY);gHovered=n;
+  canvas.style.cursor=n?'pointer':'default';
+  if(gDragging){gDragging.x=e.offsetX;gDragging.y=e.offsetY;}
+});
+canvas.addEventListener('mousedown',e=>{const n=getGraphNode(e.offsetX,e.offsetY);if(n)gDragging=n;});
+canvas.addEventListener('mouseup',()=>{gDragging=null;});
+canvas.addEventListener('click',e=>{
+  const n=getGraphNode(e.offsetX,e.offsetY);
+  if(n){selectDomain(n.id);}else{closeDetail();}
+});
+
+// ===== ARCHITECTURE VIEW =====
+function buildArchView() {
+  const view = document.getElementById('arch-view');
+  view.innerHTML = '';
+  // Relationship overview
+  const relMap = document.createElement('div');
+  relMap.className = 'rel-map';
+  relMap.innerHTML = `<h3 style="color:#e6edf3;margin-bottom:12px">核心关联关系</h3>`;
+  KG.relationships.forEach(r => {
+    const fromD = nodeMap[r.from], toD = nodeMap[r.to];
+    if(!fromD||!toD)return;
+    const row = document.createElement('div');
+    row.className = 'rel-row';
+    row.innerHTML = `<span class="rel-from" style="color:${colorMap[r.from]}">${fromD.name}</span><span class="rel-arrow">→</span><span class="rel-type">${r.type}</span><span class="rel-arrow2">→</span><span class="rel-to" style="color:${colorMap[r.to]}">${toD.name}</span>`;
+    relMap.appendChild(row);
+  });
+  view.appendChild(relMap);
+
+  // Category sections
+  categories.forEach(cat => {
+    const items = KG.domains.filter(d => d.category === cat && !d.parent);
+    if(items.length===0)return;
+    const section = document.createElement('div');
+    section.className = 'arch-section';
+    section.innerHTML = `<div class="arch-section-title"><span class="icon" style="background:${catColors[cat]}">${catIcons[cat]||'●'}</span><span style="color:${catColors[cat]}">${cat}</span></div>`;
+    const cards = document.createElement('div');
+    cards.className = 'arch-cards';
+    items.forEach(item => {
+      const subs = KG.domains.filter(d => d.parent === item.id);
+      const card = document.createElement('div');
+      card.className = 'arch-card';
+      card.dataset.id = item.id;
+      card.onclick = () => selectDomain(item.id);
+      card.innerHTML = `
+        <h3><span class="dot" style="background:${colorMap[item.id]}"></span>${item.name}</h3>
+        <div class="desc">${item.description}</div>
+        <div class="kws">${item.keywords.slice(0,5).map(k=>`<span class="kw">${k}</span>`).join('')}</div>
+        <span class="rel-badge">${item.key_files.length} 文件 · ${item.source_folders.length} 目录</span>
+        ${subs.length > 0 ? `<div class="arch-sub-cards">${subs.map(s => `
+          <div class="arch-sub-card" onclick="event.stopPropagation();selectDomain('${s.id}')">
+            <h4><span class="dot" style="background:${colorMap[s.id]}"></span>${s.name}</h4>
+            <div class="desc">${s.description}</div>
+          </div>`).join('')}</div>` : ''}
+      `;
+      cards.appendChild(card);
+    });
+    section.appendChild(cards);
+    view.appendChild(section);
+  });
+}
+buildArchView();
+
+// ===== VIEW SWITCH =====
+let currentView = 'graph';
+
+function switchView(v) {
+  currentView = v;
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.textContent.includes(v==='graph'?'图谱':'架构')));
+  canvas.style.display = v==='graph' ? 'block' : 'none';
+  document.getElementById('arch-view').style.display = v==='arch' ? 'block' : 'none';
+}
+
+// ===== START =====
+drawGraph();
+</script>
+</body>
+</html>
