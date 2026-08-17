@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数字孪生街区演示系统</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { overflow: hidden; font-family: 'Microsoft YaHei', sans-serif; background: #e8ecf1; color: #2c3e50; }
+
+  /* 顶部标题栏 */
+  #header {
+    position: fixed; top: 0; left: 0; right: 0; height: 56px; z-index: 100;
+    background: linear-gradient(90deg, #ffffff, #f0f4f8);
+    border-bottom: 1px solid #d0d8e0;
+    display: flex; align-items: center; padding: 0 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  #header h1 {
+    font-size: 20px; font-weight: 700; letter-spacing: 4px;
+    color: #1a73e8;
+  }
+  #header .subtitle { margin-left: 16px; font-size: 12px; color: #90a0b0; }
+
+  /* 左侧导航 */
+  #sidebar {
+    position: fixed; top: 56px; left: 0; bottom: 0; width: 260px; z-index: 90;
+    background: #ffffff; border-right: 1px solid #e0e4e8;
+    overflow-y: auto; padding: 12px 0;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+  }
+  #sidebar::-webkit-scrollbar { width: 3px; }
+  #sidebar::-webkit-scrollbar-thumb { background: #c0c8d0; border-radius: 2px; }
+
+  .nav-group { margin-bottom: 4px; }
+  .nav-group-title {
+    padding: 10px 16px; font-size: 12px; font-weight: 700; color: #1a73e8;
+    letter-spacing: 2px; cursor: pointer; display: flex; align-items: center; gap: 8px;
+    user-select: none;
+  }
+  .nav-group-title::before { content: ''; display: inline-block; width: 3px; height: 14px; background: #1a73e8; border-radius: 1px; }
+  .nav-group-title:hover { background: #f0f6ff; }
+
+  .nav-item {
+    padding: 8px 16px 8px 32px; font-size: 13px; color: #5a6a7a; cursor: pointer;
+    display: flex; align-items: center; gap: 8px; transition: all 0.2s;
+  }
+  .nav-item:hover { color: #1a73e8; background: #f0f6ff; }
+  .nav-item.active { color: #1a73e8; background: #e8f0fe; border-right: 2px solid #1a73e8; font-weight: 600; }
+  .nav-item .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .nav-item .dot.building { background: #4a90d9; }
+  .nav-item .dot.sensor { background: #00bfa5; }
+  .nav-item .dot.robot { background: #e74c3c; }
+  .nav-item .dot.data { background: #f39c12; }
+  .nav-item .dot.people { background: #9b59b6; }
+  .nav-item .dot.poi { background: #e67e22; }
+
+  /* 右侧详情面板 */
+  #detail-panel {
+    position: fixed; top: 56px; right: 0; bottom: 0; width: 340px; z-index: 90;
+    background: #ffffff; border-left: 1px solid #e0e4e8;
+    transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+    overflow-y: auto; padding: 0;
+    box-shadow: -2px 0 8px rgba(0,0,0,0.06);
+  }
+  #detail-panel.open { transform: translateX(0); }
+  #detail-panel::-webkit-scrollbar { width: 3px; }
+  #detail-panel::-webkit-scrollbar-thumb { background: #c0c8d0; border-radius: 2px; }
+
+  .panel-header {
+    padding: 16px 20px; border-bottom: 1px solid #e8ecf0;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; background: #ffffff; z-index: 1;
+  }
+  .panel-header h2 { font-size: 16px; font-weight: 700; color: #1a73e8; }
+  .panel-close { cursor: pointer; color: #90a0b0; font-size: 20px; line-height: 1; padding: 4px; }
+  .panel-close:hover { color: #2c3e50; }
+
+  .panel-body { padding: 16px 20px; }
+  .panel-section { margin-bottom: 20px; }
+  .panel-section-title { font-size: 13px; font-weight: 700; color: #1a73e8; margin-bottom: 10px; letter-spacing: 1px; }
+  .panel-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px solid #f0f2f5; }
+  .panel-row .label { color: #7a8a9a; }
+  .panel-row .value { color: #2c3e50; font-weight: 500; }
+  .panel-row .value.highlight { color: #1a73e8; }
+  .panel-row .value.warn { color: #e74c3c; }
+  .panel-row .value.ok { color: #00bfa5; }
+
+  .status-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600;
+  }
+  .status-badge.online { background: #e0f7f0; color: #00bfa5; }
+  .status-badge.offline { background: #fde8e8; color: #e74c3c; }
+  .status-badge.alert { background: #fff8e1; color: #f39c12; }
+
+  /* 底部统计栏 */
+  #stats-bar {
+    position: fixed; bottom: 16px; left: 280px; right: 16px; z-index: 80;
+    display: flex; gap: 12px; pointer-events: none;
+  }
+  .stat-card {
+    flex: 1; background: #ffffff; border: 1px solid #e0e4e8;
+    border-radius: 8px; padding: 12px 16px; pointer-events: auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .stat-card .stat-label { font-size: 11px; color: #7a8a9a; margin-bottom: 4px; }
+  .stat-card .stat-value { font-size: 22px; font-weight: 700; color: #1a73e8; }
+  .stat-card .stat-sub { font-size: 11px; color: #90a0b0; margin-top: 2px; }
+
+  /* 3D画布 */
+  #canvas3d { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
+
+  /* 提示浮层 */
+  #tooltip {
+    position: fixed; z-index: 200; pointer-events: none;
+    background: #ffffff; border: 1px solid #d0d8e0;
+    border-radius: 6px; padding: 8px 12px; font-size: 12px; color: #2c3e50;
+    display: none; white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  #tooltip .tt-name { font-weight: 600; color: #1a73e8; margin-bottom: 2px; }
+  #tooltip .tt-type { color: #7a8a9a; font-size: 11px; }
+
+  /* 图例 */
+  #legend {
+    position: fixed; bottom: 90px; right: 16px; z-index: 80;
+    background: #ffffff; border: 1px solid #e0e4e8;
+    border-radius: 8px; padding: 12px 16px; font-size: 11px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  #legend h4 { color: #1a73e8; margin-bottom: 8px; font-size: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; color: #5a6a7a; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* 列表项 */
+  .list-item {
+    padding: 10px 20px; border-bottom: 1px solid #f0f2f5;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .list-item:hover { background: #f0f6ff; }
+  .list-item .item-name { font-size: 13px; font-weight: 500; color: #2c3e50; }
+  .list-item .item-desc { font-size: 11px; color: #7a8a9a; margin-top: 3px; }
+
+  /* 动画 */
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .pulse { animation: pulse 2s infinite; }
+
+  /* 加载遮罩 */
+  #loading {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 999;
+    background: #e8ecf1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    transition: opacity 0.5s;
+  }
+  #loading.fade-out { opacity: 0; pointer-events: none; }
+  #loading h2 { color: #1a73e8; font-size: 18px; letter-spacing: 4px; margin-bottom: 20px; }
+  .loader { width: 40px; height: 40px; border: 3px solid #d0d8e0;
+    border-top-color: #1a73e8; border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 高亮描边动画 */
+  @keyframes highlightPulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <h2>数字孪生街区</h2>
+  <div class="loader"></div>
+</div>
+
+<div id="header">
+  <h1>数字孪生街区演示系统</h1>
+  <span class="subtitle">DIGITAL TWIN BLOCK DEMO</span>
+</div>
+
+<div id="sidebar">
+  <div class="nav-group">
+    <div class="nav-group-title">三维建模（底座）</div>
+    <div class="nav-item" data-type="building" data-subtype="community">
+      <span class="dot building"></span>社区基础模型
+    </div>
+    <div class="nav-item" data-type="building" data-subtype="road">
+      <span class="dot building"></span>道路
+    </div>
+    <div class="nav-item" data-type="building" data-subtype="building">
+      <span class="dot building"></span>楼宇
+    </div>
+    <div class="nav-item" data-type="building" data-subtype="community_area">
+      <span class="dot building"></span>小区
+    </div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">固定感知终端</div>
+    <div class="nav-item" data-type="sensor" data-subtype="camera">
+      <span class="dot sensor"></span>监控摄像头
+    </div>
+    <div class="nav-item" data-type="sensor" data-subtype="lamp">
+      <span class="dot sensor"></span>智慧灯杆
+    </div>
+    <div class="nav-item" data-type="sensor" data-subtype="electric">
+      <span class="dot sensor"></span>智能电表
+    </div>
+    <div class="nav-item" data-type="sensor" data-subtype="water">
+      <span class="dot sensor"></span>智能水表
+    </div>
+    <div class="nav-item" data-type="sensor" data-subtype="led">
+      <span class="dot sensor"></span>LED屏幕
+    </div>
+    <div class="nav-item" data-type="sensor" data-subtype="env">
+      <span class="dot sensor"></span>环境监测设备
+    </div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">具身智能终端</div>
+    <div class="nav-item" data-type="robot" data-subtype="drone">
+      <span class="dot robot"></span>无人机
+    </div>
+    <div class="nav-item" data-type="robot" data-subtype="cleaner">
+      <span class="dot robot"></span>无人清扫车
+    </div>
+    <div class="nav-item" data-type="robot" data-subtype="dog">
+      <span class="dot robot"></span>机器狗
+    </div>
+    <div class="nav-item" data-type="robot" data-subtype="delivery">
+      <span class="dot robot"></span>无人配送车
+    </div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">数据上图</div>
+    <div class="nav-item" data-type="data" data-subtype="basic">
+      <span class="dot data"></span>街道基础数据
+    </div>
+    <div class="nav-item" data-type="data" data-subtype="people">
+      <span class="dot people"></span>特殊人群
+    </div>
+    <div class="nav-item" data-type="data" data-subtype="poi">
+      <span class="dot poi"></span>POI点位
+    </div>
+  </div>
+</div>
+
+<div id="detail-panel">
+  <div class="panel-header">
+    <h2 id="panel-title">详情</h2>
+    <span class="panel-close" id="panel-close">&times;</span>
+  </div>
+  <div id="panel-content"></div>
+</div>
+
+<div id="tooltip">
+  <div class="tt-name"></div>
+  <div class="tt-type"></div>
+</div>
+
+<div id="stats-bar">
+  <div class="stat-card">
+    <div class="stat-label">楼宇总数</div>
+    <div class="stat-value">12</div>
+    <div class="stat-sub">在线监测 12</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">感知设备</div>
+    <div class="stat-value">38</div>
+    <div class="stat-sub">在线 36 / 离线 2</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">具身智能</div>
+    <div class="stat-value">6</div>
+    <div class="stat-sub">运行中 4 / 充电 2</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">特殊人群</div>
+    <div class="stat-value">23</div>
+    <div class="stat-sub">关注等级：高 5 / 中 18</div>
+  </div>
+</div>
+
+<div id="legend">
+  <h4>图例</h4>
+  <div class="legend-item"><span class="legend-dot" style="background:#4a90d9"></span>建筑/小区</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#00bfa5"></span>感知设备</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#e74c3c"></span>具身智能</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#f39c12"></span>数据标注</div>
+</div>
+
+<canvas id="canvas3d"></canvas>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ==================== 白天模式配色 ====================
+const COLORS = {
+  ground: 0xc8d6c0,        // 浅绿灰草地
+  road: 0x8a9098,          // 灰色柏油路
+  roadLine: 0xffffff,      // 白色道路标线
+  building: [0xd4e4f7, 0xc8dced, 0xe0eaf5, 0xb8cfe0, 0xd0dff0, 0xccdaea],
+  community: 0xb8cc9a,     // 浅绿小区地面
+  communityBorder: 0x1a73e8,
+  camera: 0x00bfa5,
+  lamp: 0xffc107,
+  electric: 0x00bcd4,
+  water: 0x2196f3,
+  led: 0xd32f2f,
+  env: 0x4caf50,
+  drone: 0xe74c3c,
+  cleaner: 0xff9800,
+  dog: 0x9b59b6,
+  delivery: 0x7b1fa2,
+  label: 0x1a73e8,
+  highlight: 0xffff00,     // 高亮色：黄色描边
+  windowGlass: 0x8ab4d6,   // 窗户玻璃色
+  roofAccent: 0x90a4ae,
+};
+
+// 场景中所有可交互对象的注册表
+const interactables = [];
+// 按类别分组的对象索引
+const interactableGroups = {};
+let selectedObject = null;
+let activeHighlightType = null;   // 当前高亮的类别 {type, subtype}
+const highlightOutlines = [];     // 高亮描边对象
+
+function getGroupKey(type, subtype) {
+  return type + '_' + subtype;
+}
+
+// ==================== 场景初始化 ====================
+const canvas = document.getElementById('canvas3d');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.5;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);  // 天蓝色
+scene.fog = new THREE.Fog(0xc8d8e8, 80, 200);  // 远处淡蓝雾
+
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(60, 45, 60);
+camera.lookAt(0, 0, 0);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.maxPolarAngle = Math.PI / 2.2;
+controls.minDistance = 15;
+controls.maxDistance = 150;
+controls.target.set(0, 0, 0);
+
+// ==================== 光照（白天） ====================
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+scene.add(ambientLight);
+
+const dirLight = new THREE.DirectionalLight(0xfffde7, 2.0);
+dirLight.position.set(40, 60, 30);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(2048, 2048);
+dirLight.shadow.camera.left = -60;
+dirLight.shadow.camera.right = 60;
+dirLight.shadow.camera.top = 60;
+dirLight.shadow.camera.bottom = -60;
+scene.add(dirLight);
+
+const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x8d6e3f, 0.5);
+scene.add(hemiLight);
+
+// 点光源模拟路灯（白天减弱）
+function addPointLight(x, y, z, color, intensity) {
+  const light = new THREE.PointLight(color, intensity, 20);
+  light.position.set(x, y, z);
+  scene.add(light);
+}
+
+// ==================== 地面 ====================
+function createGround() {
+  const geo = new THREE.PlaneGeometry(120, 120);
+  const mat = new THREE.MeshStandardMaterial({
+    color: COLORS.ground,
+    roughness: 0.95,
+    metalness: 0.0,
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+
+  // 网格辅助线（微弱）
+  const grid = new THREE.GridHelper(120, 60, 0xb0c0a0, 0xa8b898);
+  grid.position.y = 0.01;
+  grid.material.opacity = 0.3;
+  grid.material.transparent = true;
+  scene.add(grid);
+}
+
+// ==================== 道路 ====================
+function createRoads() {
+  const roadMat = new THREE.MeshStandardMaterial({ color: COLORS.road, roughness: 0.7 });
+  const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0xc0c0b8, roughness: 0.8 });
+
+  // 主干道 - 横向
+  const road1 = new THREE.Mesh(new THREE.BoxGeometry(120, 0.05, 8), roadMat);
+  road1.position.set(0, 0.03, 0);
+  road1.receiveShadow = true;
+  scene.add(road1);
+  registerInteractable(road1, { type: 'building', subtype: 'road', name: '东西主干道', data: { length: '120m', width: '8m', lanes: '双向4车道', status: '正常通行' } });
+
+  // 主干道 - 纵向
+  const road2 = new THREE.Mesh(new THREE.BoxGeometry(8, 0.05, 120), roadMat);
+  road2.position.set(0, 0.03, 0);
+  road2.receiveShadow = true;
+  scene.add(road2);
+  registerInteractable(road2, { type: 'building', subtype: 'road', name: '南北主干道', data: { length: '120m', width: '8m', lanes: '双向4车道', status: '正常通行' } });
+
+  // 次干道
+  const road3 = new THREE.Mesh(new THREE.BoxGeometry(120, 0.05, 5), roadMat);
+  road3.position.set(0, 0.03, 22);
+  road3.receiveShadow = true;
+  scene.add(road3);
+  registerInteractable(road3, { type: 'building', subtype: 'road', name: '东西次干道', data: { length: '120m', width: '5m', lanes: '双向2车道', status: '正常通行' } });
+
+  const road4 = new THREE.Mesh(new THREE.BoxGeometry(120, 0.05, 5), roadMat);
+  road4.position.set(0, 0.03, -22);
+  road4.receiveShadow = true;
+  scene.add(road4);
+  registerInteractable(road4, { type: 'building', subtype: 'road', name: '东西次干道(南)', data: { length: '120m', width: '5m', lanes: '双向2车道', status: '正常通行' } });
+
+  const road5 = new THREE.Mesh(new THREE.BoxGeometry(5, 0.05, 120), roadMat);
+  road5.position.set(22, 0.03, 0);
+  road5.receiveShadow = true;
+  scene.add(road5);
+  registerInteractable(road5, { type: 'building', subtype: 'road', name: '南北次干道(东)', data: { length: '120m', width: '5m', lanes: '双向2车道', status: '正常通行' } });
+
+  const road6 = new THREE.Mesh(new THREE.BoxGeometry(5, 0.05, 120), roadMat);
+  road6.position.set(-22, 0.03, 0);
+  road6.receiveShadow = true;
+  scene.add(road6);
+  registerInteractable(road6, { type: 'building', subtype: 'road', name: '南北次干道(西)', data: { length: '120m', width: '5m', lanes: '双向2车道', status: '正常通行' } });
+
+  // 道路标线（白色）
+  const lineMat = new THREE.MeshBasicMaterial({ color: COLORS.roadLine });
+  for (let z = -55; z <= 55; z += 4) {
+    const line = new THREE.Mesh(new THREE.BoxGeometry(2, 0.06, 0.15), lineMat);
+    line.position.set(z, 0.06, 0);
+    scene.add(line);
+  }
+  for (let x = -55; x <= 55; x += 4) {
+    const line = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.06, 2), lineMat);
+    line.position.set(0, 0.06, x);
+    scene.add(line);
+  }
+}
+
+// ==================== 楼宇 ====================
+const buildingDefs = [
+  { x: 11, z: -11, w: 8, d: 6, h: 14, name: '科创大厦', floors: 18, area: '12000㎡' },
+  { x: 28, z: -11, w: 6, d: 5, h: 10, name: '人才公寓A', floors: 12, area: '6000㎡' },
+  { x: 38, z: -11, w: 5, d: 5, h: 8, name: '人才公寓B', floors: 10, area: '4500㎡' },
+  { x: 11, z: 11, w: 7, d: 6, h: 12, name: '社区服务中心', floors: 15, area: '9500㎡' },
+  { x: 28, z: 11, w: 6, d: 5, h: 9, name: '商业综合体', floors: 11, area: '8000㎡' },
+  { x: 38, z: 11, w: 5, d: 4, h: 7, name: '社区卫生站', floors: 8, area: '3000㎡' },
+  { x: -11, z: -11, w: 7, d: 6, h: 11, name: '智慧办公楼', floors: 14, area: '10000㎡' },
+  { x: -28, z: -11, w: 6, d: 5, h: 8, name: '文化中心', floors: 9, area: '5500㎡' },
+  { x: -38, z: -11, w: 5, d: 5, h: 6, name: '幼儿园', floors: 3, area: '2800㎡' },
+  { x: -11, z: 11, w: 7, d: 7, h: 13, name: '居民楼A栋', floors: 16, area: '11000㎡' },
+  { x: -28, z: 11, w: 6, d: 6, h: 10, name: '居民楼B栋', floors: 12, area: '7200㎡' },
+  { x: -38, z: 11, w: 5, d: 5, h: 9, name: '居民楼C栋', floors: 11, area: '5000㎡' },
+];
+
+function createBuildings() {
+  buildingDefs.forEach((def, i) => {
+    const group = new THREE.Group();
+    const color = COLORS.building[i % COLORS.building.length];
+
+    // 主体
+    const bodyGeo = new THREE.BoxGeometry(def.w, def.h, def.d);
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color,
+      roughness: 0.5,
+      metalness: 0.1,
+    });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.y = def.h / 2;
+    body.castShadow = true;
+    body.receiveShadow = true;
+    group.add(body);
+
+    // 窗户效果（蓝色玻璃条纹）
+    const windowMat = new THREE.MeshBasicMaterial({ color: COLORS.windowGlass, transparent: true, opacity: 0.5 });
+    for (let y = 1.5; y < def.h - 1; y += 2) {
+      for (let side = 0; side < 4; side++) {
+        const wGeo = new THREE.PlaneGeometry(def.w * 0.7, 0.6);
+        const win = new THREE.Mesh(wGeo, windowMat);
+        if (side === 0) { win.position.set(0, y, def.d / 2 + 0.01); }
+        else if (side === 1) { win.position.set(0, y, -def.d / 2 - 0.01); win.rotation.y = Math.PI; }
+        else if (side === 2) {
+          win.rotation.y = Math.PI / 2;
+          win.position.set(def.w / 2 + 0.01, y, 0);
+          const wGeo2 = new THREE.PlaneGeometry(def.d * 0.7, 0.6);
+          win.geometry = wGeo2;
+        }
+        else {
+          win.rotation.y = -Math.PI / 2;
+          win.position.set(-def.w / 2 - 0.01, y, 0);
+          const wGeo2 = new THREE.PlaneGeometry(def.d * 0.7, 0.6);
+          win.geometry = wGeo2;
+        }
+        group.add(win);
+      }
+    }
+
+    // 楼顶装饰
+    const roofGeo = new THREE.BoxGeometry(def.w * 0.4, 0.5, def.d * 0.4);
+    const roofMat = new THREE.MeshStandardMaterial({ color: COLORS.roofAccent, roughness: 0.5, metalness: 0.3 });
+    const roof = new THREE.Mesh(roofGeo, roofMat);
+    roof.position.y = def.h + 0.25;
+    group.add(roof);
+
+    group.position.set(def.x, 0, def.z);
+    scene.add(group);
+
+    registerInteractable(body, {
+      type: 'building', subtype: 'building', name: def.name,
+      data: {
+        floors: def.floors + '层',
+        area: def.area,
+        height: def.h + 'm',
+        occupancy: Math.floor(60 + Math.random() * 35) + '%',
+        fireLevel: ['一级', '二级', '三级'][Math.floor(Math.random() * 3)],
+        elevator: Math.ceil(def.floors / 5) + '部',
+        parking: Math.floor(def.floors * 8) + '个',
+      }
+    });
+  });
+}
+
+// ==================== 小区 ====================
+const communityDefs = [
+  { x: 33, z: -33, r: 12, name: '阳光花园小区', households: 856, area: '45000㎡', builtYear: '2018' },
+  { x: -33, z: -33, r: 10, name: '翠湖苑小区', households: 620, area: '32000㎡', builtYear: '2015' },
+  { x: 33, z: 33, r: 10, name: '锦绣家园', households: 730, area: '38000㎡', builtYear: '2020' },
+  { x: -33, z: 33, r: 11, name: '和谐雅居', households: 580, area: '28000㎡', builtYear: '2016' },
+];
+
+function createCommunities() {
+  communityDefs.forEach(def => {
+    const group = new THREE.Group();
+
+    // 小区地面
+    const groundGeo = new THREE.CylinderGeometry(def.r, def.r, 0.15, 32);
+    const groundMat = new THREE.MeshStandardMaterial({
+      color: COLORS.community,
+      roughness: 0.85,
+      metalness: 0.0,
+    });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.position.y = 0.08;
+    ground.receiveShadow = true;
+    group.add(ground);
+
+    // 小区边框
+    const borderGeo = new THREE.TorusGeometry(def.r, 0.1, 8, 64);
+    const borderMat = new THREE.MeshBasicMaterial({ color: COLORS.communityBorder, transparent: true, opacity: 0.7 });
+    const border = new THREE.Mesh(borderGeo, borderMat);
+    border.rotation.x = -Math.PI / 2;
+    border.position.y = 0.16;
+    group.add(border);
+
+    // 小区内小楼
+    for (let i = 0; i < 5; i++) {
+      const angle = (i / 5) * Math.PI * 2;
+      const dist = def.r * 0.55;
+      const bx = Math.cos(angle) * dist;
+      const bz = Math.sin(angle) * dist;
+      const bh = 3 + Math.random() * 5;
+      const smallBuilding = new THREE.Mesh(
+        new THREE.BoxGeometry(2.5, bh, 2.5),
+        new THREE.MeshStandardMaterial({ color: COLORS.building[Math.floor(Math.random() * COLORS.building.length)], roughness: 0.5, metalness: 0.1 })
+      );
+      smallBuilding.position.set(bx, bh / 2, bz);
+      smallBuilding.castShadow = true;
+      group.add(smallBuilding);
+    }
+
+    // 小区中心绿化
+    const greenGeo = new THREE.CylinderGeometry(def.r * 0.2, def.r * 0.2, 0.2, 16);
+    const greenMat = new THREE.MeshStandardMaterial({ color: 0x4caf50, roughness: 0.9 });
+    const green = new THREE.Mesh(greenGeo, greenMat);
+    green.position.y = 0.18;
+    group.add(green);
+
+    group.position.set(def.x, 0, def.z);
+    scene.add(group);
+
+    registerInteractable(ground, {
+      type: 'building', subtype: 'community_area', name: def.name,
+      data: {
+        households: def.households + '户',
+        area: def.area,
+        builtYear: def.builtYear + '年',
+        propertyCompany: '万科物业',
+        greeningRate: (30 + Math.random() * 20).toFixed(1) + '%',
+        parkingSpaces: Math.floor(def.households * 0.8) + '个',
+      }
+    });
+  });
+}
+
+// ==================== 固定感知终端 ====================
+function createSensorDevice(type, x, z, data) {
+  const group = new THREE.Group();
+  let color, label;
+
+  switch (type) {
+    case 'camera':
+      color = COLORS.camera; label = '监控';
+      const pole1 = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.08, 3, 8),
+        new THREE.MeshStandardMaterial({ color: 0x888888 })
+      );
+      pole1.position.y = 1.5;
+      group.add(pole1);
+      const camBody = new THREE.Mesh(
+        new THREE.BoxGeometry(0.5, 0.3, 0.6),
+        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.15 })
+      );
+      camBody.position.y = 3.1;
+      group.add(camBody);
+      const lens = new THREE.Mesh(
+        new THREE.SphereGeometry(0.12, 8, 8),
+        new THREE.MeshBasicMaterial({ color: 0x00e676 })
+      );
+      lens.position.set(0, 3.1, 0.35);
+      group.add(lens);
+      break;
+
+    case 'lamp':
+      color = COLORS.lamp; label = '灯杆';
+      const pole2 = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.1, 0.12, 5, 8),
+        new THREE.MeshStandardMaterial({ color: 0x999999 })
+      );
+      pole2.position.y = 2.5;
+      group.add(pole2);
+      const lampHead = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.6, 0.3, 0.2, 8),
+        new THREE.MeshStandardMaterial({ color: 0xf5f5f5, emissive: 0xfff8e1, emissiveIntensity: 0.3 })
+      );
+      lampHead.position.y = 5.1;
+      group.add(lampHead);
+      addPointLight(x, 5.3, z, 0xfff8e1, 0.3);
+      break;
+
+    case 'electric':
+      color = COLORS.electric; label = '电表';
+      const eBox = new THREE.Mesh(
+        new THREE.BoxGeometry(0.5, 0.6, 0.3),
+        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.1 })
+      );
+      eBox.position.y = 1.2;
+      group.add(eBox);
+      break;
+
+    case 'water':
+      color = COLORS.water; label = '水表';
+      const wBox = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.25, 0.25, 0.4, 12),
+        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.1 })
+      );
+      wBox.position.y = 0.3;
+      group.add(wBox);
+      break;
+
+    case 'led':
+      color = COLORS.led; label = 'LED';
+      const ledPole = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.08, 3, 8),
+        new THREE.MeshStandardMaterial({ color: 0x888888 })
+      );
+      ledPole.position.y = 1.5;
+      group.add(ledPole);
+      const ledScreen = new THREE.Mesh(
+        new THREE.BoxGeometry(2, 1.2, 0.1),
+        new THREE.MeshStandardMaterial({ color: 0x333333, emissive: 0xff4444, emissiveIntensity: 0.6 })
+      );
+      ledScreen.position.y = 3.3;
+      group.add(ledScreen);
+      break;
+
+    case 'env':
+      color = COLORS.env; label = '环境';
+      const envPole = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.06, 0.06, 2.5, 8),
+        new THREE.MeshStandardMaterial({ color: 0x888888 })
+      );
+      envPole.position.y = 1.25;
+      group.add(envPole);
+      const envSensor = new THREE.Mesh(
+        new THREE.SphereGeometry(0.3, 12, 12),
+        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.15 })
+      );
+      envSensor.position.y = 2.7;
+      group.add(envSensor);
+      const blade = new THREE.Mesh(
+        new THREE.BoxGeometry(0.8, 0.05, 0.08),
+        new THREE.MeshStandardMaterial({ color: 0xcccccc })
+      );
+      blade.position.y = 2.85;
+      blade.userData.rotor = true;
+      group.add(blade);
+      break;
+  }
+
+  group.position.set(x, 0, z);
+  scene.add(group);
+
+  const mainMesh = group.children.find(c => c.isMesh && c.material.emissive);
+  if (mainMesh) {
+    registerInteractable(mainMesh, {
+      type: 'sensor', subtype: type, name: data.name || label,
+      data
+    });
+  }
+}
+
+function createAllSensors() {
+  const cameras = [
+    { x: 5, z: -5, name: 'CAM-001 东西路口', status: 'online', resolution: '4K' },
+    { x: -5, z: -5, name: 'CAM-002 南北路口', status: 'online', resolution: '4K' },
+    { x: 5, z: 5, name: 'CAM-003 广场东', status: 'online', resolution: '1080P' },
+    { x: -5, z: 5, name: 'CAM-004 广场西', status: 'online', resolution: '1080P' },
+    { x: 15, z: -15, name: 'CAM-005 小区入口', status: 'online', resolution: '4K' },
+    { x: -15, z: 15, name: 'CAM-006 商业街', status: 'offline', resolution: '1080P' },
+  ];
+  cameras.forEach(c => createSensorDevice('camera', c.x, c.z, {
+    name: c.name, status: c.status, resolution: c.resolution,
+    type: '球机', brand: '海康威视', ip: '192.168.1.' + (100 + Math.floor(Math.random() * 50)),
+  }));
+
+  const lamps = [
+    { x: 8, z: 0, name: '灯杆-LP01' }, { x: -8, z: 0, name: '灯杆-LP02' },
+    { x: 0, z: 8, name: '灯杆-LP03' }, { x: 0, z: -8, name: '灯杆-LP04' },
+    { x: 16, z: -8, name: '灯杆-LP05' }, { x: -16, z: 8, name: '灯杆-LP06' },
+  ];
+  lamps.forEach(l => createSensorDevice('lamp', l.x, l.z, {
+    name: l.name, status: 'online', brightness: Math.floor(60 + Math.random() * 40) + '%',
+    power: (30 + Math.random() * 30).toFixed(0) + 'W',
+    hasCamera: Math.random() > 0.5 ? '是' : '否',
+    hasCharger: Math.random() > 0.5 ? '是' : '否',
+  }));
+
+  createSensorDevice('electric', 12, -4, { name: '电表-EM01', status: 'online', todayUsage: (120 + Math.random() * 80).toFixed(1) + 'kWh', monthUsage: (3000 + Math.random() * 1000).toFixed(0) + 'kWh', voltage: '220V' });
+  createSensorDevice('electric', -12, -4, { name: '电表-EM02', status: 'online', todayUsage: (90 + Math.random() * 60).toFixed(1) + 'kWh', monthUsage: (2500 + Math.random() * 800).toFixed(0) + 'kWh', voltage: '220V' });
+  createSensorDevice('electric', 12, 4, { name: '电表-EM03', status: 'alert', todayUsage: (200 + Math.random() * 100).toFixed(1) + 'kWh', monthUsage: (5000 + Math.random() * 2000).toFixed(0) + 'kWh', voltage: '218V' });
+
+  createSensorDevice('water', 14, -2, { name: '水表-WM01', status: 'online', todayUsage: (8 + Math.random() * 12).toFixed(1) + '吨', monthUsage: (200 + Math.random() * 150).toFixed(0) + '吨', pressure: '0.35MPa' });
+  createSensorDevice('water', -14, -2, { name: '水表-WM02', status: 'online', todayUsage: (5 + Math.random() * 8).toFixed(1) + '吨', monthUsage: (150 + Math.random() * 100).toFixed(0) + '吨', pressure: '0.32MPa' });
+
+  createSensorDevice('led', 20, -4, { name: 'LED-主街01', status: 'online', content: '欢迎来到智慧街区', size: '2m×1.2m' });
+  createSensorDevice('led', -20, 4, { name: 'LED-广场01', status: 'online', content: '天气预报：晴 28℃', size: '2m×1.2m' });
+
+  createSensorDevice('env', 6, -12, { name: '环境-EM01', status: 'online', pm25: (20 + Math.random() * 30).toFixed(0) + 'μg/m³', temperature: (24 + Math.random() * 6).toFixed(1) + '℃', humidity: (50 + Math.random() * 20).toFixed(0) + '%', noise: (45 + Math.random() * 15).toFixed(0) + 'dB' });
+  createSensorDevice('env', -6, 12, { name: '环境-EM02', status: 'online', pm25: (15 + Math.random() * 25).toFixed(0) + 'μg/m³', temperature: (23 + Math.random() * 5).toFixed(1) + '℃', humidity: (55 + Math.random() * 15).toFixed(0) + '%', noise: (40 + Math.random() * 20).toFixed(0) + 'dB' });
+}
+
+// ==================== 具身智能终端 ====================
+const robotObjects = [];
+
+function createRobot(type, x, z, data) {
+  const group = new THREE.Group();
+  let color;
+
+  switch (type) {
+    case 'drone':
+      color = COLORS.drone;
+      const droneBody = new THREE.Mesh(
+        new THREE.SphereGeometry(0.4, 12, 12),
+        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.15 })
+      );
+      droneBody.position.y = 6;
+      group.add(droneBody);
+      for (let i = 0; i < 4; i++) {
+        const angle = (i / 4) * Math.PI * 2;
+        const arm = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.03, 0.03, 1, 6),
+          new THREE.MeshStandardMaterial({ color: 0xaaaaaa })
+        );
+        arm.rotation.z = Math.PI / 2;
+        arm.position.set(Math.cos(angle) * 0.5, 6, Math.sin(angle) * 0.5);
+        group.add(arm);
+        const rotor = new THREE.Mesh(
+          new THREE.TorusGeometry(0.3, 0.02, 6, 16),
+          new THREE.MeshBasicMaterial({ color: 0x6090c0, transparent: true, opacity: 0.4 })
+        );
+        rotor.rotation.x = Math.PI / 2;
+        rotor.position.set(Math.cos(angle) * 0.7, 6.15, Math.sin(angle) * 0.7);
+        rotor.userData.rotor = true;
+        group.add(rotor);
+      }
+      break;
+
+    case 'cleaner':
+      color = COLORS.cleaner;
+      const cleanerBody = new THREE.Mesh(
+        new THREE.BoxGeometry(1.2, 0.6, 0.8),
+        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.1 })
+      );
+      cleanerBody.position.y = 0.4;
+      group.add(cleanerBody);
+      const cleanerTop = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.3, 0.35, 0.3, 12),
+        new THREE.MeshStandardMaterial({ color: 0x555555 })
+      );
+      cleanerTop.position.y = 0.85;
+      group.add(cleanerTop);
+      break;
+
+    case 'dog':
+      color = COLORS.dog;
+      const dogBodyMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(0.8, 0.3, 0.4),
+        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.1 })
+      );
+      dogBodyMesh.position.y = 0.5;
+      group.add(dogBodyMesh);
+      const dogHead = new THREE.Mesh(
+        new THREE.BoxGeometry(0.3, 0.25, 0.3),
+        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.1 })
+      );
+      dogHead.position.set(0.5, 0.55, 0);
+      group.add(dogHead);
+      const legMat = new THREE.MeshStandardMaterial({ color: 0x666666 });
+      [[-0.3, -0.15], [-0.3, 0.15], [0.3, -0.15], [0.3, 0.15]].forEach(([lx, lz]) => {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.35, 6), legMat);
+        leg.position.set(lx, 0.18, lz);
+        group.add(leg);
+      });
+      break;
+
+    case 'delivery':
+      color = COLORS.delivery;
+      const deliveryBody = new THREE.Mesh(
+        new THREE.BoxGeometry(1.0, 0.8, 0.7),
+        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.1 })
+      );
+      deliveryBody.position.y = 0.5;
+      group.add(deliveryBody);
+      const cargoBox = new THREE.Mesh(
+        new THREE.BoxGeometry(0.8, 0.5, 0.6),
+        new THREE.MeshStandardMaterial({ color: 0xf5f5f5 })
+      );
+      cargoBox.position.y = 1.15;
+      group.add(cargoBox);
+      break;
+  }
+
+  group.position.set(x, 0, z);
+  scene.add(group);
+
+  robotObjects.push({ group, type, baseX: x, baseZ: z, phase: Math.random() * Math.PI * 2 });
+
+  const mainMesh = group.children.find(c => c.isMesh && c.material.emissive);
+  if (mainMesh) {
+    registerInteractable(mainMesh, {
+      type: 'robot', subtype: type, name: data.name,
+      data
+    });
+  }
+}
+
+function createAllRobots() {
+  createRobot('drone', 10, -10, { name: '无人机-D01', status: '运行中', battery: '78%', task: '街区巡逻', altitude: '15m', speed: '5m/s' });
+  createRobot('drone', -10, 10, { name: '无人机-D02', status: '充电中', battery: '35%', task: '待命', altitude: '0m', speed: '0m/s' });
+  createRobot('cleaner', 6, -6, { name: '清扫车-C01', status: '运行中', battery: '62%', task: '主街清扫', speed: '2m/s', area: '1200㎡/h' });
+  createRobot('cleaner', -6, 6, { name: '清扫车-C02', status: '运行中', battery: '88%', task: '次街清扫', speed: '2m/s', area: '1200㎡/h' });
+  createRobot('dog', 8, 8, { name: '机器狗-R01', status: '运行中', battery: '55%', task: '安防巡检', speed: '1.5m/s', duration: '4h' });
+  createRobot('delivery', -8, -8, { name: '配送车-V01', status: '配送中', battery: '91%', task: '快递配送#37', speed: '3m/s', packages: '3件' });
+}
+
+// ==================== POI标注（3D精灵） ====================
+function createPOIMarker(x, z, text, color) {
+  const canvas2d = document.createElement('canvas');
+  canvas2d.width = 256;
+  canvas2d.height = 64;
+  const ctx = canvas2d.getContext('2d');
+
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.beginPath();
+  ctx.roundRect(0, 0, 256, 64, 8);
+  ctx.fill();
+
+  ctx.strokeStyle = color || '#1a73e8';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(1, 1, 254, 62, 8);
+  ctx.stroke();
+
+  ctx.fillStyle = '#2c3e50';
+  ctx.font = 'bold 22px Microsoft YaHei';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 128, 32);
+
+  const texture = new THREE.CanvasTexture(canvas2d);
+  const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0.95 });
+  const sprite = new THREE.Sprite(spriteMat);
+  sprite.scale.set(6, 1.5, 1);
+  sprite.position.set(x, 2, z);
+
+  scene.add(sprite);
+  return sprite;
+}
+
+function createAllPOIs() {
+  createPOIMarker(11, -14, '科创大厦', '#4a90d9');
+  createPOIMarker(-11, -14, '智慧办公楼', '#4a90d9');
+  createPOIMarker(11, 14, '社区服务中心', '#4a90d9');
+  createPOIMarker(-11, 14, '居民楼A栋', '#4a90d9');
+  createPOIMarker(33, -33, '阳光花园', '#1a73e8');
+  createPOIMarker(-33, -33, '翠湖苑', '#1a73e8');
+  createPOIMarker(33, 33, '锦绣家园', '#1a73e8');
+  createPOIMarker(-33, 33, '和谐雅居', '#1a73e8');
+}
+
+// ==================== 可交互对象注册 ====================
+function registerInteractable(mesh, info) {
+  mesh.userData.interactable = true;
+  mesh.userData.info = info;
+  interactables.push(mesh);
+
+  // 按类别分组
+  const key = getGroupKey(info.type, info.subtype);
+  if (!interactableGroups[key]) interactableGroups[key] = [];
+  interactableGroups[key].push(mesh);
+}
+
+// ==================== 图层高亮系统 ====================
+
+// 为3D对象创建高亮描边
+function createHighlightOutline(mesh) {
+  const outlineGeo = mesh.geometry.clone();
+  const outlineMat = new THREE.MeshBasicMaterial({
+    color: COLORS.highlight,
+    side: THREE.BackSide,
+    transparent: true,
+    opacity: 0.6,
+  });
+  const outline = new THREE.Mesh(outlineGeo, outlineMat);
+
+  // 获取世界位置和缩放
+  const worldPos = new THREE.Vector3();
+  mesh.getWorldPosition(worldPos);
+  const worldScale = new THREE.Vector3();
+  mesh.getWorldScale(worldScale);
+
+  outline.position.copy(worldPos);
+  outline.scale.copy(worldScale).multiplyScalar(1.12);
+  outline.rotation.copy(mesh.rotation);
+
+  // 如果mesh在group内，需要处理偏移
+  if (mesh.parent && mesh.parent.isGroup) {
+    outline.position.copy(mesh.parent.position);
+    outline.position.y += mesh.position.y;
+    const s = mesh.scale.clone().multiplyScalar(1.12);
+    outline.scale.set(
+      (mesh.parent.scale.x || 1) * s.x,
+      s.y,
+      (mesh.parent.scale.z || 1) * s.z
+    );
+  }
+
+  outline.userData.isHighlight = true;
+  scene.add(outline);
+  highlightOutlines.push(outline);
+  return outline;
+}
+
+// 清除所有高亮
+function clearAllHighlights() {
+  highlightOutlines.forEach(obj => {
+    scene.remove(obj);
+    if (obj.geometry) obj.geometry.dispose();
+    if (obj.material) obj.material.dispose();
+  });
+  highlightOutlines.length = 0;
+}
+
+// 高亮指定类别的所有对象
+function highlightCategory(type, subtype) {
+  clearAllHighlights();
+
+  if (type === 'building' && subtype === 'community') {
+    // 社区基础模型 = 道路 + 楼宇 + 小区 全部高亮
+    ['road', 'building', 'community_area'].forEach(st => {
+      const key = getGroupKey('building', st);
+      const group = interactableGroups[key] || [];
+      group.forEach(mesh => createHighlightOutline(mesh));
+    });
+    // 同时高亮整个小区内的子建筑
+    scene.traverse(obj => {
+      if (obj.isMesh && obj !== selectedObject && obj.parent && obj.parent.isGroup) {
+        const group = obj.parent;
+        // 检查是否是小区内的子建筑（不是interactable但属于小区group）
+        const isCommunityChild = communityDefs.some(cd => {
+          return Math.abs(group.position.x - cd.x) < 0.1 && Math.abs(group.position.z - cd.z) < 0.1;
+        });
+        if (isCommunityChild && obj.geometry.type === 'BoxGeometry' && obj.position.y > 1 && !obj.userData.interactable) {
+          createHighlightOutline(obj);
+        }
+      }
+    });
+  } else {
+    const key = getGroupKey(type, subtype);
+    const group = interactableGroups[key] || [];
+    group.forEach(mesh => createHighlightOutline(mesh));
+  }
+
+  activeHighlightType = { type, subtype };
+}
+
+// 取消高亮
+function unhighlightCategory() {
+  clearAllHighlights();
+  activeHighlightType = null;
+}
+
+// ==================== Raycaster 点击交互 ====================
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let hoveredObject = null;
+
+function onMouseMove(event) {
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(interactables, false);
+
+  const tooltip = document.getElementById('tooltip');
+
+  if (intersects.length > 0) {
+    const obj = intersects[0].object;
+    if (obj.userData.interactable && obj !== hoveredObject) {
+      if (hoveredObject && hoveredObject.material.emissive) {
+        hoveredObject.material.emissiveIntensity = hoveredObject.userData._origEmissive || 0;
+      }
+      hoveredObject = obj;
+      if (obj.material.emissive) {
+        obj.userData._origEmissive = obj.material.emissiveIntensity;
+        obj.material.emissiveIntensity = 0.5;
+      }
+    }
+    if (obj.userData.interactable) {
+      const info = obj.userData.info;
+      tooltip.querySelector('.tt-name').textContent = info.name;
+      tooltip.querySelector('.tt-type').textContent = getTypeLabel(info.type, info.subtype);
+      tooltip.style.display = 'block';
+      tooltip.style.left = (event.clientX + 15) + 'px';
+      tooltip.style.top = (event.clientY + 15) + 'px';
+    }
+    canvas.style.cursor = 'pointer';
+  } else {
+    if (hoveredObject && hoveredObject.material.emissive) {
+      hoveredObject.material.emissiveIntensity = hoveredObject.userData._origEmissive || 0;
+    }
+    hoveredObject = null;
+    tooltip.style.display = 'none';
+    canvas.style.cursor = 'grab';
+  }
+}
+
+function getTypeLabel(type, subtype) {
+  const labels = {
+    building: { road: '道路', building: '楼宇', community_area: '小区', community: '社区' },
+    sensor: { camera: '监控摄像头', lamp: '智慧灯杆', electric: '智能电表', water: '智能水表', led: 'LED屏幕', env: '环境监测' },
+    robot: { drone: '无人机', cleaner: '无人清扫车', dog: '机器狗', delivery: '无人配送车' },
+    data: { basic: '基础数据', people: '特殊人群', poi: 'POI点位' },
+  };
+  return (labels[type] && labels[type][subtype]) || type;
+}
+
+function onClick(event) {
+  if (event.target.closest('#sidebar') || event.target.closest('#detail-panel') || event.target.closest('#header') || event.target.closest('#stats-bar') || event.target.closest('#legend')) return;
+
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(interactables, false);
+
+  if (intersects.length > 0) {
+    const obj = intersects[0].object;
+    if (obj.userData.interactable) {
+      showDetailPanel(obj.userData.info);
+      if (selectedObject && selectedObject.material.emissive) {
+        selectedObject.material.emissiveIntensity = selectedObject.userData._origEmissive || 0;
+      }
+      selectedObject = obj;
+      if (obj.material.emissive) {
+        obj.userData._origEmissive = obj.material.emissiveIntensity;
+        obj.material.emissiveIntensity = 0.8;
+      }
+      const pos = new THREE.Vector3();
+      obj.getWorldPosition(pos);
+      controls.target.lerp(pos, 0.3);
+    }
+  } else {
+    closeDetailPanel();
+  }
+}
+
+// ==================== 详情面板 ====================
+function showDetailPanel(info) {
+  const panel = document.getElementById('detail-panel');
+  const title = document.getElementById('panel-title');
+  const content = document.getElementById('panel-content');
+
+  title.textContent = info.name;
+
+  let html = '<div class="panel-body">';
+
+  if (info.data.status) {
+    const statusClass = info.data.status === '运行中' || info.data.status === 'online' ? 'online' :
+                        info.data.status === 'offline' ? 'offline' : 'alert';
+    const statusText = info.data.status === 'online' ? '在线' :
+                       info.data.status === 'offline' ? '离线' :
+                       info.data.status === 'alert' ? '告警' : info.data.status;
+    html += `<div style="margin-bottom:16px"><span class="status-badge ${statusClass}">${statusText}</span></div>`;
+  }
+
+  html += `<div class="panel-section"><div class="panel-section-title">基本信息</div>`;
+  for (const [key, val] of Object.entries(info.data)) {
+    if (key === 'status') continue;
+    const label = getFieldLabel(key);
+    let valClass = 'value';
+    if (typeof val === 'string' && (val.includes('告警') || val.includes('离线') || val.includes('异常'))) valClass += ' warn';
+    else if (typeof val === 'string' && (val.includes('正常') || val.includes('在线') || val.includes('良好'))) valClass += ' ok';
+    html += `<div class="panel-row"><span class="label">${label}</span><span class="${valClass}">${val}</span></div>`;
+  }
+  html += '</div>';
+
+  if (info.type === 'building' && info.subtype === 'building') {
+    html += `<div class="panel-section"><div class="panel-section-title">实时监测</div>`;
+    html += `<div class="panel-row"><span class="label">今日人流</span><span class="value highlight">${Math.floor(200 + Math.random() * 500)}人</span></div>`;
+    html += `<div class="panel-row"><span class="label">今日能耗</span><span class="value">${(50 + Math.random() * 100).toFixed(0)}kWh</span></div>`;
+    html += `<div class="panel-row"><span class="label">消防状态</span><span class="value ok">正常</span></div>`;
+    html += `</div>`;
+  }
+
+  if (info.type === 'building' && info.subtype === 'community_area') {
+    html += `<div class="panel-section"><div class="panel-section-title">居民信息</div>`;
+    html += `<div class="panel-row"><span class="label">常住人口</span><span class="value highlight">${Math.floor(800 + Math.random() * 600)}人</span></div>`;
+    html += `<div class="panel-row"><span class="label">特殊群体</span><span class="value">${Math.floor(10 + Math.random() * 20)}人</span></div>`;
+    html += `<div class="panel-row"><span class="label">网格员</span><span class="value">${Math.floor(3 + Math.random() * 5)}人</span></div>`;
+    html += `</div>`;
+  }
+
+  if (info.type === 'sensor') {
+    html += `<div class="panel-section"><div class="panel-section-title">设备状态</div>`;
+    html += `<div class="panel-row"><span class="label">在线时长</span><span class="value">${Math.floor(20 + Math.random() * 72)}h</span></div>`;
+    html += `<div class="panel-row"><span class="label">信号强度</span><span class="value ok">良好</span></div>`;
+    html += `</div>`;
+  }
+
+  if (info.type === 'robot') {
+    html += `<div class="panel-section"><div class="panel-section-title">运行信息</div>`;
+    html += `<div class="panel-row"><span class="label">当前位置</span><span class="value">主街区</span></div>`;
+    html += `<div class="panel-row"><span class="label">任务进度</span><span class="value highlight">${Math.floor(Math.random() * 100)}%</span></div>`;
+    html += `<div class="panel-row"><span class="label">预计完成</span><span class="value">${Math.floor(10 + Math.random() * 50)}分钟后</span></div>`;
+    html += `</div>`;
+  }
+
+  html += '</div>';
+  content.innerHTML = html;
+  panel.classList.add('open');
+}
+
+function getFieldLabel(key) {
+  const map = {
+    floors: '楼层数', area: '建筑面积', height: '建筑高度', occupancy: '入住率',
+    fireLevel: '消防等级', elevator: '电梯数量', parking: '停车位',
+    households: '总户数', builtYear: '建成年份', propertyCompany: '物业公司',
+    greeningRate: '绿化率', parkingSpaces: '车位数量',
+    length: '长度', width: '宽度', lanes: '车道', status: '状态',
+    resolution: '分辨率', type: '设备类型', brand: '品牌', ip: 'IP地址',
+    brightness: '亮度', power: '功率', hasCamera: '搭载摄像头', hasCharger: '搭载充电桩',
+    todayUsage: '今日用量', monthUsage: '本月用量', voltage: '电压', pressure: '水压',
+    content: '播放内容', size: '屏幕尺寸',
+    pm25: 'PM2.5', temperature: '温度', humidity: '湿度', noise: '噪音',
+    battery: '电量', task: '当前任务', altitude: '飞行高度', speed: '速度',
+    duration: '续航时间', packages: '载货量',
+  };
+  return map[key] || key;
+}
+
+function closeDetailPanel() {
+  document.getElementById('detail-panel').classList.remove('open');
+  if (selectedObject && selectedObject.material.emissive) {
+    selectedObject.material.emissiveIntensity = selectedObject.userData._origEmissive || 0;
+  }
+  selectedObject = null;
+}
+
+// ==================== 左侧导航交互（带高亮） ====================
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const type = item.dataset.type;
+    const subtype = item.dataset.subtype;
+
+    // 切换高亮：再次点击同一项则取消高亮
+    const wasActive = item.classList.contains('active');
+
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+    if (wasActive) {
+      // 取消高亮
+      unhighlightCategory();
+      closeDetailPanel();
+      return;
+    }
+
+    item.classList.add('active');
+
+    // 高亮3D场景中对应类别的对象
+    highlightCategory(type, subtype);
+
+    // 显示对应数据面板
+    showNavDataPanel(type, subtype);
+  });
+});
+
+function showNavDataPanel(type, subtype) {
+  const panel = document.getElementById('detail-panel');
+  const title = document.getElementById('panel-title');
+  const content = document.getElementById('panel-content');
+
+  if (type === 'data') {
+    title.textContent = subtype === 'basic' ? '街道基础数据' : subtype === 'people' ? '特殊人群上图' : 'POI点位';
+    let html = '<div class="panel-body">';
+
+    if (subtype === 'basic') {
+      html += `<div class="panel-section"><div class="panel-section-title">社区数据</div>`;
+      const communities = ['阳光社区', '翠湖社区', '锦绣社区', '和谐社区'];
+      communities.forEach(c => {
+        html += `<div class="list-item"><div class="item-name">${c}</div><div class="item-desc">户数: ${Math.floor(500+Math.random()*500)} | 面积: ${(20+Math.random()*30).toFixed(0)}万㎡</div></div>`;
+      });
+      html += '</div>';
+
+      html += `<div class="panel-section"><div class="panel-section-title">商铺数据</div>`;
+      const shops = ['便利超市', '药店', '理发店', '餐饮店', '五金店', '水果店'];
+      shops.forEach((s, idx) => {
+        html += `<div class="list-item"><div class="item-name">${s}</div><div class="item-desc">状态: 营业中 | 评级: ${['A','B','A','A','B','A'][idx]}</div></div>`;
+      });
+      html += '</div>';
+
+      html += `<div class="panel-section"><div class="panel-section-title">公共配套与民生服务</div>`;
+      const services = ['社区卫生站', '养老服务中心', '幼儿园', '文化活动中心', '健身广场', '党群服务中心'];
+      services.forEach(s => {
+        html += `<div class="list-item"><div class="item-name">${s}</div><div class="item-desc">覆盖人群: ${(1000+Math.random()*3000).toFixed(0)}人</div></div>`;
+      });
+      html += '</div>';
+    }
+
+    if (subtype === 'people') {
+      html += `<div class="panel-section"><div class="panel-section-title">网格员信息</div>`;
+      const gridWorkers = [
+        { name: '张伟', phone: '138****1234', area: '阳光社区' },
+        { name: '李芳', phone: '139****5678', area: '翠湖社区' },
+        { name: '王刚', phone: '137****9012', area: '锦绣社区' },
+        { name: '赵丽', phone: '136****3456', area: '和谐社区' },
+      ];
+      gridWorkers.forEach(w => {
+        html += `<div class="list-item"><div class="item-name">${w.name} - ${w.area}</div><div class="item-desc">电话: ${w.phone}</div></div>`;
+      });
+      html += '</div>';
+
+      html += `<div class="panel-section"><div class="panel-section-title">特殊群体</div>`;
+      const specialGroups = [
+        { name: '刘XX', type: '独居老人', phone: '135****7890', address: '阳光花园3-201' },
+        { name: '陈XX', type: '残疾人', phone: '133****2345', address: '翠湖苑5-102' },
+        { name: '杨XX', type: '低保户', phone: '131****6789', address: '锦绣家园2-301' },
+      ];
+      specialGroups.forEach(p => {
+        html += `<div class="list-item"><div class="item-name">${p.name}（${p.type}）</div><div class="item-desc">电话: ${p.phone} | 住址: ${p.address}</div></div>`;
+      });
+      html += '</div>';
+
+      html += `<div class="panel-section"><div class="panel-section-title">风险人群</div>`;
+      const riskGroups = [
+        { name: '社区矫正人员', count: 3, level: '中' },
+        { name: '精神障碍患者', count: 2, level: '高' },
+        { name: '吸毒人员', count: 1, level: '高' },
+        { name: '信访重点人员', count: 1, level: '中' },
+      ];
+      riskGroups.forEach(r => {
+        html += `<div class="list-item"><div class="item-name">${r.name}</div><div class="item-desc">人数: ${r.count} | 关注等级: <span class="${r.level==='高'?'warn':'highlight'}">${r.level}</span></div></div>`;
+      });
+      html += '</div>';
+    }
+
+    if (subtype === 'poi') {
+      html += `<div class="panel-section"><div class="panel-section-title">固定感知设备点位</div>`;
+      const pois = [
+        { name: 'CAM-001 东西路口', type: '监控', status: '在线' },
+        { name: 'CAM-002 南北路口', type: '监控', status: '在线' },
+        { name: '灯杆-LP01', type: '智慧灯杆', status: '在线' },
+        { name: '电表-EM01', type: '智能电表', status: '在线' },
+        { name: '水表-WM01', type: '智能水表', status: '在线' },
+        { name: 'LED-主街01', type: 'LED屏幕', status: '在线' },
+        { name: '环境-EM01', type: '环境监测', status: '在线' },
+      ];
+      pois.forEach(p => {
+        html += `<div class="list-item"><div class="item-name">${p.name}</div><div class="item-desc">类型: ${p.type} | <span class="ok">${p.status}</span></div></div>`;
+      });
+      html += '</div>';
+
+      html += `<div class="panel-section"><div class="panel-section-title">具身智能终端点位（小区）</div>`;
+      const robots = [
+        { name: '无人机-D01', type: '无人机', status: '运行中' },
+        { name: '无人机-D02', type: '无人机', status: '充电中' },
+        { name: '清扫车-C01', type: '无人清扫车', status: '运行中' },
+        { name: '机器狗-R01', type: '机器狗', status: '运行中' },
+        { name: '配送车-V01', type: '无人配送车', status: '配送中' },
+      ];
+      robots.forEach(r => {
+        html += `<div class="list-item"><div class="item-name">${r.name}</div><div class="item-desc">类型: ${r.type} | <span class="${r.status.includes('充电')?'warn':'ok'}">${r.status}</span></div></div>`;
+      });
+      html += '</div>';
+    }
+
+    html += '</div>';
+    content.innerHTML = html;
+    panel.classList.add('open');
+  } else {
+    // 3D对象类型 - 聚焦到第一个匹配的对象
+    const target = interactables.find(obj => obj.userData.info.type === type && obj.userData.info.subtype === subtype);
+    if (target) {
+      const pos = new THREE.Vector3();
+      target.getWorldPosition(pos);
+      controls.target.lerp(pos, 0.5);
+      showDetailPanel(target.userData.info);
+    }
+  }
+}
+
+// ==================== 面板关闭按钮 ====================
+document.getElementById('panel-close').addEventListener('click', closeDetailPanel);
+
+// ==================== 构建场景 ====================
+createGround();
+createRoads();
+createBuildings();
+createCommunities();
+createAllSensors();
+createAllRobots();
+createAllPOIs();
+
+// ==================== 动画循环 ====================
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+
+  controls.update();
+
+  // 机器人移动动画
+  robotObjects.forEach(robot => {
+    if (robot.type === 'drone') {
+      robot.group.position.y = Math.sin(t * 2 + robot.phase) * 0.3;
+      robot.group.position.x = robot.baseX + Math.sin(t * 0.3 + robot.phase) * 3;
+      robot.group.position.z = robot.baseZ + Math.cos(t * 0.3 + robot.phase) * 3;
+    } else if (robot.type === 'cleaner' || robot.type === 'delivery') {
+      robot.group.position.x = robot.baseX + Math.sin(t * 0.5 + robot.phase) * 5;
+      robot.group.position.z = robot.baseZ + Math.cos(t * 0.5 + robot.phase) * 3;
+      robot.group.rotation.y = t * 0.5 + robot.phase + Math.PI / 2;
+    } else if (robot.type === 'dog') {
+      robot.group.position.x = robot.baseX + Math.sin(t * 0.4 + robot.phase) * 4;
+      robot.group.position.z = robot.baseZ + Math.cos(t * 0.4 + robot.phase) * 4;
+      robot.group.rotation.y = -t * 0.4 - robot.phase + Math.PI / 2;
+    }
+  });
+
+  // 旋翼动画
+  scene.traverse(obj => {
+    if (obj.userData.rotor) {
+      obj.rotation.z = t * 15;
+    }
+  });
+
+  // 小区边框呼吸灯
+  scene.traverse(obj => {
+    if (obj.isMesh && obj.material.color && obj.material.color.getHex() === COLORS.communityBorder) {
+      obj.material.opacity = 0.4 + Math.sin(t * 2) * 0.3;
+    }
+  });
+
+  // 高亮描边脉冲动画
+  highlightOutlines.forEach(outline => {
+    outline.material.opacity = 0.3 + Math.sin(t * 4) * 0.3;
+  });
+
+  renderer.render(scene, camera);
+}
+
+animate();
+
+// ==================== 响应窗口大小 ====================
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ==================== 事件监听 ====================
+canvas.addEventListener('mousemove', onMouseMove);
+canvas.addEventListener('click', onClick);
+
+// ==================== 移除加载遮罩 ====================
+setTimeout(() => {
+  const loading = document.getElementById('loading');
+  loading.classList.add('fade-out');
+  setTimeout(() => loading.remove(), 500);
+}, 1200);
+
+</script>
+</body>
+</html>
