@@ -1,0 +1,2842 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI金融风控智能体平台</title>
+<style>
+/* ==================== CSS变量 - 主题色定义 ==================== */
+:root {
+  --bg-main: #0a0e1a;
+  --bg-card: rgba(15, 25, 45, 0.9);
+  --bg-card-hover: rgba(20, 35, 60, 0.95);
+  --bg-input: rgba(10, 20, 40, 0.8);
+  --primary: #00d4ff;
+  --primary-dim: rgba(0, 212, 255, 0.15);
+  --primary-glow: rgba(0, 212, 255, 0.4);
+  --success: #00e676;
+  --success-dim: rgba(0, 230, 118, 0.15);
+  --warning: #ffab40;
+  --warning-dim: rgba(255, 171, 64, 0.15);
+  --danger: #ff5252;
+  --danger-dim: rgba(255, 82, 82, 0.15);
+  --danger-glow: rgba(255, 82, 82, 0.5);
+  --purple: #b388ff;
+  --purple-dim: rgba(179, 136, 255, 0.15);
+  --text-main: #e0e6ed;
+  --text-secondary: #8a9bb0;
+  --text-dim: #5a6a7a;
+  --border: rgba(0, 212, 255, 0.2);
+  --border-hover: rgba(0, 212, 255, 0.4);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px var(--primary-glow);
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==================== 全局重置 ==================== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* 背景装饰 - 网格线 */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image:
+    linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 背景装饰 - 光晕 */
+body::after {
+  content: '';
+  position: fixed;
+  top: -200px; right: -200px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.06) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ==================== 顶部标题栏 ==================== */
+.header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 60px;
+  background: rgba(10, 14, 26, 0.95);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.header-left { display: flex; align-items: center; gap: 12px; }
+
+.logo {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--primary), var(--purple));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 600;
+  background: linear-gradient(90deg, var(--primary), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
+}
+
+.header-right { display: flex; align-items: center; gap: 20px; }
+
+.header-status {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--success);
+}
+
+.status-dot {
+  width: 8px; height: 8px;
+  background: var(--success);
+  border-radius: 50%;
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--success); }
+  50% { opacity: 0.6; box-shadow: 0 0 0 6px transparent; }
+}
+
+.header-time {
+  font-size: 14px;
+  color: var(--primary);
+  font-family: 'Courier New', monospace;
+  letter-spacing: 2px;
+}
+
+/* ==================== 左侧导航栏 ==================== */
+.sidebar {
+  position: fixed;
+  top: 60px; left: 0; bottom: 0;
+  width: 200px;
+  background: rgba(10, 14, 26, 0.95);
+  border-right: 1px solid var(--border);
+  padding: 16px 0;
+  z-index: 90;
+  backdrop-filter: blur(10px);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 14px;
+  transition: var(--transition);
+  border-left: 3px solid transparent;
+  position: relative;
+}
+
+.nav-item:hover {
+  background: var(--primary-dim);
+  color: var(--primary);
+}
+
+.nav-item.active {
+  background: var(--primary-dim);
+  color: var(--primary);
+  border-left-color: var(--primary);
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 3px; height: 60%;
+  background: var(--primary);
+  border-radius: 2px;
+  box-shadow: 0 0 8px var(--primary-glow);
+}
+
+.nav-icon { font-size: 18px; width: 24px; text-align: center; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* ==================== 主内容区 ==================== */
+.main-content {
+  position: fixed;
+  top: 60px; left: 200px; right: 0; bottom: 0;
+  overflow-y: auto;
+  padding: 20px;
+  z-index: 1;
+}
+
+.main-content::-webkit-scrollbar { width: 6px; }
+.main-content::-webkit-scrollbar-track { background: transparent; }
+.main-content::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+.main-content::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+
+/* 面板淡入动画 */
+.panel {
+  display: none;
+  animation: panelFadeIn 0.5s ease;
+}
+.panel.active { display: block; }
+
+@keyframes panelFadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==================== 通用组件 ==================== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: var(--transition);
+}
+
+.card:hover { border-color: var(--border-hover); }
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-title::before {
+  content: '';
+  width: 3px; height: 14px;
+  background: var(--primary);
+  border-radius: 2px;
+}
+
+.btn {
+  background: linear-gradient(135deg, var(--primary), rgba(0, 212, 255, 0.7));
+  color: #0a0e1a;
+  border: none;
+  padding: 10px 24px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:hover {
+  box-shadow: 0 0 20px var(--primary-glow);
+  transform: translateY(-1px);
+}
+
+.btn:active { transform: translateY(0); }
+
+.btn-secondary {
+  background: var(--bg-input);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: none;
+}
+
+/* 标签样式 */
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.tag-high { background: var(--danger-dim); color: var(--danger); }
+.tag-mid { background: var(--warning-dim); color: var(--warning); }
+.tag-low { background: var(--success-dim); color: var(--success); }
+.tag-info { background: var(--primary-dim); color: var(--primary); }
+.tag-purple { background: var(--purple-dim); color: var(--purple); }
+
+/* ==================== 面板1 - 风险态势 ==================== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.kpi-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 212, 255, 0.1);
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 2px;
+  background: linear-gradient(90deg, var(--primary), transparent);
+}
+
+.kpi-icon { font-size: 28px; margin-bottom: 8px; }
+.kpi-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+.kpi-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary);
+  font-family: 'Courier New', monospace;
+}
+.kpi-unit { font-size: 14px; color: var(--text-secondary); margin-left: 4px; }
+.kpi-trend {
+  font-size: 11px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.kpi-trend.up { color: var(--success); }
+.kpi-trend.down { color: var(--danger); }
+
+/* 风险态势中下部布局 */
+.risk-mid-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* 环形图 */
+.donut-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.donut-chart {
+  width: 160px; height: 160px;
+  border-radius: 50%;
+  position: relative;
+  transition: background 1s ease;
+}
+
+.donut-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100px; height: 100px;
+  background: var(--bg-card);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-center-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.donut-center-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+
+.legend-label { color: var(--text-secondary); flex: 1; }
+.legend-value { color: var(--text-main); font-weight: 600; }
+
+/* 事件流 */
+.event-stream {
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event-stream::-webkit-scrollbar { width: 4px; }
+.event-stream::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.event-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(10, 20, 40, 0.5);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--border);
+  animation: eventSlideIn 0.4s ease;
+  font-size: 12px;
+}
+
+@keyframes eventSlideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.event-item.high { border-left-color: var(--danger); }
+.event-item.mid { border-left-color: var(--warning); }
+.event-item.low { border-left-color: var(--success); }
+
+.event-time {
+  color: var(--text-dim);
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
+}
+
+.event-content { flex: 1; color: var(--text-main); }
+
+/* 思考链面板 */
+.think-chain {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.think-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(10, 20, 40, 0.5);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  position: relative;
+}
+
+.think-step::before {
+  content: '';
+  position: absolute;
+  left: 18px; top: 38px; bottom: -12px;
+  width: 1px;
+  background: var(--border);
+}
+
+.think-step:last-child::before { display: none; }
+
+.think-icon {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--primary-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+.think-text {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.think-text .highlight { color: var(--primary); font-weight: 600; }
+.think-text .danger { color: var(--danger); font-weight: 600; }
+
+/* 打字机光标 */
+.typing-cursor::after {
+  content: '▊';
+  color: var(--primary);
+  animation: blink 0.8s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Canvas图表容器 */
+.chart-container {
+  position: relative;
+  width: 100%;
+}
+
+canvas { display: block; width: 100%; }
+
+/* ==================== 面板2 - 信贷审批 ==================== */
+.credit-grid {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 20px;
+}
+
+/* 表单 */
+.form-group { margin-bottom: 16px; }
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.form-input, .form-select {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--text-main);
+  font-size: 14px;
+  transition: var(--transition);
+}
+
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-dim);
+}
+
+.form-input::placeholder { color: var(--text-dim); }
+
+.form-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2300d4ff' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+/* 滑块 */
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.slider {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 6px;
+  background: linear-gradient(90deg, var(--danger), var(--warning), var(--success));
+  border-radius: 3px;
+  outline: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  background: var(--primary);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+
+.slider-value {
+  min-width: 50px;
+  text-align: center;
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 16px;
+  font-family: 'Courier New', monospace;
+}
+
+/* 审批进度条 */
+.approval-progress {
+  margin: 16px 0;
+}
+
+.progress-steps {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-dim);
+  transition: var(--transition);
+  position: relative;
+  flex: 1;
+}
+
+.progress-step .step-circle {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--bg-input);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  transition: var(--transition);
+  z-index: 1;
+}
+
+.progress-step.active .step-circle {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #0a0e1a;
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+.progress-step.completed .step-circle {
+  background: var(--success);
+  border-color: var(--success);
+  color: #0a0e1a;
+}
+
+.progress-step.active { color: var(--primary); }
+.progress-step.completed { color: var(--success); }
+
+.progress-step::after {
+  content: '';
+  position: absolute;
+  top: 14px; left: 50%;
+  width: 100%; height: 2px;
+  background: var(--border);
+  z-index: 0;
+}
+
+.progress-step:last-child::after { display: none; }
+.progress-step.completed::after { background: var(--success); }
+
+/* 审批结果卡片 */
+.result-card {
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  margin: 16px 0;
+  border: 1px solid;
+  animation: resultPop 0.4s ease;
+}
+
+@keyframes resultPop {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.result-card.pass {
+  background: var(--success-dim);
+  border-color: var(--success);
+}
+
+.result-card.reject {
+  background: var(--danger-dim);
+  border-color: var(--danger);
+}
+
+.result-card.review {
+  background: var(--warning-dim);
+  border-color: var(--warning);
+}
+
+.result-icon { font-size: 36px; margin-bottom: 8px; }
+.result-title { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+
+.result-details {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  font-size: 13px;
+}
+
+.result-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.result-detail-label { color: var(--text-secondary); font-size: 11px; }
+.result-detail-value { font-weight: 700; font-size: 16px; }
+
+/* 雷达图容器 */
+.radar-container {
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+}
+
+/* 风险因素列表 */
+.risk-factors {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.risk-factor-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(10, 20, 40, 0.5);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+
+.risk-factor-icon { font-size: 16px; flex-shrink: 0; }
+.risk-factor-text { flex: 1; color: var(--text-main); }
+
+/* 折叠面板 */
+.collapse-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 10px;
+  background: rgba(10, 20, 40, 0.5);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  transition: var(--transition);
+}
+
+.collapse-header:hover { background: var(--primary-dim); }
+
+.collapse-arrow {
+  transition: transform 0.3s;
+  color: var(--primary);
+}
+
+.collapse-arrow.open { transform: rotate(180deg); }
+
+.collapse-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.collapse-body.open { max-height: 500px; }
+
+.log-list {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.log-item {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 6px 10px;
+  border-left: 2px solid var(--border);
+  font-family: 'Courier New', monospace;
+  line-height: 1.6;
+}
+
+.log-item .log-time { color: var(--text-dim); margin-right: 8px; }
+.log-item .log-tag { color: var(--primary); margin-right: 6px; }
+
+/* ==================== 面板3 - 反欺诈监控 ==================== */
+.fraud-top {
+  margin-bottom: 20px;
+}
+
+.transaction-flow {
+  display: flex;
+  gap: 12px;
+  overflow: hidden;
+  padding: 10px 0;
+  position: relative;
+}
+
+.transaction-flow::before,
+.transaction-flow::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 40px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.transaction-flow::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--bg-main), transparent);
+}
+
+.transaction-flow::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--bg-main), transparent);
+}
+
+.tx-card {
+  min-width: 200px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.tx-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.tx-card.high-risk {
+  border-color: var(--danger);
+  animation: highRiskBlink 1.5s infinite;
+}
+
+@keyframes highRiskBlink {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 12px var(--danger-glow); }
+}
+
+.tx-time { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; }
+.tx-amount { font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+.tx-merchant { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+
+.tx-risk-score {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.risk-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--bg-input);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.risk-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.fraud-mid-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* CSS柱状图 */
+.bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bar-label {
+  min-width: 70px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.bar-track {
+  flex: 1;
+  height: 20px;
+  background: rgba(10, 20, 40, 0.5);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* 设备指纹地图 */
+.device-map {
+  position: relative;
+  height: 280px;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(0, 212, 255, 0.05) 0%, transparent 60%);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.map-grid {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image:
+    linear-gradient(rgba(0, 212, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.05) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+.map-point {
+  position: absolute;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.map-point.normal {
+  background: var(--primary);
+  box-shadow: 0 0 6px var(--primary-glow);
+}
+
+.map-point.high {
+  background: var(--danger);
+  box-shadow: 0 0 10px var(--danger-glow);
+  animation: mapPulse 1.5s infinite;
+}
+
+@keyframes mapPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.8); }
+}
+
+.map-point::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: 12px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.map-point:hover::after { opacity: 1; }
+
+.map-legend {
+  position: absolute;
+  bottom: 8px; left: 8px;
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+}
+
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-secondary);
+}
+
+/* 案例详情面板 */
+.case-detail {
+  margin-top: 16px;
+}
+
+.case-detail.hidden { display: none; }
+
+.case-section {
+  margin-bottom: 14px;
+}
+
+.case-section-title {
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+/* 交易链路追踪图 */
+.trace-flow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 10px;
+  background: rgba(10, 20, 40, 0.5);
+  border-radius: var(--radius-sm);
+}
+
+.trace-node {
+  padding: 6px 12px;
+  background: var(--primary-dim);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--primary);
+}
+
+.trace-arrow {
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+/* Agent状态悬浮 */
+.agent-status-float {
+  position: fixed;
+  bottom: 20px; right: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 80;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+}
+
+.agent-status-icon {
+  width: 36px; height: 36px;
+  background: var(--success-dim);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.agent-status-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.agent-status-label { font-size: 11px; color: var(--text-secondary); }
+.agent-status-value { font-size: 14px; font-weight: 600; color: var(--success); }
+.agent-status-queue { font-size: 11px; color: var(--text-secondary); }
+
+/* ==================== 面板4 - 智能投顾 ==================== */
+.invest-grid {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+}
+
+.risk-preference-display {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.risk-pref-label {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.risk-pref-current {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.product-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.product-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(10, 20, 40, 0.5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.product-card:hover {
+  border-color: var(--primary);
+  background: var(--primary-dim);
+}
+
+.product-icon {
+  width: 40px; height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.product-info { flex: 1; }
+
+.product-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.product-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.product-return {
+  text-align: right;
+}
+
+.product-return-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.product-return-label {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+/* 对话窗口 */
+.chat-window {
+  margin-top: 16px;
+  background: rgba(10, 20, 40, 0.5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.chat-messages {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.chat-msg {
+  max-width: 80%;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  line-height: 1.5;
+  animation: msgSlide 0.3s ease;
+}
+
+@keyframes msgSlide {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chat-msg.user {
+  align-self: flex-end;
+  background: var(--primary-dim);
+  color: var(--primary);
+  border: 1px solid var(--border);
+}
+
+.chat-msg.bot {
+  align-self: flex-start;
+  background: rgba(10, 20, 40, 0.8);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.chat-input {
+  flex: 1;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  color: var(--text-main);
+  font-size: 12px;
+  transition: var(--transition);
+}
+
+.chat-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.chat-send {
+  background: var(--primary);
+  color: #0a0e1a;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.chat-send:hover { box-shadow: 0 0 10px var(--primary-glow); }
+
+/* FAQ快捷按钮 */
+.faq-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px;
+}
+
+.faq-btn {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.faq-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* AI解读文字 */
+.ai-analysis {
+  padding: 12px;
+  background: rgba(10, 20, 40, 0.5);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  border-left: 3px solid var(--primary);
+  margin-top: 10px;
+}
+
+.ai-analysis .highlight { color: var(--primary); font-weight: 600; }
+.ai-analysis .success { color: var(--success); font-weight: 600; }
+.ai-analysis .danger { color: var(--danger); font-weight: 600; }
+
+/* 响应式 */
+@media (max-width: 1200px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .risk-mid-grid { grid-template-columns: 1fr; }
+  .credit-grid, .invest-grid { grid-template-columns: 1fr; }
+  .fraud-mid-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== 顶部标题栏 ==================== -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo">🛡️</div>
+    <div class="header-title">AI金融风控智能体平台</div>
+  </div>
+  <div class="header-right">
+    <div class="header-status">
+      <div class="status-dot"></div>
+      <span>系统运行中</span>
+    </div>
+    <div class="header-time" id="headerTime">--:--:--</div>
+  </div>
+</header>
+
+<!-- ==================== 左侧导航栏 ==================== -->
+<nav class="sidebar">
+  <div class="nav-item active" data-panel="risk" onclick="switchPanel('risk')">
+    <span class="nav-icon">📊</span>
+    <span>风险态势</span>
+  </div>
+  <div class="nav-item" data-panel="credit" onclick="switchPanel('credit')">
+    <span class="nav-icon">🔍</span>
+    <span>信贷审批</span>
+  </div>
+  <div class="nav-item" data-panel="fraud" onclick="switchPanel('fraud')">
+    <span class="nav-icon">🛡️</span>
+    <span>反欺诈监控</span>
+    <span class="nav-badge">3</span>
+  </div>
+  <div class="nav-item" data-panel="invest" onclick="switchPanel('invest')">
+    <span class="nav-icon">📈</span>
+    <span>智能投顾</span>
+  </div>
+</nav>
+
+<!-- ==================== 主内容区 ==================== -->
+<main class="main-content">
+
+  <!-- ==================== 面板1 - 风险态势 ==================== -->
+  <div class="panel active" id="panel-risk">
+
+    <!-- KPI卡片 -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon">💰</div>
+        <div class="kpi-label">今日交易总额</div>
+        <div class="kpi-value" data-target="8472" data-suffix="">0</div>
+        <div class="kpi-trend up">↑ 12.3% 较昨日</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">🚫</div>
+        <div class="kpi-label">风险拦截次数</div>
+        <div class="kpi-value" data-target="342" data-suffix="">0</div>
+        <div class="kpi-trend up">↑ 8.7% 较昨日</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">🎯</div>
+        <div class="kpi-label">欺诈识别率</div>
+        <div class="kpi-value" data-target="99.2" data-suffix="%">0</div>
+        <div class="kpi-trend up">↑ 0.3% 较上周</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">⚙️</div>
+        <div class="kpi-label">系统健康度</div>
+        <div class="kpi-value" data-target="98" data-suffix="%">0</div>
+        <div class="kpi-trend up">↑ 2.1% 较昨日</div>
+      </div>
+    </div>
+
+    <!-- 中部三列 -->
+    <div class="risk-mid-grid">
+      <!-- 环形图 -->
+      <div class="card">
+        <div class="card-title">风险等级分布</div>
+        <div class="donut-container">
+          <div class="donut-chart" id="riskDonut"></div>
+          <div class="donut-center">
+            <div class="donut-center-value">1,247</div>
+            <div class="donut-center-label">总风险事件</div>
+          </div>
+        </div>
+        <div class="donut-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#ff5252"></div>
+            <span class="legend-label">高风险</span>
+            <span class="legend-value">186 (14.9%)</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#ffab40"></div>
+            <span class="legend-label">中风险</span>
+            <span class="legend-value">342 (27.4%)</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#00e676"></div>
+            <span class="legend-label">低风险</span>
+            <span class="legend-value">719 (57.7%)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 事件流 -->
+      <div class="card">
+        <div class="card-title">实时风险事件流</div>
+        <div class="event-stream" id="eventStream"></div>
+      </div>
+
+      <!-- 思考链 -->
+      <div class="card">
+        <div class="card-title">智能体思考链</div>
+        <div class="think-chain" id="thinkChain"></div>
+      </div>
+    </div>
+
+    <!-- 趋势图 -->
+    <div class="card">
+      <div class="card-title">7日风险趋势</div>
+      <div class="chart-container">
+        <canvas id="trendCanvas" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 面板2 - 信贷审批 ==================== -->
+  <div class="panel" id="panel-credit">
+    <div class="credit-grid">
+      <!-- 左侧表单 -->
+      <div class="card">
+        <div class="card-title">申请人信息</div>
+        <div class="form-group">
+          <label class="form-label">姓名</label>
+          <input class="form-input" id="app-name" placeholder="请输入申请人姓名" value="张明远">
+        </div>
+        <div class="form-group">
+          <label class="form-label">身份证号</label>
+          <input class="form-input" id="app-id" placeholder="请输入身份证号" value="3201**********1234">
+        </div>
+        <div class="form-group">
+          <label class="form-label">月收入（元）</label>
+          <input class="form-input" id="app-income" type="number" placeholder="请输入月收入" value="18000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">申请额度（元）</label>
+          <input class="form-input" id="app-amount" type="number" placeholder="请输入申请额度" value="500000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">贷款期限</label>
+          <select class="form-select" id="app-term">
+            <option value="12">12个月</option>
+            <option value="24">24个月</option>
+            <option value="36" selected>36个月</option>
+            <option value="60">60个月</option>
+            <option value="120">120个月（10年）</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">信用评分（300-850）</label>
+          <div class="slider-container">
+            <input type="range" class="slider" id="credit-score" min="300" max="850" value="680">
+            <div class="slider-value" id="credit-score-val">680</div>
+          </div>
+        </div>
+        <button class="btn" style="width:100%" onclick="startApproval()">提交审批</button>
+      </div>
+
+      <!-- 右侧结果 -->
+      <div class="card">
+        <div class="card-title">AI智能审批结果</div>
+
+        <!-- 进度条 -->
+        <div class="approval-progress" id="approvalProgress" style="display:none">
+          <div class="progress-steps">
+            <div class="progress-step" data-step="0">
+              <div class="step-circle">1</div>
+              <span>数据采集</span>
+            </div>
+            <div class="progress-step" data-step="1">
+              <div class="step-circle">2</div>
+              <span>特征工程</span>
+            </div>
+            <div class="progress-step" data-step="2">
+              <div class="step-circle">3</div>
+              <span>模型评估</span>
+            </div>
+            <div class="progress-step" data-step="3">
+              <div class="step-circle">4</div>
+              <span>风控决策</span>
+            </div>
+            <div class="progress-step" data-step="4">
+              <div class="step-circle">5</div>
+              <span>生成报告</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 结果区域 -->
+        <div id="approvalResult">
+          <div style="text-align:center; padding: 60px 0; color: var(--text-dim);">
+            <div style="font-size:48px; margin-bottom:12px;">📋</div>
+            <div>提交申请后，AI将自动进行审批</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 面板3 - 反欺诈监控 ==================== -->
+  <div class="panel" id="panel-fraud">
+
+    <!-- 顶部交易流 -->
+    <div class="card fraud-top">
+      <div class="card-title">实时交易流监控</div>
+      <div class="transaction-flow" id="txFlow"></div>
+    </div>
+
+    <!-- 中部两列 -->
+    <div class="fraud-mid-grid">
+      <!-- 欺诈类型分布 -->
+      <div class="card">
+        <div class="card-title">欺诈类型分布</div>
+        <div class="bar-chart" id="fraudBars"></div>
+      </div>
+
+      <!-- 设备指纹地图 -->
+      <div class="card">
+        <div class="card-title">设备指纹地图</div>
+        <div class="device-map" id="deviceMap">
+          <div class="map-grid"></div>
+          <div class="map-legend">
+            <div class="map-legend-item">
+              <div class="legend-dot" style="background:#00d4ff"></div>
+              <span>正常</span>
+            </div>
+            <div class="map-legend-item">
+              <div class="legend-dot" style="background:#ff5252"></div>
+              <span>高危</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 案例详情 -->
+    <div class="card case-detail hidden" id="caseDetail">
+      <div class="card-title">案例详情分析</div>
+      <div id="caseDetailContent"></div>
+    </div>
+
+    <!-- Agent状态 -->
+    <div class="agent-status-float" id="agentStatus">
+      <div class="agent-status-icon">🤖</div>
+      <div class="agent-status-text">
+        <div class="agent-status-label">反欺诈Agent</div>
+        <div class="agent-status-value" id="agentStatusValue">运行中</div>
+        <div class="agent-status-queue">处理队列: <span id="agentQueue">7</span> 笔</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 面板4 - 智能投顾 ==================== -->
+  <div class="panel" id="panel-invest">
+    <div class="invest-grid">
+      <!-- 左侧输入 -->
+      <div class="card">
+        <div class="card-title">客户画像</div>
+        <div class="form-group">
+          <label class="form-label">风险偏好</label>
+          <div class="risk-preference-display">
+            <span class="risk-pref-label">保守</span>
+            <span class="risk-pref-label">稳健</span>
+            <span class="risk-pref-label">平衡</span>
+            <span class="risk-pref-label">进取</span>
+            <span class="risk-pref-label">激进</span>
+          </div>
+          <div class="slider-container">
+            <input type="range" class="slider" id="risk-pref" min="1" max="5" value="3" style="background:linear-gradient(90deg, #00e676, #00d4ff, #ffab40, #ff5252, #b388ff)">
+            <div class="slider-value" id="risk-pref-val">平衡</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">投资期限</label>
+          <select class="form-select" id="invest-term">
+            <option value="3">3个月</option>
+            <option value="6">6个月</option>
+            <option value="12" selected>12个月</option>
+            <option value="36">3年</option>
+            <option value="60">5年以上</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">可投资金额（万元）</label>
+          <input class="form-input" id="invest-amount" type="number" placeholder="请输入金额" value="100">
+        </div>
+      </div>
+
+      <!-- 右侧结果 -->
+      <div>
+        <!-- 资产配置 -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">AI资产配置建议</div>
+          <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
+            <div class="donut-chart" id="investDonut" style="width:140px;height:140px;"></div>
+            <div class="donut-legend" style="flex:1; min-width:200px;">
+              <div class="legend-item">
+                <div class="legend-dot" style="background:#00d4ff" id="legend-stock"></div>
+                <span class="legend-label">股票</span>
+                <span class="legend-value" id="alloc-stock">30%</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background:#00e676" id="legend-bond"></div>
+                <span class="legend-label">债券</span>
+                <span class="legend-value" id="alloc-bond">30%</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background:#ffab40" id="legend-fund"></div>
+                <span class="legend-label">基金</span>
+                <span class="legend-value" id="alloc-fund">20%</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background:#b388ff" id="legend-cash"></div>
+                <span class="legend-label">现金</span>
+                <span class="legend-value" id="alloc-cash">10%</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background:#ff5252" id="legend-alt"></div>
+                <span class="legend-label">另类投资</span>
+                <span class="legend-value" id="alloc-alt">10%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 推荐产品 -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">推荐产品</div>
+          <div class="product-list" id="productList"></div>
+        </div>
+
+        <!-- 市场趋势 -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">市场趋势分析</div>
+          <div class="chart-container">
+            <canvas id="klineCanvas" height="180"></canvas>
+          </div>
+          <div class="ai-analysis" id="marketAnalysis">
+            <span class="highlight">AI解读：</span>当前市场处于震荡上行阶段，沪指在3200-3400点区间运行。建议关注<span class="success">新能源</span>和<span class="success">人工智能</span>板块，注意<span class="danger">美联储加息</span>带来的短期波动风险。
+          </div>
+        </div>
+
+        <!-- 对话窗口 -->
+        <div class="chat-window">
+          <div class="faq-buttons">
+            <button class="faq-btn" onclick="askFAQ(0)">当前市场适合入市吗？</button>
+            <button class="faq-btn" onclick="askFAQ(1)">如何分散投资风险？</button>
+            <button class="faq-btn" onclick="askFAQ(2)">债券和股票的比例？</button>
+            <button class="faq-btn" onclick="askFAQ(3)">什么时候需要调仓？</button>
+            <button class="faq-btn" onclick="askFAQ(4)">定投策略好不好？</button>
+          </div>
+          <div class="chat-messages" id="chatMessages">
+            <div class="chat-msg bot">您好！我是您的智能投顾助手，有什么投资问题可以随时问我。</div>
+          </div>
+          <div class="chat-input-row">
+            <input class="chat-input" id="chatInput" placeholder="输入您的问题..." onkeydown="if(event.key==='Enter')sendChat()">
+            <button class="chat-send" onclick="sendChat()">发送</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+/* ==================== 全局模拟数据 ==================== */
+
+// 风险事件数据模板
+var riskEventTemplates = [
+  { level: 'high', text: '检测到异常IP集中访问账户 #A87234' },
+  { level: 'high', text: '大额转账触发风控规则 R-2341，已自动拦截' },
+  { level: 'mid', text: '用户#B19238 短时间内多次修改绑定手机' },
+  { level: 'mid', text: '信用卡交易地点跳跃：上海→深圳（间隔<5min）' },
+  { level: 'low', text: '新设备登录验证通过，风险评分 32' },
+  { level: 'high', text: '疑似盗刷交易 ¥18,600 已紧急冻结账户' },
+  { level: 'mid', text: '商户#M3392 交易频率异常增长 340%' },
+  { level: 'low', text: '常规风控规则扫描完成，未发现异常' },
+  { level: 'mid', text: '跨境交易告警：缅甸→中国 涉嫌洗钱模型匹配' },
+  { level: 'high', text: '批量注册检测：同IP 17个账号在3分钟内注册' },
+  { level: 'low', text: '信贷审批模型完成评估，通过率 76.3%' },
+  { level: 'mid', text: '设备指纹异常：模拟器环境检测结果为正' },
+  { level: 'high', text: '套现行为检测：信用卡#C4521 连续大额整数消费' },
+  { level: 'low', text: '生物特征验证通过，活体检测评分 98.7' },
+  { level: 'mid', text: '夜间异常交易告警：02:34 大额消费 ¥9,800' }
+];
+
+// 思考链数据
+var thinkChainData = [
+  { icon: '📊', text: '正在分析<span class="highlight">交易模式</span>... 已处理 <span class="highlight">12,847</span> 笔交易数据' },
+  { icon: '🔍', text: '检测到<span class="danger">异常IP集中访问</span>，来源地区：境外代理节点' },
+  { icon: '⚡', text: '触发风控规则 <span class="highlight">R-2341</span>（大额异常转账），自动拦截中...' },
+  { icon: '🎯', text: '匹配欺诈模型 <span class="highlight">Fraud-Net-v3</span>，置信度 <span class="highlight">94.7%</span>' },
+  { icon: '✅', text: '建议：<span class="highlight">二次验证</span> + <span class="highlight">人工复审</span>，已通知风控专员' }
+];
+
+// 信贷审批风险因素
+var creditRiskFactors = [
+  { icon: '⚠️', text: '近6个月信用查询次数偏多（8次），可能存在多头借贷', level: 'mid' },
+  { icon: '💰', text: '负债收入比 42%，接近警戒线（45%）', level: 'mid' },
+  { icon: '📋', text: '无抵押物，为纯信用贷款，违约回收难度较高', level: 'high' },
+  { icon: '🏠', text: '当前工作单位在职时间 1.2年，略短于建议值', level: 'low' },
+  { icon: '📈', text: '月收入稳定，近3个月银行流水无明显异常', level: 'low' }
+];
+
+// 审批日志
+var approvalLogs = [
+  { time: '0.1s', tag: '[DATA]', text: '采集央行征信数据 → 信用评分 680' },
+  { time: '0.3s', tag: '[DATA]', text: '采集社保/公积金数据 → 连续缴纳 14个月' },
+  { time: '0.5s', tag: '[DATA]', text: '采集运营商数据 → 在网时长 36个月' },
+  { time: '1.0s', tag: '[FEAT]', text: '特征提取完成，共 127 维特征向量' },
+  { time: '1.2s', tag: '[FEAT]', text: '关键特征：DTI=0.42, CreditAge=3.2y, Inquiry=8' },
+  { time: '2.0s', tag: '[MODEL]', text: 'XGBoost模型评分 → 违约概率 12.3%' },
+  { time: '2.2s', tag: '[MODEL]', text: '深度神经网络评分 → 违约概率 14.1%' },
+  { time: '2.5s', tag: '[MODEL]', text: '集成模型最终评分 → 违约概率 13.2%' },
+  { time: '3.0s', tag: '[RULE]', text: '规则引擎匹配 → 命中规则 R-104(负债比偏高)' },
+  { time: '3.2s', tag: '[RULE]', text: '规则引擎匹配 → 命中规则 R-208(查询次数偏多)' },
+  { time: '4.0s', tag: '[DECISION]', text: '综合决策 → 建议人工复审，额度降至30万' },
+  { time: '4.5s', tag: '[DECISION]', text: '建议利率上浮 0.5%，期限维持36个月' },
+  { time: '5.0s', tag: '[REPORT]', text: '生成审批报告完成，已推送至复审队列' }
+];
+
+// 交易流数据
+var txTemplates = [
+  { time: '', amount: 18600, merchant: '数码城在线支付', risk: 92, high: true },
+  { time: '', amount: 329, merchant: '美团外卖', risk: 12, high: false },
+  { time: '', amount: 5000, merchant: '京东商城', risk: 28, high: false },
+  { time: '', amount: 9999, merchant: '某珠宝店POS', risk: 85, high: true },
+  { time: '', amount: 158, merchant: '滴滴出行', risk: 8, high: false },
+  { time: '', amount: 2800, merchant: '某免税店', risk: 45, high: false },
+  { time: '', amount: 12000, merchant: '虚拟商品平台', risk: 88, high: true },
+  { time: '', amount: 680, merchant: '星巴克咖啡', risk: 5, high: false },
+  { time: '', amount: 4500, merchant: '航空公司官网', risk: 22, high: false },
+  { time: '', amount: 8888, merchant: '某赌场关联商户', risk: 95, high: true },
+  { time: '', amount: 230, merchant: '便利店', risk: 3, high: false },
+  { time: '', amount: 3200, merchant: '某P2P平台', risk: 67, high: false }
+];
+
+// 欺诈类型数据
+var fraudTypes = [
+  { name: '盗刷', count: 47, color: '#ff5252' },
+  { name: '套现', count: 32, color: '#ffab40' },
+  { name: '洗钱', count: 18, color: '#b388ff' },
+  { name: '虚假交易', count: 25, color: '#00d4ff' },
+  { name: '账号盗用', count: 14, color: '#00e676' }
+];
+
+// 设备指纹地图坐标（模拟全国主要城市，百分比定位）
+var mapPoints = [
+  { x: 52, y: 30, label: '北京', high: false },
+  { x: 54, y: 38, label: '上海', high: false },
+  { x: 50, y: 55, label: '深圳', high: true },
+  { x: 46, y: 48, label: '武汉', high: false },
+  { x: 58, y: 35, label: '杭州', high: false },
+  { x: 42, y: 40, label: '成都', high: true },
+  { x: 60, y: 25, label: '沈阳', high: false },
+  { x: 48, y: 33, label: '郑州', high: false },
+  { x: 38, y: 50, label: '昆明', high: false },
+  { x: 56, y: 48, label: '厦门', high: false },
+  { x: 35, y: 60, label: '海口', high: true },
+  { x: 44, y: 25, label: '乌鲁木齐', high: false }
+];
+
+// 投顾FAQ
+var investFAQs = [
+  '当前市场处于震荡上行阶段，建议分批建仓。短期波动属正常调整，中长期看好科技和消费板块。根据您的风险偏好，建议保持60%以上权益仓位。',
+  '分散投资的核心原则是"不把鸡蛋放在一个篮子里"。建议从三个维度分散：1）资产类别（股+债+现金）；2）行业（不超3个行业集中）；3）时间（定投平滑成本）。',
+  '债券和股票的比例应根据您的风险偏好动态调整。保守型建议债70%股30%；平衡型建议各50%；进取型建议股70%债30%。当前市场建议适当增配权益。',
+  '建议以下情况考虑调仓：1）单一资产涨幅超20%导致比例失衡；2）市场出现重大政策变化；3）个人风险偏好发生改变；4）每季度定期检视一次。',
+  '定投是长期投资的优秀策略，特别适合波动较大的权益类资产。核心优势：平滑成本、避免择时、纪律性强。建议选择指数基金，每月固定金额，坚持3年以上。'
+];
+
+// 投顾产品数据
+var investProducts = {
+  1: [
+    { icon: '🏦', name: '国债逆回购7天期', desc: '低风险短期理财', ret: '2.8%', risk: '低', riskColor: 'tag-low' },
+    { icon: '💰', name: '货币基金-安心盈', desc: 'T+0赎回，灵活便捷', ret: '2.5%', risk: '低', riskColor: 'tag-low' },
+    { icon: '📊', name: '短债基金-稳健通', desc: '中低风险，稳健收益', ret: '3.8%', risk: '中低', riskColor: 'tag-low' },
+    { icon: '🔒', name: '银行大额存单3年', desc: '保本保息，提前支取灵活', ret: '3.2%', risk: '极低', riskColor: 'tag-low' }
+  ],
+  2: [
+    { icon: '📊', name: '混合基金-平衡配置', desc: '股债平衡，攻守兼备', ret: '5.6%', risk: '中', riskColor: 'tag-mid' },
+    { icon: '🏦', name: '信用债基金-优选', desc: '高信用等级企业债', ret: '4.2%', risk: '中低', riskColor: 'tag-low' },
+    { icon: '💰', name: '指数基金-沪深300', desc: '核心宽基，长期配置', ret: '6.8%', risk: '中', riskColor: 'tag-mid' },
+    { icon: '🔒', name: '结构性存款-看涨', desc: '保底+浮动收益', ret: '3.5%', risk: '低', riskColor: 'tag-low' }
+  ],
+  3: [
+    { icon: '📈', name: '科技ETF-人工智能', desc: '聚焦AI赛道龙头企业', ret: '12.5%', risk: '中高', riskColor: 'tag-mid' },
+    { icon: '📊', name: '消费混合基金', desc: '大消费赛道长期持有', ret: '8.2%', risk: '中', riskColor: 'tag-mid' },
+    { icon: '🏦', name: '可转债基金', desc: '债底保护+股性弹性', ret: '6.5%', risk: '中', riskColor: 'tag-mid' },
+    { icon: '💰', name: '新能源产业基金', desc: '碳中和主题，成长性强', ret: '10.3%', risk: '中高', riskColor: 'tag-mid' }
+  ],
+  4: [
+    { icon: '🚀', name: '半导体行业基金', desc: '国产替代核心赛道', ret: '18.7%', risk: '高', riskColor: 'tag-high' },
+    { icon: '📈', name: '创业板ETF', desc: '成长股集中地', ret: '15.2%', risk: '高', riskColor: 'tag-high' },
+    { icon: '📊', name: '生物医药基金', desc: '创新药+医疗器械', ret: '13.8%', risk: '高', riskColor: 'tag-high' },
+    { icon: '💰', name: 'QDII基金-美股科技', desc: '全球科技龙头配置', ret: '16.5%', risk: '高', riskColor: 'tag-high' }
+  ],
+  5: [
+    { icon: '🔥', name: '加密数字资产基金', desc: '高风险高回报另类投资', ret: '25.0%', risk: '极高', riskColor: 'tag-high' },
+    { icon: '🚀', name: '天使投资基金', desc: '早期股权投资', ret: '30.0%', risk: '极高', riskColor: 'tag-high' },
+    { icon: '📈', name: '杠杆ETF-创业板', desc: '2倍杠杆放大收益', ret: '22.0%', risk: '极高', riskColor: 'tag-high' },
+    { icon: '💰', name: '大宗商品期货基金', desc: 'CTA策略，多空双向', ret: '20.0%', risk: '极高', riskColor: 'tag-high' }
+  ]
+};
+
+// 资产配置比例（根据风险偏好）
+var assetAllocations = {
+  1: { stock: 10, bond: 50, fund: 15, cash: 20, alt: 5 },
+  2: { stock: 20, bond: 40, fund: 20, cash: 15, alt: 5 },
+  3: { stock: 30, bond: 30, fund: 20, cash: 10, alt: 10 },
+  4: { stock: 45, bond: 20, fund: 20, cash: 5, alt: 10 },
+  5: { stock: 55, bond: 10, fund: 15, cash: 5, alt: 15 }
+};
+
+/* ==================== 通用工具函数 ==================== */
+
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+function formatTime(d) {
+  return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+}
+
+function formatTimeShort(d) {
+  return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+}
+
+// 数字滚动动画
+function animateNumber(el, target, duration, suffix) {
+  suffix = suffix || '';
+  var start = 0;
+  var startTime = null;
+  var decimals = target % 1 !== 0;
+
+  function step(ts) {
+    if (!startTime) startTime = ts;
+    var progress = Math.min((ts - startTime) / duration, 1);
+    var eased = 1 - Math.pow(1 - progress, 3);
+    var current = start + (target - start) * eased;
+    el.textContent = (decimals ? current.toFixed(1) : Math.floor(current).toLocaleString()) + suffix;
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// 打字机效果
+function typewriter(el, text, speed, callback) {
+  speed = speed || 30;
+  var i = 0;
+  el.innerHTML = '';
+  el.classList.add('typing-cursor');
+  function type() {
+    if (i < text.length) {
+      el.innerHTML = text.substring(0, i + 1);
+      i++;
+      setTimeout(type, speed);
+    } else {
+      el.classList.remove('typing-cursor');
+      if (callback) callback();
+    }
+  }
+  type();
+}
+
+/* ==================== 面板1 - 风险态势渲染 ==================== */
+
+function renderRiskDonut() {
+  var donut = document.getElementById('riskDonut');
+  // 高14.9% 中27.4% 低57.7%
+  var high = 14.9, mid = 27.4, low = 57.7;
+  donut.style.background = 'conic-gradient(' +
+    '#ff5252 0% ' + high + '%, ' +
+    '#ffab40 ' + high + '% ' + (high + mid) + '%, ' +
+    '#00e676 ' + (high + mid) + '% 100%)';
+}
+
+var eventStreamTimer = null;
+var eventIndex = 0;
+
+function addRiskEvent() {
+  var stream = document.getElementById('eventStream');
+  if (!stream) return;
+
+  var tpl = riskEventTemplates[eventIndex % riskEventTemplates.length];
+  eventIndex++;
+
+  var now = new Date();
+  var item = document.createElement('div');
+  item.className = 'event-item ' + tpl.level;
+  item.innerHTML =
+    '<span class="event-time">' + formatTime(now) + '</span>' +
+    '<span class="event-content">' + tpl.text + '</span>' +
+    '<span class="tag tag-' + (tpl.level === 'high' ? 'high' : tpl.level === 'mid' ? 'mid' : 'low') + '">' +
+    (tpl.level === 'high' ? '高' : tpl.level === 'mid' ? '中' : '低') + '</span>';
+
+  stream.insertBefore(item, stream.firstChild);
+
+  while (stream.children.length > 15) {
+    stream.removeChild(stream.lastChild);
+  }
+}
+
+function renderThinkChain() {
+  var container = document.getElementById('thinkChain');
+  if (!container) return;
+  container.innerHTML = '';
+
+  var idx = 0;
+  function showNext() {
+    if (idx >= thinkChainData.length) {
+      // 循环
+      setTimeout(function() {
+        container.innerHTML = '';
+        idx = 0;
+        showNext();
+      }, 3000);
+      return;
+    }
+    var data = thinkChainData[idx];
+    var step = document.createElement('div');
+    step.className = 'think-step';
+    step.innerHTML =
+      '<div class="think-icon">' + data.icon + '</div>' +
+      '<div class="think-text" id="think-text-' + idx + '"></div>';
+    container.appendChild(step);
+
+    var textEl = document.getElementById('think-text-' + idx);
+    typewriter(textEl, data.text, 25, function() {
+      idx++;
+      setTimeout(showNext, 800);
+    });
+  }
+  showNext();
+}
+
+function renderTrendChart() {
+  var canvas = document.getElementById('trendCanvas');
+  if (!canvas) return;
+
+  var dpr = window.devicePixelRatio || 1;
+  var rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 220 * dpr;
+  canvas.style.height = '220px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var w = rect.width, h = 220;
+  var padding = { top: 20, right: 20, bottom: 30, left: 50 };
+  var chartW = w - padding.left - padding.right;
+  var chartH = h - padding.top - padding.bottom;
+
+  // 数据
+  var days = ['周一', '周二', '周三', '周四', '周五', '周六', '今天'];
+  var txData = [6200, 7100, 6800, 7900, 7300, 8100, 8472];
+  var blockData = [180, 220, 195, 280, 240, 310, 342];
+
+  var maxVal = 9000;
+  var minVal = 0;
+
+  // 网格线
+  ctx.strokeStyle = 'rgba(0, 212, 255, 0.08)';
+  ctx.lineWidth = 1;
+  for (var i = 0; i <= 4; i++) {
+    var y = padding.top + (chartH / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(padding.left + chartW, y);
+    ctx.stroke();
+
+    // Y轴标签
+    ctx.fillStyle = 'rgba(138, 155, 176, 0.6)';
+    ctx.font = '10px Courier New';
+    ctx.textAlign = 'right';
+    var val = maxVal - (maxVal / 4) * i;
+    ctx.fillText(Math.floor(val), padding.left - 8, y + 3);
+  }
+
+  // X轴标签
+  ctx.fillStyle = 'rgba(138, 155, 176, 0.6)';
+  ctx.font = '10px Microsoft YaHei';
+  ctx.textAlign = 'center';
+  for (var i = 0; i < days.length; i++) {
+    var x = padding.left + (chartW / (days.length - 1)) * i;
+    ctx.fillText(days[i], x, h - 10);
+  }
+
+  // 交易量线
+  ctx.strokeStyle = '#00d4ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (var i = 0; i < txData.length; i++) {
+    var x = padding.left + (chartW / (txData.length - 1)) * i;
+    var y = padding.top + chartH - (txData[i] / maxVal) * chartH;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // 交易量填充
+  ctx.lineTo(padding.left + chartW, padding.top + chartH);
+  ctx.lineTo(padding.left, padding.top + chartH);
+  ctx.closePath();
+  var grad = ctx.createLinearGradient(0, padding.top, 0, padding.top + chartH);
+  grad.addColorStop(0, 'rgba(0, 212, 255, 0.15)');
+  grad.addColorStop(1, 'rgba(0, 212, 255, 0)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // 交易量点
+  for (var i = 0; i < txData.length; i++) {
+    var x = padding.left + (chartW / (txData.length - 1)) * i;
+    var y = padding.top + chartH - (txData[i] / maxVal) * chartH;
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#00d4ff';
+    ctx.fill();
+  }
+
+  // 拦截量线
+  ctx.strokeStyle = '#ff5252';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (var i = 0; i < blockData.length; i++) {
+    var x = padding.left + (chartW / (blockData.length - 1)) * i;
+    var y = padding.top + chartH - (blockData[i] / maxVal) * chartH;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // 拦截量点
+  for (var i = 0; i < blockData.length; i++) {
+    var x = padding.left + (chartW / (blockData.length - 1)) * i;
+    var y = padding.top + chartH - (blockData[i] / maxVal) * chartH;
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#ff5252';
+    ctx.fill();
+  }
+
+  // 图例
+  ctx.font = '11px Microsoft YaHei';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#00d4ff';
+  ctx.fillText('● 交易量', w - 120, 15);
+  ctx.fillStyle = '#ff5252';
+  ctx.fillText('● 拦截量', w - 60, 15);
+}
+
+function initKPIAnimation() {
+  var kpis = document.querySelectorAll('.kpi-value[data-target]');
+  kpis.forEach(function(el) {
+    var target = parseFloat(el.getAttribute('data-target'));
+    var suffix = el.getAttribute('data-suffix') || '';
+    animateNumber(el, target, 1500, suffix);
+  });
+}
+
+function startRiskPanel() {
+  renderRiskDonut();
+  initKPIAnimation();
+  renderTrendChart();
+  renderThinkChain();
+
+  // 初始事件
+  for (var i = 0; i < 5; i++) {
+    addRiskEvent();
+  }
+
+  if (eventStreamTimer) clearInterval(eventStreamTimer);
+  eventStreamTimer = setInterval(addRiskEvent, 3000);
+}
+
+/* ==================== 面板2 - 信贷审批渲染 ==================== */
+
+var approvalInProgress = false;
+
+function startApproval() {
+  if (approvalInProgress) return;
+  approvalInProgress = true;
+
+  var progress = document.getElementById('approvalProgress');
+  var result = document.getElementById('approvalResult');
+  progress.style.display = 'block';
+  result.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-secondary)">AI审批进行中...</div>';
+
+  // 重置步骤
+  var steps = document.querySelectorAll('.progress-step');
+  steps.forEach(function(s) { s.classList.remove('active', 'completed'); });
+
+  var currentStep = 0;
+  function advanceStep() {
+    if (currentStep > 0) {
+      steps[currentStep - 1].classList.remove('active');
+      steps[currentStep - 1].classList.add('completed');
+    }
+    if (currentStep < steps.length) {
+      steps[currentStep].classList.add('active');
+      currentStep++;
+      setTimeout(advanceStep, 1000);
+    } else {
+      // 全部完成
+      steps[steps.length - 1].classList.remove('active');
+      steps[steps.length - 1].classList.add('completed');
+      renderApprovalResult();
+      approvalInProgress = false;
+    }
+  }
+  advanceStep();
+}
+
+function renderApprovalResult() {
+  var score = parseInt(document.getElementById('credit-score').value);
+  var income = parseInt(document.getElementById('app-income').value) || 18000;
+  var amount = parseInt(document.getElementById('app-amount').value) || 500000;
+  var term = parseInt(document.getElementById('app-term').value);
+  var name = document.getElementById('app-name').value || '申请人';
+
+  // 判断结果
+  var resultType, resultIcon, resultTitle, resultColor;
+  if (score >= 750 && income >= 20000) {
+    resultType = 'pass';
+    resultIcon = '✅';
+    resultTitle = '审批通过';
+    resultColor = 'var(--success)';
+  } else if (score < 600 || income < 8000) {
+    resultType = 'reject';
+    resultIcon = '❌';
+    resultTitle = '审批拒绝';
+    resultColor = 'var(--danger)';
+  } else {
+    resultType = 'review';
+    resultIcon = '⚠️';
+    resultTitle = '人工复审';
+    resultColor = 'var(--warning)';
+  }
+
+  // 计算额度利率
+  var approvedAmount, rate;
+  if (resultType === 'pass') {
+    approvedAmount = amount;
+    rate = (3.8 + (850 - score) / 100).toFixed(2);
+  } else if (resultType === 'review') {
+    approvedAmount = Math.floor(amount * 0.6 / 10000) * 10000;
+    rate = (4.5 + (750 - score) / 100).toFixed(2);
+  } else {
+    approvedAmount = 0;
+    rate = '-';
+  }
+
+  var result = document.getElementById('approvalResult');
+  result.innerHTML =
+
+    // 结果卡片
+    '<div class="result-card ' + resultType + '">' +
+      '<div class="result-icon">' + resultIcon + '</div>' +
+      '<div class="result-title" style="color:' + resultColor + '">' + resultTitle + '</div>' +
+      '<div class="result-details">' +
+        '<div class="result-detail-item"><span class="result-detail-label">批准额度</span><span class="result-detail-value" style="color:' + resultColor + '">' + (approvedAmount > 0 ? '¥' + approvedAmount.toLocaleString() : '-') + '</span></div>' +
+        '<div class="result-detail-item"><span class="result-detail-label">年化利率</span><span class="result-detail-value" style="color:' + resultColor + '">' + rate + (rate !== '-' ? '%' : '') + '</span></div>' +
+        '<div class="result-detail-item"><span class="result-detail-label">期限</span><span class="result-detail-value" style="color:' + resultColor + '">' + term + '个月</span></div>' +
+      '</div>' +
+    '</div>' +
+
+    // 雷达图
+    '<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">' +
+      '<div>' +
+        '<div class="card-title" style="margin-bottom:8px">多维评分雷达</div>' +
+        '<div class="radar-container"><canvas id="radarCanvas" width="280" height="240"></canvas></div>' +
+      '</div>' +
+      '<div>' +
+        '<div class="card-title" style="margin-bottom:8px">风险因素分析</div>' +
+        '<div class="risk-factors">' +
+          creditRiskFactors.map(function(f) {
+            return '<div class="risk-factor-item">' +
+              '<span class="risk-factor-icon">' + f.icon + '</span>' +
+              '<span class="risk-factor-text">' + f.text + '</span>' +
+              '<span class="tag tag-' + f.level + '">' + (f.level === 'high' ? '高' : f.level === 'mid' ? '中' : '低') + '</span>' +
+            '</div>';
+          }).join('') +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+
+    // 推理日志
+    '<div class="collapse-header" onclick="toggleCollapse(this)">' +
+      '<span>智能体推理日志</span>' +
+      '<span class="collapse-arrow">▼</span>' +
+    '</div>' +
+    '<div class="collapse-body">' +
+      '<div class="log-list">' +
+        approvalLogs.map(function(log) {
+          return '<div class="log-item"><span class="log-time">' + log.time + '</span><span class="log-tag">' + log.tag + '</span>' + log.text + '</div>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+
+  // 绘制雷达图
+  setTimeout(function() { drawRadarChart(); }, 100);
+}
+
+function drawRadarChart() {
+  var canvas = document.getElementById('radarCanvas');
+  if (!canvas) return;
+
+  var dpr = window.devicePixelRatio || 1;
+  canvas.width = 280 * dpr;
+  canvas.height = 240 * dpr;
+  canvas.style.width = '280px';
+  canvas.style.height = '240px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var cx = 140, cy = 120, maxR = 80;
+  var labels = ['还款能力', '信用历史', '收入稳定性', '负债比', '抵押物'];
+  // 根据信用评分模拟数据
+  var score = parseInt(document.getElementById('credit-score').value);
+  var rt = window._radarResultType || 'review';
+  var data = [
+    Math.min(95, (score - 300) / 550 * 100 * 0.85 + 15),
+    Math.min(98, (score - 300) / 550 * 100),
+    72,
+    Math.max(40, 100 - (score - 300) / 550 * 40),
+    rt === 'pass' ? 80 : rt === 'review' ? 45 : 25
+  ];
+
+  var sides = 5;
+  var angleStep = (Math.PI * 2) / sides;
+
+  // 背景网格
+  for (var level = 1; level <= 4; level++) {
+    var r = (maxR / 4) * level;
+    ctx.strokeStyle = 'rgba(0, 212, 255, 0.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (var i = 0; i <= sides; i++) {
+      var angle = -Math.PI / 2 + angleStep * i;
+      var x = cx + Math.cos(angle) * r;
+      var y = cy + Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  // 轴线
+  for (var i = 0; i < sides; i++) {
+    var angle = -Math.PI / 2 + angleStep * i;
+    ctx.strokeStyle = 'rgba(0, 212, 255, 0.1)';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(angle) * maxR, cy + Math.sin(angle) * maxR);
+    ctx.stroke();
+  }
+
+  // 数据多边形
+  ctx.strokeStyle = '#00d4ff';
+  ctx.lineWidth = 2;
+  ctx.fillStyle = 'rgba(0, 212, 255, 0.15)';
+  ctx.beginPath();
+  for (var i = 0; i < sides; i++) {
+    var angle = -Math.PI / 2 + angleStep * i;
+    var r = maxR * (data[i] / 100);
+    var x = cx + Math.cos(angle) * r;
+    var y = cy + Math.sin(angle) * r;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // 数据点
+  for (var i = 0; i < sides; i++) {
+    var angle = -Math.PI / 2 + angleStep * i;
+    var r = maxR * (data[i] / 100);
+    var x = cx + Math.cos(angle) * r;
+    var y = cy + Math.sin(angle) * r;
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#00d4ff';
+    ctx.fill();
+  }
+
+  // 标签
+  ctx.font = '11px Microsoft YaHei';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#8a9bb0';
+  for (var i = 0; i < sides; i++) {
+    var angle = -Math.PI / 2 + angleStep * i;
+    var lx = cx + Math.cos(angle) * (maxR + 18);
+    var ly = cy + Math.sin(angle) * (maxR + 18) + 4;
+    ctx.fillText(labels[i], lx, ly);
+
+    // 分数
+    ctx.fillStyle = '#00d4ff';
+    ctx.font = '10px Courier New';
+    ctx.fillText(Math.floor(data[i]), lx, ly + 12);
+    ctx.fillStyle = '#8a9bb0';
+    ctx.font = '11px Microsoft YaHei';
+  }
+}
+
+function toggleCollapse(header) {
+  var body = header.nextElementSibling;
+  var arrow = header.querySelector('.collapse-arrow');
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+
+// 信用评分滑块
+function initCreditSlider() {
+  var slider = document.getElementById('credit-score');
+  var display = document.getElementById('credit-score-val');
+  if (!slider) return;
+  slider.addEventListener('input', function() {
+    display.textContent = slider.value;
+    var val = parseInt(slider.value);
+    if (val < 580) display.style.color = 'var(--danger)';
+    else if (val < 670) display.style.color = 'var(--warning)';
+    else if (val < 740) display.style.color = 'var(--primary)';
+    else display.style.color = 'var(--success)';
+  });
+}
+
+/* ==================== 面板3 - 反欺诈监控渲染 ==================== */
+
+function renderTxFlow() {
+  var flow = document.getElementById('txFlow');
+  if (!flow) return;
+  flow.innerHTML = '';
+
+  // 生成12张卡片
+  var cards = [];
+  for (var i = 0; i < 12; i++) {
+    var tpl = txTemplates[i % txTemplates.length];
+    var now = new Date(Date.now() - i * 120000);
+    cards.push({
+      time: formatTimeShort(now),
+      amount: tpl.amount,
+      merchant: tpl.merchant,
+      risk: tpl.risk,
+      high: tpl.high
+    });
+  }
+
+  cards.forEach(function(c, idx) {
+    var card = document.createElement('div');
+    card.className = 'tx-card' + (c.high ? ' high-risk' : '');
+    card.onclick = function() { showCaseDetail(c, idx); };
+    card.innerHTML =
+      '<div class="tx-time">' + c.time + '</div>' +
+      '<div class="tx-amount">¥' + c.amount.toLocaleString() + '</div>' +
+      '<div class="tx-merchant">' + c.merchant + '</div>' +
+      '<div class="tx-risk-score">' +
+        '<span style="color:' + (c.high ? 'var(--danger)' : 'var(--text-secondary)') + '">风险</span>' +
+        '<div class="risk-bar"><div class="risk-bar-fill" style="width:' + c.risk + '%; background:' + (c.high ? 'var(--danger)' : c.risk > 40 ? 'var(--warning)' : 'var(--success)') + '">' + c.risk + '</div></div>' +
+      '</div>';
+    flow.appendChild(card);
+  });
+
+  // 自动滚动动画
+  startTxFlowScroll();
+}
+
+var txScrollTimer = null;
+function startTxFlowScroll() {
+  var flow = document.getElementById('txFlow');
+  if (!flow) return;
+  if (txScrollTimer) clearInterval(txScrollTimer);
+
+  var scrollPos = 0;
+  var cardWidth = 212;
+
+  txScrollTimer = setInterval(function() {
+    scrollPos += 1;
+    if (scrollPos >= cardWidth) {
+      scrollPos = 0;
+      // 移动第一张卡片到最后
+      var first = flow.firstElementChild;
+      if (first) {
+        var now = new Date();
+        var tpl = txTemplates[Math.floor(Math.random() * txTemplates.length)];
+        first.querySelector('.tx-time').textContent = formatTimeShort(now);
+        first.querySelector('.tx-amount').textContent = '¥' + tpl.amount.toLocaleString();
+        first.querySelector('.tx-merchant').textContent = tpl.merchant;
+        var riskEl = first.querySelector('.risk-bar-fill');
+        riskEl.style.width = tpl.risk + '%';
+        riskEl.style.background = tpl.high ? 'var(--danger)' : tpl.risk > 40 ? 'var(--warning)' : 'var(--success)';
+        riskEl.textContent = tpl.risk;
+        first.className = 'tx-card' + (tpl.high ? ' high-risk' : '');
+        first.onclick = function() { showCaseDetail({ time: formatTimeShort(now), amount: tpl.amount, merchant: tpl.merchant, risk: tpl.risk, high: tpl.high }); };
+        flow.appendChild(first);
+      }
+    }
+    flow.scrollLeft = scrollPos;
+  }, 50);
+}
+
+function renderFraudBars() {
+  var container = document.getElementById('fraudBars');
+  if (!container) return;
+  container.innerHTML = '';
+
+  var maxVal = Math.max.apply(null, fraudTypes.map(function(f) { return f.count; }));
+
+  fraudTypes.forEach(function(f) {
+    var pct = (f.count / maxVal) * 100;
+    var item = document.createElement('div');
+    item.className = 'bar-item';
+    item.innerHTML =
+      '<div class="bar-label">' + f.name + '</div>' +
+      '<div class="bar-track">' +
+        '<div class="bar-fill" style="width:0%; background:' + f.color + ';">' + f.count + '</div>' +
+      '</div>';
+    container.appendChild(item);
+
+    // 动画
+    setTimeout(function() {
+      item.querySelector('.bar-fill').style.width = pct + '%';
+    }, 100);
+  });
+}
+
+function renderDeviceMap() {
+  var map = document.getElementById('deviceMap');
+  if (!map) return;
+
+  mapPoints.forEach(function(p) {
+    var point = document.createElement('div');
+    point.className = 'map-point ' + (p.high ? 'high' : 'normal');
+    point.style.left = p.x + '%';
+    point.style.top = p.y + '%';
+    point.setAttribute('data-label', p.label + (p.high ? ' ⚠高危' : ''));
+    map.appendChild(point);
+  });
+}
+
+function showCaseDetail(tx, idx) {
+  var panel = document.getElementById('caseDetail');
+  var content = document.getElementById('caseDetailContent');
+  panel.classList.remove('hidden');
+
+  var riskColor = tx.high ? 'var(--danger)' : 'var(--text-secondary)';
+
+  content.innerHTML =
+    '<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">' +
+
+      // 左侧
+      '<div>' +
+        '<div class="case-section">' +
+          '<div class="case-section-title">交易基本信息</div>' +
+          '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:12px;">' +
+            '<div>交易时间：<span style="color:var(--primary)">' + tx.time + '</span></div>' +
+            '<div>交易金额：<span style="color:var(--primary)">¥' + tx.amount.toLocaleString() + '</span></div>' +
+            '<div>商户名称：<span style="color:var(--text-main)">' + tx.merchant + '</span></div>' +
+            '<div>风险评分：<span style="color:' + riskColor + '">' + tx.risk + '/100</span></div>' +
+            '<div>交易渠道：<span style="color:var(--text-main)">手机APP</span></div>' +
+            '<div>支付方式：<span style="color:var(--text-main)">信用卡</span></div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="case-section">' +
+          '<div class="case-section-title">交易链路追踪</div>' +
+          '<div class="trace-flow">' +
+            '<div class="trace-node">用户终端</div><div class="trace-arrow">→</div>' +
+            '<div class="trace-node">风控网关</div><div class="trace-arrow">→</div>' +
+            '<div class="trace-node">' + (tx.high ? '🚨拦截' : '✅放行') + '</div><div class="trace-arrow">→</div>' +
+            '<div class="trace-node">' + (tx.high ? '人工复审' : '交易完成') + '</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="case-section">' +
+          '<div class="case-section-title">设备信息</div>' +
+          '<div style="font-size:12px; line-height:1.8; color:var(--text-secondary)">' +
+            '设备型号：iPhone 15 Pro Max<br>' +
+            'IP地址：192.168.' + Math.floor(Math.random() * 255) + '.' + Math.floor(Math.random() * 255) + '<br>' +
+            '设备指纹：DF-' + Math.random().toString(36).substr(2, 12).toUpperCase() + '<br>' +
+            'GPS定位：' + (tx.high ? '与常用地址不符' : '与常用地址一致') + '<br>' +
+            '模拟器检测：' + (tx.high ? '<span style="color:var(--danger)">检出(风险)</span>' : '<span style="color:var(--success)">未检出</span>') +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      // 右侧
+      '<div>' +
+        '<div class="case-section">' +
+          '<div class="case-section-title">历史行为对比</div>' +
+          '<div style="font-size:12px; line-height:1.8; color:var(--text-secondary)">' +
+            '近30天平均消费：¥2,340<br>' +
+            '本次消费偏离度：<span style="color:' + riskColor + '">' + (tx.high ? '448% (严重偏离)' : '40% (正常范围)') + '</span><br>' +
+            '常用消费时段：09:00-22:00<br>' +
+            '本次消费时段：<span style="color:' + riskColor + '">' + (tx.high ? '异常时段' : '正常时段') + '</span><br>' +
+            '常用地：北京 / 本次：' + (tx.high ? '境外IP' : '北京') +
+          '</div>' +
+        '</div>' +
+
+        '<div class="case-section">' +
+          '<div class="case-section-title">AI判定依据</div>' +
+          '<div class="ai-analysis" style="border-left-color:' + riskColor + '">' +
+            '<span class="highlight">Fraud-Net-v3 模型分析：</span><br>' +
+            (tx.high ?
+              '1. 交易金额远超用户历史均值，偏离度达 <span class="danger">448%</span><br>' +
+              '2. 商户属于<span class="danger">高风险类目</span>（虚拟商品/珠宝）<br>' +
+              '3. 设备指纹与历史记录不匹配，疑似<span class="danger">新设备盗用</span><br>' +
+              '4. IP地址归属地异常，疑似<span class="danger">VPN/代理</span><br>' +
+              '5. 综合风险评分 <span class="danger">' + tx.risk + '</span>，建议<span class="danger">立即拦截冻结</span>'
+            :
+              '1. 交易金额在用户正常消费范围内<br>' +
+              '2. 商户属于<span class="success">低风险类目</span><br>' +
+              '3. 设备指纹与历史记录匹配<br>' +
+              '4. IP地址归属地正常<br>' +
+              '5. 综合风险评分 <span class="success">' + tx.risk + '</span>，判定为<span class="success">正常交易</span>'
+            ) +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  // 更新Agent状态
+  var statusVal = document.getElementById('agentStatusValue');
+  var queue = document.getElementById('agentQueue');
+  if (tx.high) {
+    statusVal.textContent = '已拦截';
+    statusVal.style.color = 'var(--danger)';
+  } else {
+    statusVal.textContent = '处理中';
+    statusVal.style.color = 'var(--warning)';
+  }
+  queue.textContent = Math.max(1, Math.floor(Math.random() * 10) + 3);
+}
+
+/* ==================== 面板4 - 智能投顾渲染 ==================== */
+
+function renderInvestDonut() {
+  var donut = document.getElementById('investDonut');
+  if (!donut) return;
+
+  var pref = parseInt(document.getElementById('risk-pref').value);
+  var alloc = assetAllocations[pref];
+
+  var colors = ['#00d4ff', '#00e676', '#ffab40', '#b388ff', '#ff5252'];
+  var values = [alloc.stock, alloc.bond, alloc.fund, alloc.cash, alloc.alt];
+
+  var acc = 0;
+  var stops = [];
+  for (var i = 0; i < values.length; i++) {
+    stops.push(colors[i] + ' ' + acc + '% ' + (acc + values[i]) + '%');
+    acc += values[i];
+  }
+
+  donut.style.background = 'conic-gradient(' + stops.join(', ') + ')';
+
+  // 更新图例数值
+  document.getElementById('alloc-stock').textContent = alloc.stock + '%';
+  document.getElementById('alloc-bond').textContent = alloc.bond + '%';
+  document.getElementById('alloc-fund').textContent = alloc.fund + '%';
+  document.getElementById('alloc-cash').textContent = alloc.cash + '%';
+  document.getElementById('alloc-alt').textContent = alloc.alt + '%';
+
+  // 更新产品列表
+  renderProductList(pref);
+
+  // 更新市场分析
+  updateMarketAnalysis(pref);
+}
+
+function renderProductList(pref) {
+  var container = document.getElementById('productList');
+  if (!container) return;
+  var products = investProducts[pref] || investProducts[3];
+
+  container.innerHTML = '';
+  products.forEach(function(p) {
+    var iconBg = p.riskColor === 'tag-low' ? 'var(--success-dim)' :
+                 p.riskColor === 'tag-mid' ? 'var(--warning-dim)' : 'var(--danger-dim)';
+    var card = document.createElement('div');
+    card.className = 'product-card';
+    card.innerHTML =
+      '<div class="product-icon" style="background:' + iconBg + '">' + p.icon + '</div>' +
+      '<div class="product-info">' +
+        '<div class="product-name">' + p.name + '</div>' +
+        '<div class="product-desc">' + p.desc + '</div>' +
+      '</div>' +
+      '<div class="product-return">' +
+        '<div class="product-return-value">' + p.ret + '</div>' +
+        '<div class="product-return-label">预期年化</div>' +
+      '</div>' +
+      '<span class="tag ' + p.riskColor + '">' + p.risk + '风险</span>';
+    container.appendChild(card);
+  });
+}
+
+function updateMarketAnalysis(pref) {
+  var el = document.getElementById('marketAnalysis');
+  if (!el) return;
+
+  var analyses = {
+    1: '<span class="highlight">AI解读：</span>当前市场波动较大，建议以<span class="success">保本型产品</span>为主。优先配置国债和货币基金，确保资金安全。短期不宜增加权益类投资比例，关注<span class="danger">央行货币政策</span>变化。',
+    2: '<span class="highlight">AI解读：</span>市场处于震荡筑底阶段，建议采用<span class="success">股债平衡</span>策略。可适当配置蓝筹股和信用债，控制单一资产占比不超过30%。关注<span class="danger">美联储政策</span>和国内经济数据。',
+    3: '<span class="highlight">AI解读：</span>当前市场处于震荡上行阶段，沪指在3200-3400点区间运行。建议关注<span class="success">新能源</span>和<span class="success">人工智能</span>板块，注意<span class="danger">美联储加息</span>带来的短期波动风险。',
+    4: '<span class="highlight">AI解读：</span>市场结构性机会明显，成长股表现活跃。建议超配<span class="success">科技ETF</span>和<span class="success">创业板</span>，把握国产替代和数字经济发展红利。注意控制仓位，防范回撤风险。',
+    5: '<span class="highlight">AI解读：</span>高风险高回报阶段，建议布局<span class="success">前沿科技</span>和<span class="success">新兴资产</span>。可配置杠杆产品和另类投资，但需严格设置止损线。注意<span class="danger">流动性风险</span>和<span class="danger">政策监管</span>变化。'
+  };
+  el.innerHTML = analyses[pref] || analyses[3];
+}
+
+function renderKLineChart() {
+  var canvas = document.getElementById('klineCanvas');
+  if (!canvas) return;
+
+  var dpr = window.devicePixelRatio || 1;
+  var rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 180 * dpr;
+  canvas.style.height = '180px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var w = rect.width, h = 180;
+  var padding = { top: 15, right: 10, bottom: 25, left: 40 };
+  var chartW = w - padding.left - padding.right;
+  var chartH = h - padding.top - padding.bottom;
+
+  // 模拟K线数据
+  var candleCount = 30;
+  var candles = [];
+  var price = 3300;
+  for (var i = 0; i < candleCount; i++) {
+    var open = price;
+    var change = (Math.random() - 0.48) * 60;
+    var close = open + change;
+    var high = Math.max(open, close) + Math.random() * 20;
+    var low = Math.min(open, close) - Math.random() * 20;
+    candles.push({ open: open, close: close, high: high, low: low });
+    price = close;
+  }
+
+  var allPrices = candles.flatMap(function(c) { return [c.high, c.low]; });
+  var maxP = Math.max.apply(null, allPrices) + 10;
+  var minP = Math.min.apply(null, allPrices) - 10;
+  var range = maxP - minP;
+
+  // 网格
+  ctx.strokeStyle = 'rgba(0, 212, 255, 0.06)';
+  ctx.lineWidth = 1;
+  for (var i = 0; i <= 4; i++) {
+    var y = padding.top + (chartH / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(padding.left + chartW, y);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(138, 155, 176, 0.5)';
+    ctx.font = '9px Courier New';
+    ctx.textAlign = 'right';
+    var val = maxP - (range / 4) * i;
+    ctx.fillText(val.toFixed(0), padding.left - 5, y + 3);
+  }
+
+  // K线
+  var candleW = chartW / candleCount;
+  var bodyW = candleW * 0.6;
+
+  candles.forEach(function(c, i) {
+    var x = padding.left + candleW * i + candleW / 2;
+    var yOpen = padding.top + chartH - ((c.open - minP) / range) * chartH;
+    var yClose = padding.top + chartH - ((c.close - minP) / range) * chartH;
+    var yHigh = padding.top + chartH - ((c.high - minP) / range) * chartH;
+    var yLow = padding.top + chartH - ((c.low - minP) / range) * chartH;
+
+    var isUp = c.close >= c.open;
+    var color = isUp ? '#00e676' : '#ff5252';
+
+    // 影线
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, yHigh);
+    ctx.lineTo(x, yLow);
+    ctx.stroke();
+
+    // 实体
+    ctx.fillStyle = color;
+    var bodyTop = Math.min(yOpen, yClose);
+    var bodyH = Math.max(Math.abs(yOpen - yClose), 1);
+    ctx.fillRect(x - bodyW / 2, bodyTop, bodyW, bodyH);
+  });
+
+  // 标注
+  ctx.fillStyle = 'rgba(138, 155, 176, 0.6)';
+  ctx.font = '10px Microsoft YaHei';
+  ctx.textAlign = 'left';
+  ctx.fillText('沪指30日K线', padding.left, 12);
+}
+
+function initInvestSlider() {
+  var slider = document.getElementById('risk-pref');
+  var display = document.getElementById('risk-pref-val');
+  if (!slider) return;
+
+  var labels = ['', '保守', '稳健', '平衡', '进取', '激进'];
+  var colors = ['', 'var(--success)', 'var(--primary)', 'var(--primary)', 'var(--warning)', 'var(--danger)'];
+
+  slider.addEventListener('input', function() {
+    var val = parseInt(slider.value);
+    display.textContent = labels[val];
+    display.style.color = colors[val];
+    renderInvestDonut();
+  });
+}
+
+function sendChat() {
+  var input = document.getElementById('chatInput');
+  var msg = input.value.trim();
+  if (!msg) return;
+
+  addChatMessage(msg, 'user');
+  input.value = '';
+
+  // 模拟回复
+  setTimeout(function() {
+    var reply = generateChatReply(msg);
+    addChatMessage(reply, 'bot');
+  }, 800);
+}
+
+function addChatMessage(text, type) {
+  var container = document.getElementById('chatMessages');
+  var msg = document.createElement('div');
+  msg.className = 'chat-msg ' + type;
+  msg.textContent = text;
+  container.appendChild(msg);
+  container.scrollTop = container.scrollHeight;
+}
+
+function askFAQ(idx) {
+  addChatMessage(['当前市场适合入市吗？', '如何分散投资风险？', '债券和股票的比例？', '什么时候需要调仓？', '定投策略好不好？'][idx], 'user');
+  setTimeout(function() {
+    addChatMessage(investFAQs[idx], 'bot');
+  }, 600);
+}
+
+function generateChatReply(msg) {
+  var lower = msg.toLowerCase();
+  if (lower.indexOf('市场') >= 0 || lower.indexOf('行情') >= 0)
+    return investFAQs[0];
+  if (lower.indexOf('分散') >= 0 || lower.indexOf('风险') >= 0)
+    return investFAQs[1];
+  if (lower.indexOf('债券') >= 0 || lower.indexOf('股票') >= 0 || lower.indexOf('比例') >= 0)
+    return investFAQs[2];
+  if (lower.indexOf('调仓') >= 0 || lower.indexOf('调整') >= 0)
+    return investFAQs[3];
+  if (lower.indexOf('定投') >= 0)
+    return investFAQs[4];
+  if (lower.indexOf('你好') >= 0 || lower.indexOf('hello') >= 0)
+    return '您好！我是您的AI智能投顾助手，可以为您提供资产配置建议、市场分析和投资策略咨询。请问有什么可以帮您的？';
+  return '这是一个很好的问题。根据当前市场环境和您的风险偏好，建议您关注资产配置的合理性，定期检视投资组合。如需更详细的建议，请随时咨询。';
+}
+
+/* ==================== 面板切换 ==================== */
+
+function switchPanel(name) {
+  // 导航
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    item.classList.toggle('active', item.getAttribute('data-panel') === name);
+  });
+
+  // 面板
+  document.querySelectorAll('.panel').forEach(function(p) {
+    p.classList.toggle('active', p.id === 'panel-' + name);
+  });
+
+  // 面板初始化
+  if (name === 'risk') {
+    setTimeout(function() { renderTrendChart(); }, 100);
+  } else if (name === 'fraud') {
+    // 反欺诈面板已自动初始化
+  } else if (name === 'invest') {
+    setTimeout(function() { renderKLineChart(); }, 100);
+  }
+}
+
+/* ==================== 时钟 ==================== */
+
+function updateClock() {
+  var el = document.getElementById('headerTime');
+  if (el) el.textContent = formatTime(new Date());
+}
+
+/* ==================== 全局变量 ==================== */
+var resultType = 'review';
+
+/* ==================== 初始化 ==================== */
+
+function init() {
+  // 时钟
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // 面板1
+  startRiskPanel();
+
+  // 面板2
+  initCreditSlider();
+
+  // 面板3
+  renderTxFlow();
+  renderFraudBars();
+  renderDeviceMap();
+
+  // 面板4
+  initInvestSlider();
+  renderInvestDonut();
+  renderKLineChart();
+
+  // 窗口大小变化重绘Canvas
+  window.addEventListener('resize', function() {
+    renderTrendChart();
+    renderKLineChart();
+    var radar = document.getElementById('radarCanvas');
+    if (radar) drawRadarChart();
+  });
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+
+
+
+<!-- AIGC: {"Label":"value1","ContentProducer":"001191110000802100433B11010001191110000802100433B11010","ProduceID":"0873f8b2-3832-4221-b958-6ce8ff50aa46","ReservedCode1":"72dafc97cd38b92e5f3d5cdfd0dfbbe6","ContentPropagator":"001191110000802100433B11010001191110000802100433B11010","PropagateID":"6ea1f9f2-e259-496a-8e00-6c51d88a5ae0","ReservedCode2":"2734827274df537123a472bf4de01eb5"} -->
+</body>
+</html>
