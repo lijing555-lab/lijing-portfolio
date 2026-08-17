@@ -1,0 +1,2605 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI智慧养老守护平台</title>
+<style>
+/* ===== CSS Variables ===== */
+:root {
+  --bg-dark: #1a1a2e;
+  --bg-card: rgba(30, 35, 60, 0.9);
+  --bg-card-hover: rgba(40, 45, 75, 0.95);
+  --bg-input: rgba(20, 25, 45, 0.8);
+  --primary: #FF8C42;
+  --primary-light: #FFA566;
+  --primary-dim: rgba(255, 140, 66, 0.15);
+  --accent: #4ECDC4;
+  --accent-light: #6FE0D8;
+  --accent-dim: rgba(78, 205, 196, 0.15);
+  --danger: #FF6B6B;
+  --danger-dim: rgba(255, 107, 107, 0.15);
+  --warning: #FFD93D;
+  --warning-dim: rgba(255, 217, 61, 0.15);
+  --success: #6BCB77;
+  --success-dim: rgba(107, 203, 119, 0.15);
+  --text-primary: #E8E8F0;
+  --text-secondary: #A0A0B8;
+  --text-muted: #6B6B85;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 140, 66, 0.3);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --transition: all 0.3s ease;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 20px rgba(255, 140, 66, 0.15);
+}
+
+/* ===== Reset & Base ===== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,140,66,0.4); }
+
+/* ===== Layout ===== */
+.app { display: flex; flex-direction: column; height: 100vh; }
+.header { flex-shrink: 0; }
+.body { display: flex; flex: 1; overflow: hidden; }
+.nav { flex-shrink: 0; width: 200px; }
+.main { flex: 1; overflow-y: auto; padding: 16px; }
+
+/* ===== Header ===== */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 60px;
+  background: linear-gradient(135deg, rgba(30,30,60,0.95), rgba(25,25,50,0.95));
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-logo {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  box-shadow: var(--shadow-glow);
+}
+.header-title { font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+.header-right { display: flex; align-items: center; gap: 24px; }
+.header-time { font-size: 14px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.header-online {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 12px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(78,205,196,0.3);
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--accent);
+}
+.header-online .dot {
+  width: 8px; height: 8px;
+  background: var(--success);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* ===== Navigation ===== */
+.nav {
+  background: rgba(20, 22, 40, 0.8);
+  border-right: 1px solid var(--border);
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: var(--transition);
+  border-left: 3px solid transparent;
+  position: relative;
+}
+.nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+.nav-item.active {
+  background: var(--primary-dim);
+  color: var(--primary);
+  border-left-color: var(--primary);
+}
+.nav-icon { font-size: 18px; width: 24px; text-align: center; }
+.nav-label { font-size: 14px; font-weight: 500; }
+
+/* ===== Panel ===== */
+.panel { display: none; animation: fadeIn 0.4s ease; }
+.panel.active { display: block; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Card ===== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: var(--transition);
+}
+.card:hover { border-color: var(--border-hover); }
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title::before {
+  content: '';
+  width: 3px; height: 14px;
+  background: var(--primary);
+  border-radius: 2px;
+}
+
+/* ===== KPI Cards ===== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition);
+}
+.kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--border-hover); }
+.kpi-card::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  opacity: 0.08;
+  transform: translate(20px, -20px);
+}
+.kpi-card:nth-child(1)::after { background: var(--accent); }
+.kpi-card:nth-child(2)::after { background: var(--warning); }
+.kpi-card:nth-child(3)::after { background: var(--danger); }
+.kpi-card:nth-child(4)::after { background: var(--success); }
+.kpi-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+.kpi-value { font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.kpi-card:nth-child(1) .kpi-value { color: var(--accent); }
+.kpi-card:nth-child(2) .kpi-value { color: var(--warning); }
+.kpi-card:nth-child(3) .kpi-value { color: var(--danger); }
+.kpi-card:nth-child(4) .kpi-value { color: var(--success); }
+.kpi-unit { font-size: 14px; color: var(--text-muted); margin-left: 4px; }
+.kpi-trend { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+/* ===== Grid Layouts ===== */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px; }
+.grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 16px; }
+
+/* ===== Donut Chart ===== */
+.donut-container { display: flex; align-items: center; gap: 24px; }
+.donut-chart {
+  width: 160px; height: 160px;
+  border-radius: 50%;
+  position: relative;
+}
+.donut-chart::before {
+  content: '';
+  position: absolute;
+  top: 25px; left: 25px;
+  width: 110px; height: 110px;
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+.donut-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 1;
+}
+.donut-center .num { font-size: 28px; font-weight: 700; color: var(--primary); }
+.donut-center .label { font-size: 12px; color: var(--text-secondary); }
+.donut-legend { flex: 1; }
+.legend-item {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px; font-size: 13px;
+}
+.legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.legend-pct { color: var(--text-secondary); margin-left: auto; font-variant-numeric: tabular-nums; }
+
+/* ===== Timeline ===== */
+.timeline { position: relative; padding-left: 24px; max-height: 280px; overflow-y: auto; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 4px; bottom: 4px;
+  width: 2px;
+  background: var(--border);
+}
+.timeline-item {
+  position: relative;
+  margin-bottom: 16px;
+  padding-bottom: 4px;
+}
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -20px; top: 4px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-dark);
+}
+.timeline-item.normal::before { background: var(--accent); }
+.timeline-item.warning::before { background: var(--warning); }
+.timeline-item.danger::before { background: var(--danger); }
+.timeline-item.success::before { background: var(--success); }
+.timeline-time { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.timeline-text { font-size: 13px; color: var(--text-primary); margin-top: 2px; }
+
+/* ===== Elder Cards ===== */
+.elder-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.elder-card {
+  background: rgba(40,45,75,0.5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: var(--transition);
+  cursor: pointer;
+}
+.elder-card:hover { background: var(--bg-card-hover); border-color: var(--border-hover); }
+.elder-card.selected { border-color: var(--primary); background: var(--primary-dim); }
+.elder-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-dim), var(--accent-dim));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  border: 2px solid var(--border);
+}
+.elder-info { flex: 1; min-width: 0; }
+.elder-name { font-size: 14px; font-weight: 600; }
+.elder-age { font-size: 12px; color: var(--text-muted); }
+.elder-stats { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+.elder-status-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  margin-left: 4px;
+}
+.tag-healthy { background: var(--success-dim); color: var(--success); }
+.tag-watch { background: var(--warning-dim); color: var(--warning); }
+.tag-alert { background: var(--danger-dim); color: var(--danger); }
+.tag-abnormal { background: rgba(255,107,107,0.25); color: var(--danger); animation: blink 1.5s infinite; }
+@keyframes blink { 50% { opacity: 0.5; } }
+.elder-call-btn {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: var(--danger-dim);
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+.elder-call-btn:hover { background: var(--danger); color: #fff; }
+
+/* ===== Agent Panel ===== */
+.agent-panel {
+  background: linear-gradient(135deg, rgba(255,140,66,0.08), rgba(78,205,196,0.08));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.agent-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 12px;
+}
+.agent-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 10px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(78,205,196,0.3);
+  border-radius: 12px;
+  font-size: 11px;
+  color: var(--accent);
+}
+.agent-badge .dot {
+  width: 6px; height: 6px;
+  background: var(--success);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+.agent-thinking {
+  background: rgba(20,22,40,0.6);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  min-height: 140px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.agent-thinking .step { margin-bottom: 2px; }
+.agent-thinking .arrow { color: var(--primary); margin: 0 2px; }
+.agent-thinking .highlight { color: var(--warning); }
+.agent-thinking .action { color: var(--accent); }
+.typing-cursor::after {
+  content: '▊';
+  color: var(--primary);
+  animation: blink 0.8s infinite;
+}
+.agent-summary {
+  display: flex; gap: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.agent-stat { text-align: center; flex: 1; }
+.agent-stat .num { font-size: 22px; font-weight: 700; color: var(--primary); }
+.agent-stat .num.accent { color: var(--accent); }
+.agent-stat .num.warning { color: var(--warning); }
+.agent-stat .label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* ===== Health Panel ===== */
+.health-elder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+.health-elder-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(40,45,75,0.4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.health-elder-item:hover { background: var(--bg-card-hover); }
+.health-elder-item.active { border-color: var(--primary); background: var(--primary-dim); }
+.health-elder-item .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-dim), var(--accent-dim)); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.health-elder-item .name { font-size: 13px; font-weight: 500; }
+.health-elder-item .hr { font-size: 11px; color: var(--text-muted); }
+.status-led { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.led-green { background: var(--success); box-shadow: 0 0 6px var(--success); }
+.led-yellow { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
+.led-red { background: var(--danger); box-shadow: 0 0 6px var(--danger); animation: blink 1s infinite; }
+
+/* ===== Vital Gauges ===== */
+.gauge-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.gauge-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  text-align: center;
+  transition: var(--transition);
+}
+.gauge-card:hover { border-color: var(--border-hover); }
+.gauge-circle {
+  width: 90px; height: 90px;
+  margin: 0 auto 8px;
+  position: relative;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.gauge-circle svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+.gauge-circle .gauge-bg { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 6; }
+.gauge-circle .gauge-fg { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+.gauge-value { font-size: 22px; font-weight: 700; z-index: 1; }
+.gauge-label { font-size: 12px; color: var(--text-secondary); }
+.gauge-card.heart .gauge-fg { stroke: var(--danger); }
+.gauge-card.heart .gauge-value { color: var(--danger); }
+.gauge-card.bp .gauge-fg { stroke: var(--warning); }
+.gauge-card.bp .gauge-value { color: var(--warning); }
+.gauge-card.spo2 .gauge-fg { stroke: var(--accent); }
+.gauge-card.spo2 .gauge-value { color: var(--accent); }
+.gauge-card.temp .gauge-fg { stroke: var(--primary); }
+.gauge-card.temp .gauge-value { color: var(--primary); }
+.gauge-card.abnormal .gauge-value { animation: blink 1s infinite; }
+
+/* ===== Canvas Charts ===== */
+.chart-container {
+  background: rgba(20,22,40,0.4);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.chart-container canvas { width: 100%; display: block; }
+.chart-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px;
+}
+.chart-title { font-size: 13px; font-weight: 600; }
+.chart-legend { display: flex; gap: 12px; font-size: 11px; color: var(--text-secondary); }
+.chart-legend span { display: flex; align-items: center; gap: 4px; }
+.chart-legend .dot { width: 8px; height: 8px; border-radius: 2px; }
+
+/* ===== Health Score ===== */
+.score-container { display: flex; align-items: center; gap: 20px; }
+.score-ring {
+  width: 120px; height: 120px;
+  position: relative;
+  flex-shrink: 0;
+}
+.score-ring svg { transform: rotate(-90deg); }
+.score-ring .bg { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 8; }
+.score-ring .fg { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1.5s ease; }
+.score-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+.score-center .num { font-size: 32px; font-weight: 700; color: var(--success); }
+.score-center .label { font-size: 11px; color: var(--text-muted); }
+.score-dimensions { flex: 1; }
+.score-dim-item { margin-bottom: 6px; }
+.score-dim-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px; }
+.score-dim-bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+.score-dim-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+
+/* ===== Agent Report ===== */
+.agent-report {
+  background: linear-gradient(135deg, rgba(255,140,66,0.06), rgba(78,205,196,0.06));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+.agent-report .header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.agent-report .icon { font-size: 16px; }
+.agent-report .title { font-size: 13px; font-weight: 600; color: var(--accent); }
+.agent-report .body { font-size: 13px; line-height: 1.8; color: var(--text-secondary); }
+.agent-report .body .arrow { color: var(--primary); }
+.agent-report .body .highlight { color: var(--warning); }
+.agent-report .body .action { color: var(--accent); }
+
+/* ===== Alert History ===== */
+.alert-list { display: flex; flex-direction: column; gap: 6px; }
+.alert-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  background: rgba(40,45,75,0.4);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+.alert-item .time { color: var(--text-muted); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.alert-item .type { flex: 1; }
+.alert-item .status { font-size: 11px; padding: 1px 8px; border-radius: 8px; }
+.status-done { background: var(--success-dim); color: var(--success); }
+.status-pending { background: var(--warning-dim); color: var(--warning); }
+.status-processing { background: var(--accent-dim); color: var(--accent); }
+
+/* ===== Fall Detection Panel ===== */
+.fall-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+.fall-stat { display: flex; align-items: center; gap: 8px; }
+.fall-stat .label { font-size: 12px; color: var(--text-muted); }
+.fall-stat .value { font-size: 18px; font-weight: 700; color: var(--accent); }
+.fall-status-badge {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 12px;
+  background: var(--success-dim);
+  border: 1px solid rgba(107,203,119,0.3);
+  border-radius: 16px;
+  font-size: 12px;
+  color: var(--success);
+}
+
+/* Camera Monitor */
+.camera-monitor {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.camera-view {
+  aspect-ratio: 4/3;
+  background: #0a0a1a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  position: relative;
+  overflow: hidden;
+}
+.camera-label {
+  position: absolute;
+  top: 6px; left: 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+  background: rgba(0,0,0,0.5);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.camera-rec {
+  position: absolute;
+  top: 6px; right: 6px;
+  display: flex; align-items: center; gap: 3px;
+  font-size: 10px;
+  color: var(--danger);
+}
+.camera-rec .dot { width: 6px; height: 6px; background: var(--danger); border-radius: 50%; animation: blink 1s infinite; }
+.camera-ai-box {
+  position: absolute;
+  border: 2px solid var(--accent);
+  border-radius: 4px;
+}
+.camera-ai-label {
+  position: absolute;
+  top: -16px; left: -2px;
+  font-size: 9px;
+  color: var(--accent);
+  background: rgba(0,0,0,0.6);
+  padding: 1px 4px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+.skeleton-overlay {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Detection States */
+.det-states { display: flex; gap: 8px; margin-bottom: 12px; }
+.det-state {
+  flex: 1;
+  padding: 8px;
+  background: rgba(40,45,75,0.4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-size: 12px;
+}
+.det-state.active-green { border-color: var(--success); background: var(--success-dim); }
+.det-state.active-yellow { border-color: var(--warning); background: var(--warning-dim); }
+.det-state.active-orange { border-color: var(--primary); background: var(--primary-dim); }
+.det-state.active-red { border-color: var(--danger); background: var(--danger-dim); }
+.det-state .label { font-size: 11px; color: var(--text-muted); }
+.det-state .value { font-size: 14px; font-weight: 600; margin-top: 2px; }
+
+/* Skeleton Figure */
+.skeleton-figure {
+  width: 120px; height: 180px;
+  margin: 0 auto;
+  position: relative;
+}
+.skeleton-joint {
+  position: absolute;
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--accent);
+  transform: translate(-50%, -50%);
+}
+.skeleton-joint.alert { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+.skeleton-bone {
+  position: absolute;
+  background: rgba(78,205,196,0.4);
+  height: 2px;
+  transform-origin: left center;
+}
+.skeleton-bone.alert { background: rgba(255,107,107,0.4); }
+
+/* Fall Event Timeline */
+.event-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.event-tl-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(40,45,75,0.3);
+  border-radius: 6px;
+  font-size: 12px;
+}
+.event-tl-time {
+  font-size: 11px;
+  color: var(--primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+}
+.event-tl-text { color: var(--text-secondary); }
+
+/* Risk List */
+.risk-list { display: flex; flex-direction: column; gap: 6px; }
+.risk-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(40,45,75,0.4);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+.risk-level {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.risk-high { background: var(--danger-dim); color: var(--danger); }
+.risk-mid { background: var(--warning-dim); color: var(--warning); }
+.risk-low { background: var(--success-dim); color: var(--success); }
+.risk-factors { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+.risk-factor-tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  color: var(--text-secondary);
+}
+
+/* Prevention Cards */
+.prevention-list { display: flex; flex-direction: column; gap: 6px; }
+.prevention-card {
+  padding: 8px 12px;
+  background: var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Fall Stats Chart */
+.fall-stats-chart { display: flex; align-items: flex-end; gap: 6px; height: 80px; padding: 8px 0; }
+.fall-bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.fall-bar-fill { width: 100%; background: linear-gradient(180deg, var(--primary), var(--primary-dim)); border-radius: 3px 3px 0 0; transition: height 0.8s ease; }
+.fall-bar-label { font-size: 10px; color: var(--text-muted); }
+
+/* ===== Medication Panel ===== */
+.med-header {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.med-completion {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 240px;
+}
+.med-completion .ring {
+  width: 80px; height: 80px;
+  position: relative;
+  flex-shrink: 0;
+}
+.med-completion .ring svg { transform: rotate(-90deg); }
+.med-completion .ring .bg { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 6; }
+.med-completion .ring .fg { fill: none; stroke: var(--success); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 1.5s ease; }
+.med-completion .center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+.med-completion .center .num { font-size: 24px; font-weight: 700; color: var(--success); }
+.med-completion .center .pct { font-size: 12px; color: var(--text-muted); }
+.med-completion .info .label { font-size: 13px; color: var(--text-secondary); }
+.med-completion .info .detail { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+.med-reminders {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+}
+.med-reminder-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.med-reminder-item:last-child { border-bottom: none; }
+.med-reminder-time { font-weight: 600; color: var(--primary); min-width: 50px; }
+.med-reminder-elder { color: var(--text-secondary); min-width: 60px; }
+.med-reminder-drug { color: var(--text-primary); }
+
+/* Medication Timeline */
+.med-timeline {
+  display: flex;
+  gap: 0;
+  margin-bottom: 12px;
+  position: relative;
+}
+.med-tl-point {
+  flex: 1;
+  text-align: center;
+  position: relative;
+}
+.med-tl-point::before {
+  content: '';
+  position: absolute;
+  top: 14px; left: 50%; right: -50%;
+  height: 2px;
+  background: var(--border);
+}
+.med-tl-point:last-child::before { display: none; }
+.med-tl-icon {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  margin: 0 auto 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  z-index: 1;
+}
+.med-tl-icon.taken { background: var(--success); color: #fff; }
+.med-tl-icon.pending { background: rgba(255,255,255,0.1); color: var(--text-muted); border: 2px dashed var(--text-muted); }
+.med-tl-icon.missed { background: var(--danger); color: #fff; animation: blink 1s infinite; }
+.med-tl-icon:hover { transform: scale(1.15); }
+.med-tl-time { font-size: 11px; color: var(--text-secondary); font-weight: 600; }
+.med-tl-drug { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+/* Drug List */
+.drug-list { display: flex; flex-direction: column; gap: 6px; }
+.drug-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(40,45,75,0.4);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+.drug-name { font-weight: 600; min-width: 80px; }
+.drug-dose { color: var(--text-secondary); }
+.drug-freq { color: var(--text-muted); }
+.drug-purpose { color: var(--accent); }
+.drug-note { font-size: 10px; padding: 1px 6px; background: var(--warning-dim); color: var(--warning); border-radius: 3px; }
+
+/* Pill Box */
+.pill-box-grid {
+  display: grid;
+  grid-template-columns: 40px repeat(7, 1fr);
+  gap: 4px;
+  margin: 0 auto;
+  max-width: 400px;
+}
+.pill-box-cell {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  transition: var(--transition);
+  cursor: pointer;
+}
+.pill-box-cell.header { background: transparent; color: var(--text-muted); font-weight: 600; }
+.pill-box-cell.taken { background: var(--success-dim); border: 1px solid rgba(107,203,119,0.3); color: var(--success); }
+.pill-box-cell.pending { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-muted); }
+.pill-box-cell.missed { background: var(--danger-dim); border: 1px solid rgba(255,107,107,0.3); color: var(--danger); animation: blink 1.5s infinite; }
+.pill-box-cell:hover { transform: scale(1.1); }
+
+/* Reminder Popup */
+.reminder-popup {
+  background: linear-gradient(135deg, var(--primary-dim), rgba(255,140,66,0.2));
+  border: 1px solid rgba(255,140,66,0.3);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.reminder-popup .icon { font-size: 32px; animation: pulse 2s infinite; }
+.reminder-popup .info { flex: 1; }
+.reminder-popup .title { font-size: 14px; font-weight: 600; }
+.reminder-popup .detail { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+.reminder-popup .actions { display: flex; gap: 8px; }
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+}
+.btn-primary { background: var(--success); color: #fff; }
+.btn-primary:hover { background: #5ab866; }
+.btn-secondary { background: rgba(255,255,255,0.1); color: var(--text-secondary); }
+.btn-secondary:hover { background: rgba(255,255,255,0.15); }
+
+/* Call Modal */
+.call-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  align-items: center; justify-content: center;
+  z-index: 999;
+}
+.call-modal-overlay.show { display: flex; }
+.call-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  text-align: center;
+  min-width: 300px;
+}
+.call-modal .avatar {
+  width: 80px; height: 80px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--danger-dim), var(--primary-dim));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px;
+  border: 3px solid var(--danger);
+  animation: pulse 1.5s infinite;
+}
+.call-modal .name { font-size: 18px; font-weight: 600; }
+.call-modal .status { font-size: 14px; color: var(--accent); margin-top: 8px; }
+.call-modal .timer { font-size: 13px; color: var(--text-muted); margin-top: 8px; font-variant-numeric: tabular-nums; }
+.call-modal .btn-hangup {
+  margin-top: 20px;
+  padding: 10px 24px;
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.call-modal .btn-hangup:hover { opacity: 0.85; }
+
+/* Tooltip */
+.chart-tooltip {
+  position: absolute;
+  background: rgba(20,22,40,0.95);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--text-primary);
+  pointer-events: none;
+  z-index: 50;
+  display: none;
+  white-space: nowrap;
+}
+
+/* Section title */
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Info row */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 13px;
+}
+.info-row .label { color: var(--text-muted); }
+.info-row .value { color: var(--text-primary); font-weight: 500; }
+
+/* Agent log */
+.agent-log {
+  background: rgba(20,22,40,0.6);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  min-height: 100px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+.agent-log .arrow { color: var(--primary); }
+.agent-log .highlight { color: var(--danger); }
+.agent-log .action { color: var(--accent); }
+
+/* Compare chart container */
+.compare-chart { padding: 8px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="header-logo">🛡️</div>
+      <div class="header-title">AI智慧养老守护平台</div>
+    </div>
+    <div class="header-right">
+      <div class="header-time" id="header-time"></div>
+      <div class="header-online">
+        <span class="dot"></span>
+        <span>在线老人 <strong id="online-count">48</strong> 人</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="body">
+    <!-- Navigation -->
+    <nav class="nav">
+      <div class="nav-item active" data-panel="overview">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">养老总览</span>
+      </div>
+      <div class="nav-item" data-panel="health">
+        <span class="nav-icon">💓</span>
+        <span class="nav-label">健康监测</span>
+      </div>
+      <div class="nav-item" data-panel="fall">
+        <span class="nav-icon">🚨</span>
+        <span class="nav-label">跌倒检测</span>
+      </div>
+      <div class="nav-item" data-panel="medication">
+        <span class="nav-icon">💊</span>
+        <span class="nav-label">用药管理</span>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- ===== Panel 1: Overview ===== -->
+      <section class="panel active" id="panel-overview">
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">在册老人数</div>
+            <div class="kpi-value" data-target="48">0</div>
+            <div class="kpi-trend">较上月 +2人</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">今日健康预警</div>
+            <div class="kpi-value" data-target="3">0</div>
+            <div class="kpi-trend">待处理 1 项</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">跌倒事件（本月）</div>
+            <div class="kpi-value" data-target="5">0</div>
+            <div class="kpi-trend">较上月 -2次</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">用药完成率</div>
+            <div class="kpi-value"><span data-target="92">0</span><span class="kpi-unit">%</span></div>
+            <div class="kpi-trend">较昨日 +3%</div>
+          </div>
+        </div>
+
+        <!-- Middle: Donut + Timeline -->
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">老人健康状态分布</div>
+            <div class="donut-container">
+              <div class="donut-chart" id="health-donut">
+                <div class="donut-center">
+                  <div class="num">48</div>
+                  <div class="label">在册老人</div>
+                </div>
+              </div>
+              <div class="donut-legend">
+                <div class="legend-item">
+                  <span class="legend-dot" style="background:#6BCB77"></span>
+                  <span>健康</span>
+                  <span class="legend-pct">30人 (62.5%)</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot" style="background:#4ECDC4"></span>
+                  <span>关注</span>
+                  <span class="legend-pct">10人 (20.8%)</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot" style="background:#FFD93D"></span>
+                  <span>预警</span>
+                  <span class="legend-pct">5人 (10.4%)</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot" style="background:#FF6B6B"></span>
+                  <span>异常</span>
+                  <span class="legend-pct">3人 (6.3%)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">今日事件时间轴</div>
+            <div class="timeline" id="overview-timeline"></div>
+          </div>
+        </div>
+
+        <!-- Bottom: Elder List + Agent Panel -->
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">老人列表</div>
+            <div class="elder-grid" id="overview-elders"></div>
+          </div>
+
+          <div class="agent-panel">
+            <div class="agent-header">
+              <span class="agent-badge"><span class="dot"></span>守护Agent运行中</span>
+            </div>
+            <div class="agent-thinking" id="overview-agent-thinking"></div>
+            <div class="agent-summary">
+              <div class="agent-stat">
+                <div class="num">12</div>
+                <div class="label">已完成巡检</div>
+              </div>
+              <div class="agent-stat">
+                <div class="num warning">1</div>
+                <div class="label">待处理预警</div>
+              </div>
+              <div class="agent-stat">
+                <div class="num accent">3</div>
+                <div class="label">已派发工单</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Panel 2: Health Monitoring ===== -->
+      <section class="panel" id="panel-health">
+        <div class="grid-1-2" style="margin-bottom: 16px;">
+          <div class="card">
+            <div class="card-title">老人选择</div>
+            <div class="health-elder-list" id="health-elder-list"></div>
+          </div>
+
+          <div>
+            <div class="card" style="margin-bottom: 16px;">
+              <div class="card-title" id="health-elder-name">李淑芬 - 健康详情</div>
+              <div class="gauge-grid" id="vital-gauges"></div>
+            </div>
+
+            <div class="card" style="margin-bottom: 16px;">
+              <div class="chart-container">
+                <div class="chart-header">
+                  <span class="chart-title">24小时心率趋势</span>
+                  <div class="chart-legend">
+                    <span><span class="dot" style="background:#FF6B6B"></span>心率</span>
+                    <span><span class="dot" style="background:rgba(255,107,107,0.2)"></span>异常区间</span>
+                  </div>
+                </div>
+                <canvas id="hr-canvas" height="160"></canvas>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 16px;">
+              <div class="chart-container">
+                <div class="chart-header">
+                  <span class="chart-title">血压趋势（近7天）</span>
+                  <div class="chart-legend">
+                    <span><span class="dot" style="background:#FF8C42"></span>收缩压</span>
+                    <span><span class="dot" style="background:#4ECDC4"></span>舒张压</span>
+                    <span><span class="dot" style="background:rgba(107,203,119,0.3)"></span>正常范围</span>
+                  </div>
+                </div>
+                <canvas id="bp-canvas" height="160"></canvas>
+              </div>
+            </div>
+
+            <div class="grid-2" style="margin-bottom: 0;">
+              <div class="card">
+                <div class="card-title">健康评分</div>
+                <div class="score-container">
+                  <div class="score-ring" id="score-ring"></div>
+                  <div class="score-dimensions" id="score-dimensions"></div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-title">历史预警记录</div>
+                <div class="alert-list" id="alert-history"></div>
+              </div>
+            </div>
+
+            <div class="agent-report" style="margin-top: 16px;">
+              <div class="header">
+                <span class="icon">🤖</span>
+                <span class="title">健康Agent分析报告</span>
+              </div>
+              <div class="body" id="health-agent-report"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Panel 3: Fall Detection ===== -->
+      <section class="panel" id="panel-fall">
+        <!-- Status Bar -->
+        <div class="fall-status-bar">
+          <div class="fall-stat">
+            <span class="label">传感器在线</span>
+            <span class="value">36/36</span>
+          </div>
+          <div class="fall-stat">
+            <span class="label">今日检测次数</span>
+            <span class="value">1,248</span>
+          </div>
+          <div class="fall-stat">
+            <span class="label">响应平均时间</span>
+            <span class="value">2.3s</span>
+          </div>
+          <div class="fall-status-badge">
+            <span style="width:8px;height:8px;background:var(--success);border-radius:50%"></span>
+            系统正常运行
+          </div>
+        </div>
+
+        <!-- Middle: Monitor + Event Details -->
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">跌倒检测实时监控</div>
+            <div class="camera-monitor">
+              <div class="camera-view">
+                <span class="camera-label">客厅</span>
+                <span class="camera-rec"><span class="dot"></span>REC</span>
+                <div class="camera-ai-box" style="top: 30%; left: 35%; width: 30%; height: 50%;">
+                  <span class="camera-ai-label">人体检测 98%</span>
+                </div>
+              </div>
+              <div class="camera-view">
+                <span class="camera-label">卫生间</span>
+                <span class="camera-rec"><span class="dot"></span>REC</span>
+                <div class="camera-ai-box" style="top: 25%; left: 30%; width: 35%; height: 55%; border-color: var(--success);">
+                  <span class="camera-ai-label" style="color: var(--success);">正常行走</span>
+                </div>
+              </div>
+              <div class="camera-view">
+                <span class="camera-label">走廊</span>
+                <span class="camera-rec"><span class="dot"></span>REC</span>
+                <div class="camera-ai-box" style="top: 35%; left: 40%; width: 25%; height: 45%; border-color: var(--warning);">
+                  <span class="camera-ai-label" style="color: var(--warning);">姿态分析中</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="det-states">
+              <div class="det-state active-green">
+                <div class="label">正常行走</div>
+                <div class="value" style="color:var(--success)">2区</div>
+              </div>
+              <div class="det-state active-yellow">
+                <div class="label">姿态异常</div>
+                <div class="value" style="color:var(--warning)">1区</div>
+              </div>
+              <div class="det-state">
+                <div class="label">疑似跌倒</div>
+                <div class="value" style="color:var(--text-muted)">0区</div>
+              </div>
+              <div class="det-state">
+                <div class="label">确认跌倒</div>
+                <div class="value" style="color:var(--text-muted)">0区</div>
+              </div>
+            </div>
+
+            <div class="card-title" style="margin-top: 12px;">实时姿态分析</div>
+            <div style="display:flex; gap:16px; align-items:center;">
+              <div class="skeleton-figure" id="skeleton-figure"></div>
+              <div style="flex:1; font-size: 12px; color: var(--text-secondary); line-height: 1.8;">
+                <div>关节追踪点：<span style="color:var(--accent)">17/17</span></div>
+                <div>重心偏移：<span style="color:var(--success)">正常</span></div>
+                <div>步态频率：<span style="color:var(--text-primary)">0.8Hz</span></div>
+                <div>姿态判定：<span style="color:var(--success)">站立/行走</span></div>
+                <div>置信度：<span style="color:var(--accent)">96.3%</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">跌倒事件详情 - 最近一次</div>
+            <div style="margin-bottom: 12px;">
+              <div class="info-row"><span class="label">事件时间</span><span class="value">2026-08-17 14:03:27</span></div>
+              <div class="info-row"><span class="label">老人姓名</span><span class="value">王秀英 (78岁)</span></div>
+              <div class="info-row"><span class="label">发生地点</span><span class="value">3号房间 - 卫生间</span></div>
+              <div class="info-row"><span class="label">跌倒类型</span><span class="value" style="color:var(--danger)">前倾跌倒</span></div>
+              <div class="info-row"><span class="label">处置状态</span><span class="value" style="color:var(--success)">已处理完毕</span></div>
+            </div>
+
+            <div class="card-title">AI分析时间线（秒级）</div>
+            <div class="event-timeline" style="margin-bottom: 12px;">
+              <div class="event-tl-item"><span class="event-tl-time">0s</span><span class="event-tl-text">检测到异常姿态变化</span></div>
+              <div class="event-tl-item"><span class="event-tl-time">0.5s</span><span class="event-tl-text">AI确认跌倒事件</span></div>
+              <div class="event-tl-item"><span class="event-tl-time">1s</span><span class="event-tl-text">触发一级警报</span></div>
+              <div class="event-tl-item"><span class="event-tl-time">3s</span><span class="event-tl-text">通知护理员张三</span></div>
+              <div class="event-tl-item"><span class="event-tl-time">8s</span><span class="event-tl-text">护理员确认接收</span></div>
+              <div class="event-tl-item"><span class="event-tl-time">120s</span><span class="event-tl-text">护理员到达现场</span></div>
+            </div>
+
+            <div class="card-title">跌倒前后生命体征对比</div>
+            <div class="compare-chart">
+              <canvas id="fall-compare-canvas" height="140"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom: Risk Assessment + Agent Log -->
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">跌倒风险评估</div>
+            <div class="risk-list" id="risk-list" style="margin-bottom: 12px;"></div>
+            <div class="card-title" style="margin-top: 12px;">AI预防建议</div>
+            <div class="prevention-list" id="prevention-list"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">跌倒Agent日志</div>
+            <div class="agent-log" id="fall-agent-log"></div>
+            <div class="card-title" style="margin-top: 16px;">历史跌倒统计</div>
+            <div style="display:flex; gap:16px; margin-bottom: 8px;">
+              <div class="info-row" style="flex-direction:column; gap:2px; flex:1;">
+                <span class="label" style="font-size:12px;">本月跌倒</span>
+                <span class="value" style="font-size:20px; color:var(--danger);">5次</span>
+              </div>
+              <div class="info-row" style="flex-direction:column; gap:2px; flex:1;">
+                <span class="label" style="font-size:12px;">同比变化</span>
+                <span class="value" style="font-size:20px; color:var(--success);">-29%</span>
+              </div>
+            </div>
+            <div class="chart-header">
+              <span class="chart-title" style="font-size:12px;">高发时段分布</span>
+            </div>
+            <div class="fall-stats-chart" id="fall-stats-chart"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Panel 4: Medication ===== -->
+      <section class="panel" id="panel-medication">
+        <!-- Header: Completion + Reminders -->
+        <div class="med-header">
+          <div class="med-completion">
+            <div class="ring" id="med-ring">
+              <svg width="80" height="80">
+                <circle class="bg" cx="40" cy="40" r="34"></circle>
+                <circle class="fg" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="213.6"></circle>
+              </svg>
+              <div class="center">
+                <div class="num" id="med-completion-num">0</div>
+                <div class="pct">%</div>
+              </div>
+            </div>
+            <div class="info">
+              <div class="label">今日用药完成率</div>
+              <div class="detail">已服用 22/24 项 · 漏服 1 项 · 待服 1 项</div>
+            </div>
+          </div>
+          <div class="med-reminders">
+            <div class="card-title" style="margin-bottom: 8px;">用药提醒队列</div>
+            <div class="med-reminder-item">
+              <span class="med-reminder-time">18:00</span>
+              <span class="med-reminder-elder">张建国</span>
+              <span class="med-reminder-drug">硝苯地平缓释片 10mg</span>
+            </div>
+            <div class="med-reminder-item">
+              <span class="med-reminder-time">18:30</span>
+              <span class="med-reminder-elder">李淑芬</span>
+              <span class="med-reminder-drug">阿司匹林肠溶片 100mg</span>
+            </div>
+            <div class="med-reminder-item">
+              <span class="med-reminder-time">22:00</span>
+              <span class="med-reminder-elder">王秀英</span>
+              <span class="med-reminder-drug">阿托伐他汀钙片 20mg</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Middle: Med Plan + Pill Box -->
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title" id="med-elder-name">张建国 - 今日用药计划</div>
+            <div class="med-timeline" id="med-timeline"></div>
+            <div class="card-title" style="margin-top: 16px;">药品列表</div>
+            <div class="drug-list" id="drug-list"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">智能药盒状态</div>
+            <div class="pill-box-grid" id="pill-box-grid"></div>
+            <div style="margin-top: 16px;">
+              <div class="card-title">当前提醒</div>
+              <div class="reminder-popup" id="reminder-popup">
+                <span class="icon">💊</span>
+                <div class="info">
+                  <div class="title">张建国 - 硝苯地平缓释片</div>
+                  <div class="detail">剂量: 10mg · 用法: 口服 · 注意: 饭后服用</div>
+                </div>
+                <div class="actions">
+                  <button class="btn btn-primary" onclick="handleMedTaken()">已服用</button>
+                  <button class="btn btn-secondary" onclick="handleMedDelay()">延迟15分钟</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom: Agent Analysis -->
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-title">用药Agent分析</div>
+            <div class="agent-log" id="med-agent-log"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">用药依从性趋势</div>
+            <div class="chart-container">
+              <div class="chart-header">
+                <div class="chart-legend">
+                  <span><span class="dot" style="background:#6BCB77"></span>7天</span>
+                  <span><span class="dot" style="background:#4ECDC4"></span>30天</span>
+                </div>
+              </div>
+              <canvas id="compliance-canvas" height="140"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">药物相互作用提醒</div>
+            <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.8; margin-bottom: 12px;">
+              <div style="padding: 8px; background: var(--warning-dim); border-radius: 6px; margin-bottom: 6px;">
+                ⚠️ <strong style="color: var(--warning);">阿司匹林 + 华法林</strong><br>
+                存在轻微相互作用，增加出血风险<br>
+                <span style="color: var(--accent);">建议：间隔2小时服用</span>
+              </div>
+              <div style="padding: 8px; background: var(--accent-dim); border-radius: 6px;">
+                ℹ️ <strong style="color: var(--accent);">用药调整建议</strong><br>
+                根据近期血压数据（平均145/92），建议医生评估是否调整硝苯地平剂量<br>
+                <span style="color: var(--text-muted);">已生成建议报告，待医生审核</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- Call Modal -->
+<div class="call-modal-overlay" id="call-modal">
+  <div class="call-modal">
+    <div class="avatar" id="call-avatar">👤</div>
+    <div class="name" id="call-name">紧急联系人</div>
+    <div class="status" id="call-status">正在呼叫中...</div>
+    <div class="timer" id="call-timer">00:00</div>
+    <button class="btn-hangup" onclick="hangupCall()">挂断</button>
+  </div>
+</div>
+
+<!-- Chart Tooltip -->
+<div class="chart-tooltip" id="chart-tooltip"></div>
+
+<script>
+/* ============================================================
+   Mock Data
+   ============================================================ */
+const ELDER_DATA = [
+  { id: 1, name: '李淑芬', age: 82, gender: 'F', status: 'alert', hr: 88, bp: '145/95', spo2: 96, temp: 36.5, contact: '李明 138****6677', avatar: '👵' },
+  { id: 2, name: '张建国', age: 79, gender: 'M', status: 'watch', hr: 72, bp: '138/88', spo2: 97, temp: 36.3, contact: '张伟 139****2233', avatar: '👴' },
+  { id: 3, name: '王秀英', age: 78, gender: 'F', status: 'abnormal', hr: 102, bp: '150/98', spo2: 93, temp: 37.2, contact: '王强 137****8899', avatar: '👵' },
+  { id: 4, name: '赵德柱', age: 85, gender: 'M', status: 'healthy', hr: 68, bp: '125/78', spo2: 98, temp: 36.4, contact: '赵磊 136****4455', avatar: '👴' },
+  { id: 5, name: '陈玉兰', age: 76, gender: 'F', status: 'healthy', hr: 74, bp: '120/75', spo2: 99, temp: 36.2, contact: '陈浩 135****6611', avatar: '👵' },
+  { id: 6, name: '刘长青', age: 81, gender: 'M', status: 'watch', hr: 65, bp: '135/85', spo2: 96, temp: 36.5, contact: '刘洋 133****7788', avatar: '👴' },
+  { id: 7, name: '孙桂芳', age: 84, gender: 'F', status: 'healthy', hr: 70, bp: '128/80', spo2: 97, temp: 36.3, contact: '孙明 131****3344', avatar: '👵' },
+  { id: 8, name: '周振华', age: 77, gender: 'M', status: 'alert', hr: 95, bp: '142/90', spo2: 95, temp: 36.8, contact: '周杰 132****5566', avatar: '👴' },
+];
+
+const STATUS_MAP = {
+  healthy: { label: '健康', cls: 'tag-healthy', led: 'led-green' },
+  watch: { label: '关注', cls: 'tag-watch', led: 'led-yellow' },
+  alert: { label: '预警', cls: 'tag-alert', led: 'led-yellow' },
+  abnormal: { label: '异常', cls: 'tag-abnormal', led: 'led-red' },
+};
+
+const TIMELINE_DATA = [
+  { time: '08:00', text: '日常健康检查完成，48位老人体征数据已采集', type: 'normal' },
+  { time: '09:30', text: '李淑芬奶奶血压145/95高于阈值，触发预警', type: 'warning' },
+  { time: '10:00', text: 'AI守护Agent完成晨间巡检报告生成', type: 'success' },
+  { time: '11:15', text: '张建国爷爷完成午间用药，服药率更新', type: 'success' },
+  { time: '12:30', text: '午餐营养分析完成，3位老人需调整饮食', type: 'normal' },
+  { time: '14:00', text: '王秀英奶奶卫生间跌倒警报已处理，护理员已到场', type: 'danger' },
+  { time: '14:30', text: '王秀英奶奶生命体征恢复正常，跌倒后评估完成', type: 'success' },
+  { time: '15:00', text: '周振华爷爷心率持续偏高，建议远程问诊', type: 'warning' },
+  { time: '15:30', text: '下午活动监测启动，8位老人参与康复训练', type: 'normal' },
+];
+
+const DRUG_DATA = [
+  { name: '硝苯地平缓释片', dose: '10mg', freq: '每日2次', purpose: '降压', note: '饭后服用' },
+  { name: '阿司匹林肠溶片', dose: '100mg', freq: '每日1次', purpose: '抗凝血', note: '空腹' },
+  { name: '阿托伐他汀钙片', dose: '20mg', freq: '每晚1次', purpose: '降脂', note: '睡前服用' },
+  { name: '二甲双胍片', dose: '0.5g', freq: '每日3次', purpose: '降糖', note: '餐中服用' },
+  { name: '美托洛尔片', dose: '12.5mg', freq: '每日2次', purpose: '控制心率', note: '不可骤停' },
+];
+
+const MED_SCHEDULE = [
+  { time: '07:00', drug: '硝苯地平 + 二甲双胍', status: 'taken' },
+  { time: '12:00', drug: '二甲双胍 + 美托洛尔', status: 'taken' },
+  { time: '18:00', drug: '硝苯地平 + 美托洛尔', status: 'pending' },
+  { time: '22:00', drug: '阿托伐他汀 + 阿司匹林', status: 'pending' },
+];
+
+const RISK_ELDER_DATA = [
+  { name: '王秀英', age: 78, level: 'high', factors: ['近期跌倒史', '服用降压药', '独居'] },
+  { name: '李淑芬', age: 82, level: 'high', factors: ['行动不便', '视力障碍'] },
+  { name: '刘长青', age: 81, level: 'mid', factors: ['服用降压药', '偶发头晕'] },
+  { name: '周振华', age: 77, level: 'mid', factors: ['心率异常', '近期跌倒史'] },
+  { name: '张建国', age: 79, level: 'low', factors: ['服用降压药'] },
+];
+
+const PREVENTION_DATA = [
+  '建议为王秀英奶奶卫生间安装防滑扶手和紧急呼叫按钮',
+  '建议李淑芬奶奶每日进行15分钟平衡训练（扶椅单脚站立）',
+  '建议调整刘长青爷爷降压药服用时间至晨间，避免夜间低血压',
+];
+
+const ALERT_HISTORY_DATA = [
+  { time: '14:00', type: '跌倒警报', status: 'done' },
+  { time: '09:30', type: '血压偏高', status: 'processing' },
+  { time: '08:15', type: '血氧偏低', status: 'done' },
+  { time: '昨日 22:30', type: '心率过速', status: 'done' },
+  { time: '昨日 15:00', type: '用药超时', status: 'done' },
+];
+
+const FALL_STATS_HOURS = [
+  { hour: '00-04', count: 1 },
+  { hour: '04-08', count: 0 },
+  { hour: '08-12', count: 0 },
+  { hour: '12-16', count: 3 },
+  { hour: '16-20', count: 1 },
+  { hour: '20-24', count: 0 },
+];
+
+let selectedHealthElder = ELDER_DATA[0];
+let selectedMedElder = ELDER_DATA[1];
+
+/* ============================================================
+   Utilities
+   ============================================================ */
+function $(sel) { return document.querySelector(sel); }
+function $$(sel) { return document.querySelectorAll(sel); }
+
+function formatTime(d) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function formatDate(d) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/* ============================================================
+   Header Clock
+   ============================================================ */
+function updateClock() {
+  const now = new Date();
+  const weekdays = ['日','一','二','三','四','五','六'];
+  $('#header-time').textContent = `${formatDate(now)} 星期${weekdays[now.getDay()]}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ============================================================
+   Navigation
+   ============================================================ */
+$$('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    $$('.nav-item').forEach(n => n.classList.remove('active'));
+    $$('.panel').forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    const panel = item.dataset.panel;
+    $('#panel-' + panel).classList.add('active');
+    // Trigger panel-specific renders
+    if (panel === 'overview') { animateKPIs(); startOverviewAgent(); }
+    if (panel === 'health') { renderHealthPanel(); }
+    if (panel === 'fall') { renderFallPanel(); }
+    if (panel === 'medication') { renderMedicationPanel(); }
+  });
+});
+
+/* ============================================================
+   KPI Number Animation
+   ============================================================ */
+function animateKPIs() {
+  $$('#panel-overview .kpi-value [data-target], #panel-overview .kpi-value[data-target]').forEach(el => {
+    const target = parseInt(el.dataset.target);
+    let current = 0;
+    const duration = 1200;
+    const steps = 40;
+    const increment = target / steps;
+    const interval = duration / steps;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= target) {
+        current = target;
+        clearInterval(timer);
+      }
+      el.textContent = Math.round(current);
+    }, interval);
+  });
+}
+
+/* ============================================================
+   Donut Chart (CSS)
+   ============================================================ */
+function renderDonut() {
+  const data = [
+    { value: 30, color: '#6BCB77' },
+    { value: 10, color: '#4ECDC4' },
+    { value: 5, color: '#FFD93D' },
+    { value: 3, color: '#FF6B6B' },
+  ];
+  const total = data.reduce((s, d) => s + d.value, 0);
+  let cumulative = 0;
+  const conicParts = data.map(d => {
+    const start = (cumulative / total) * 360;
+    cumulative += d.value;
+    const end = (cumulative / total) * 360;
+    return `${d.color} ${start}deg ${end}deg`;
+  });
+  const donut = $('#health-donut');
+  donut.style.background = `conic-gradient(${conicParts.join(', ')})`;
+}
+
+/* ============================================================
+   Timeline Render
+   ============================================================ */
+function renderTimeline() {
+  const container = $('#overview-timeline');
+  container.innerHTML = TIMELINE_DATA.map(item => `
+    <div class="timeline-item ${item.type}">
+      <div class="timeline-time">${item.time}</div>
+      <div class="timeline-text">${item.text}</div>
+    </div>
+  `).join('');
+}
+
+/* ============================================================
+   Elder Cards (Overview)
+   ============================================================ */
+function renderOverviewElders() {
+  const container = $('#overview-elders');
+  const elders = ELDER_DATA.slice(0, 6);
+  container.innerHTML = elders.map(e => {
+    const st = STATUS_MAP[e.status];
+    return `
+      <div class="elder-card" data-id="${e.id}">
+        <div class="elder-avatar">${e.avatar}</div>
+        <div class="elder-info">
+          <div class="elder-name">${e.name} <span class="elder-status-tag ${st.cls}">${st.label}</span></div>
+          <div class="elder-age">${e.age}岁</div>
+          <div class="elder-stats">❤️ ${e.hr} · 🩸 ${e.bp}</div>
+        </div>
+        <button class="elder-call-btn" onclick="event.stopPropagation(); callElder('${e.name}', '${e.contact}')">📞</button>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ============================================================
+   Typewriter Effect
+   ============================================================ */
+function typewriter(element, text, speed = 30) {
+  element.innerHTML = '';
+  element.classList.add('typing-cursor');
+  let i = 0;
+  function type() {
+    if (i < text.length) {
+      const ch = text[i];
+      if (ch === '\n') {
+        element.innerHTML += '<br>';
+      } else {
+        element.innerHTML += ch;
+      }
+      i++;
+      setTimeout(type, speed);
+    } else {
+      element.classList.remove('typing-cursor');
+    }
+  }
+  type();
+}
+
+/* ============================================================
+   Overview Agent Thinking
+   ============================================================ */
+function startOverviewAgent() {
+  const text = `08:00 启动晨间健康巡检
+ → 采集12位老人生命体征数据
+ → 李淑芬血压 145/95 高于阈值
+ → 查询历史记录：近3天血压呈上升趋势
+ → 生成预警通知
+ → 已推送给护理员小王
+ → 建议安排医生远程问诊`;
+  typewriter($('#overview-agent-thinking'), text, 25);
+}
+
+/* ============================================================
+   Health Panel
+   ============================================================ */
+function renderHealthElderList() {
+  const container = $('#health-elder-list');
+  container.innerHTML = ELDER_DATA.map(e => {
+    const st = STATUS_MAP[e.status];
+    return `
+      <div class="health-elder-item ${e.id === selectedHealthElder.id ? 'active' : ''}" data-id="${e.id}">
+        <div class="avatar">${e.avatar}</div>
+        <div style="flex:1;">
+          <div class="name">${e.name} ${e.age}岁</div>
+          <div class="hr">心率 ${e.hr} bpm</div>
+        </div>
+        <div class="status-led ${st.led}"></div>
+      </div>
+    `;
+  }).join('');
+  container.querySelectorAll('.health-elder-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const id = parseInt(item.dataset.id);
+      selectedHealthElder = ELDER_DATA.find(e => e.id === id);
+      renderHealthPanel();
+    });
+  });
+}
+
+function renderVitalGauges() {
+  const e = selectedHealthElder;
+  $('#health-elder-name').textContent = `${e.name} - 健康详情`;
+  const gauges = [
+    { type: 'heart', label: '心率', value: e.hr, unit: 'bpm', max: 150, color: '#FF6B6B', abnormal: e.hr > 100 || e.hr < 50 },
+    { type: 'bp', label: '收缩压', value: parseInt(e.bp.split('/')[0]), unit: 'mmHg', max: 200, color: '#FFD93D', abnormal: parseInt(e.bp.split('/')[0]) > 140 },
+    { type: 'spo2', label: '血氧', value: e.spo2, unit: '%', max: 100, color: '#4ECDC4', abnormal: e.spo2 < 95 },
+    { type: 'temp', label: '体温', value: e.temp, unit: '°C', max: 42, color: '#FF8C42', abnormal: e.temp > 37.3 },
+  ];
+  const container = $('#vital-gauges');
+  container.innerHTML = gauges.map(g => {
+    const pct = Math.min(g.value / g.max, 1);
+    const circumference = 2 * Math.PI * 38;
+    const offset = circumference * (1 - pct);
+    return `
+      <div class="gauge-card ${g.type} ${g.abnormal ? 'abnormal' : ''}">
+        <div class="gauge-circle">
+          <svg width="90" height="90">
+            <circle class="gauge-bg" cx="45" cy="45" r="38"></circle>
+            <circle class="gauge-fg" cx="45" cy="45" r="38" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"></circle>
+          </svg>
+          <div class="gauge-value">${g.value}</div>
+        </div>
+        <div class="gauge-label">${g.label} (${g.unit})</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function drawHeartRateChart() {
+  const canvas = $('#hr-canvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.offsetWidth;
+  const h = 160;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  // Generate 24h data
+  const data = [];
+  for (let i = 0; i < 48; i++) {
+    let base = 72 + Math.sin(i * 0.3) * 8 + Math.random() * 4;
+    if (i >= 36 && i <= 40) base = 95 + Math.random() * 8; // abnormal zone
+    if (i >= 18 && i <= 20) base = 88 + Math.random() * 5;
+    data.push(base);
+  }
+
+  const padding = { left: 35, right: 10, top: 10, bottom: 25 };
+  const cw = w - padding.left - padding.right;
+  const ch = h - padding.top - padding.bottom;
+  const minVal = 50, maxVal = 110;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 5; i++) {
+    const y = padding.top + (ch / 5) * i;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(padding.left + cw, y);
+    ctx.stroke();
+    ctx.fillStyle = '#6B6B85';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(maxVal - ((maxVal - minVal) / 5) * i, padding.left - 5, y + 3);
+  }
+
+  // X labels
+  for (let i = 0; i <= 24; i += 4) {
+    const x = padding.left + (cw / 24) * i;
+    ctx.fillStyle = '#6B6B85';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(i + ':00', x, h - 8);
+  }
+
+  // Abnormal zone
+  ctx.fillStyle = 'rgba(255,107,107,0.1)';
+  const abStart = padding.left + (cw / 47) * 36;
+  const abEnd = padding.left + (cw / 47) * 40;
+  ctx.fillRect(abStart, padding.top, abEnd - abStart, ch);
+
+  // Normal range band
+  ctx.fillStyle = 'rgba(107,203,119,0.06)';
+  const ny1 = padding.top + ch * (1 - (80 - minVal) / (maxVal - minVal));
+  const ny2 = padding.top + ch * (1 - (60 - minVal) / (maxVal - minVal));
+  ctx.fillRect(padding.left, ny1, cw, ny2 - ny1);
+
+  // Line
+  ctx.strokeStyle = '#FF6B6B';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = padding.left + (cw / (data.length - 1)) * i;
+    const y = padding.top + ch * (1 - (v - minVal) / (maxVal - minVal));
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Fill
+  ctx.lineTo(padding.left + cw, padding.top + ch);
+  ctx.lineTo(padding.left, padding.top + ch);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(255,107,107,0.08)';
+  ctx.fill();
+
+  // Max/Min markers
+  const maxIdx = data.indexOf(Math.max(...data));
+  const minIdx = data.indexOf(Math.min(...data));
+  [[maxIdx, '#FF6B6B', '最高'], [minIdx, '#4ECDC4', '最低']].forEach(([idx, color, label]) => {
+    const x = padding.left + (cw / (data.length - 1)) * idx;
+    const y = padding.top + ch * (1 - (data[idx] - minVal) / (maxVal - minVal));
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${label} ${data[idx].toFixed(0)}`, x, y - 8);
+  });
+
+  // Hover tooltip
+  canvas.onmousemove = function(ev) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = ev.clientX - rect.left;
+    const idx = Math.round(((mx - padding.left) / cw) * (data.length - 1));
+    if (idx >= 0 && idx < data.length) {
+      const x = padding.left + (cw / (data.length - 1)) * idx;
+      const y = padding.top + ch * (1 - (data[idx] - minVal) / (maxVal - minVal));
+      ctx.clearRect(0, 0, w, h);
+      // Redraw all (simplified - just redraw the essential)
+      drawHRRedraw(ctx, w, h, padding, cw, ch, data, minVal, maxVal);
+      // Vertical line
+      ctx.strokeStyle = 'rgba(255,140,66,0.5)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, padding.top);
+      ctx.lineTo(x, padding.top + ch);
+      ctx.stroke();
+      // Point
+      ctx.fillStyle = '#FF8C42';
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      // Tooltip
+      const tooltip = $('#chart-tooltip');
+      tooltip.style.display = 'block';
+      tooltip.style.left = (rect.left + mx + 10) + 'px';
+      tooltip.style.top = (rect.top + y - 10) + 'px';
+      const hour = Math.floor(idx / 2);
+      const min = (idx % 2) * 30;
+      tooltip.innerHTML = `${String(hour).padStart(2,'0')}:${String(min).padStart(2,'0')} | 心率 ${data[idx].toFixed(0)} bpm`;
+    }
+  };
+  canvas.onmouseleave = function() {
+    $('#chart-tooltip').style.display = 'none';
+    drawHRRedraw(ctx, w, h, padding, cw, ch, data, minVal, maxVal);
+  };
+}
+
+function drawHRRedraw(ctx, w, h, padding, cw, ch, data, minVal, maxVal) {
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 5; i++) {
+    const y = padding.top + (ch / 5) * i;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(padding.left + cw, y);
+    ctx.stroke();
+    ctx.fillStyle = '#6B6B85';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(maxVal - ((maxVal - minVal) / 5) * i, padding.left - 5, y + 3);
+  }
+  for (let i = 0; i <= 24; i += 4) {
+    const x = padding.left + (cw / 24) * i;
+    ctx.fillStyle = '#6B6B85';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(i + ':00', x, h - 8);
+  }
+  ctx.fillStyle = 'rgba(255,107,107,0.1)';
+  const abStart = padding.left + (cw / 47) * 36;
+  const abEnd = padding.left + (cw / 47) * 40;
+  ctx.fillRect(abStart, padding.top, abEnd - abStart, ch);
+  ctx.fillStyle = 'rgba(107,203,119,0.06)';
+  const ny1 = padding.top + ch * (1 - (80 - minVal) / (maxVal - minVal));
+  const ny2 = padding.top + ch * (1 - (60 - minVal) / (maxVal - minVal));
+  ctx.fillRect(padding.left, ny1, cw, ny2 - ny1);
+  ctx.strokeStyle = '#FF6B6B';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = padding.left + (cw / (data.length - 1)) * i;
+    const y = padding.top + ch * (1 - (v - minVal) / (maxVal - minVal));
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.lineTo(padding.left + cw, padding.top + ch);
+  ctx.lineTo(padding.left, padding.top + ch);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(255,107,107,0.08)';
+  ctx.fill();
+  const maxIdx = data.indexOf(Math.max(...data));
+  const minIdx = data.indexOf(Math.min(...data));
+  [[maxIdx, '#FF6B6B', '最高'], [minIdx, '#4ECDC4', '最低']].forEach(([idx, color, label]) => {
+    const x = padding.left + (cw / (data.length - 1)) * idx;
+    const y = padding.top + ch * (1 - (data[idx] - minVal) / (maxVal - minVal));
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${label} ${data[idx].toFixed(0)}`, x, y - 8);
+  });
+}
+
+function drawBPChart() {
+  const canvas = $('#bp-canvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.offsetWidth;
+  const h = 160;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  const days = ['周一','周二','周三','周四','周五','周六','今日'];
+  const sysData = [135, 138, 140, 142, 143, 144, 145];
+  const diaData = [85, 86, 88, 89, 92, 93, 95];
+
+  const padding = { left: 35, right: 10, top: 10, bottom: 25 };
+  const cw = w - padding.left - padding.right;
+  const ch = h - padding.top - padding.bottom;
+  const minVal = 60, maxVal = 160;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 5; i++) {
+    const y = padding.top + (ch / 5) * i;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(padding.left + cw, y);
+    ctx.stroke();
+    ctx.fillStyle = '#6B6B85';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(maxVal - ((maxVal - minVal) / 5) * i, padding.left - 5, y + 3);
+  }
+
+  // X labels
+  days.forEach((d, i) => {
+    const x = padding.left + (cw / (days.length - 1)) * i;
+    ctx.fillStyle = '#6B6B85';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(d, x, h - 8);
+  });
+
+  // Normal range band (90-120 systolic, 60-80 diastolic)
+  ctx.fillStyle = 'rgba(107,203,119,0.08)';
+  const nTop = padding.top + ch * (1 - (120 - minVal) / (maxVal - minVal));
+  const nBot = padding.top + ch * (1 - (80 - minVal) / (maxVal - minVal));
+  ctx.fillRect(padding.left, nTop, cw, nBot - nTop);
+
+  // Systolic line
+  ctx.strokeStyle = '#FF8C42';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  sysData.forEach((v, i) => {
+    const x = padding.left + (cw / (sysData.length - 1)) * i;
+    const y = padding.top + ch * (1 - (v - minVal) / (maxVal - minVal));
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  sysData.forEach((v, i) => {
+    const x = padding.left + (cw / (sysData.length - 1)) * i;
+    const y = padding.top + ch * (1 - (v - minVal) / (maxVal - minVal));
+    ctx.fillStyle = '#FF8C42';
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Diastolic line
+  ctx.strokeStyle = '#4ECDC4';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  diaData.forEach((v, i) => {
+    const x = padding.left + (cw / (diaData.length - 1)) * i;
+    const y = padding.top + ch * (1 - (v - minVal) / (maxVal - minVal));
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  diaData.forEach((v, i) => {
+    const x = padding.left + (cw / (diaData.length - 1)) * i;
+    const y = padding.top + ch * (1 - (v - minVal) / (maxVal - minVal));
+    ctx.fillStyle = '#4ECDC4';
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function renderHealthScore() {
+  const score = 72;
+  const circumference = 2 * Math.PI * 48;
+  const offset = circumference * (1 - score / 100);
+  const ring = $('#score-ring');
+  ring.innerHTML = `
+    <svg width="120" height="120">
+      <circle class="bg" cx="60" cy="60" r="48"></circle>
+      <circle class="fg" cx="60" cy="60" r="48" stroke="#6BCB77" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"></circle>
+    </svg>
+    <div class="score-center">
+      <div class="num">${score}</div>
+      <div class="label">综合评分</div>
+    </div>
+  `;
+
+  const dims = [
+    { name: '心血管', value: 65, color: '#FF6B6B' },
+    { name: '代谢', value: 70, color: '#FFD93D' },
+    { name: '运动', value: 78, color: '#4ECDC4' },
+    { name: '睡眠', value: 68, color: '#FF8C42' },
+    { name: '营养', value: 80, color: '#6BCB77' },
+  ];
+  $('#score-dimensions').innerHTML = dims.map(d => `
+    <div class="score-dim-item">
+      <div class="score-dim-label"><span>${d.name}</span><span style="color:${d.color}">${d.value}</span></div>
+      <div class="score-dim-bar"><div class="score-dim-fill" style="width:${d.value}%; background:${d.color}"></div></div>
+    </div>
+  `).join('');
+}
+
+function renderAlertHistory() {
+  const statusMap = {
+    done: { cls: 'status-done', text: '已处理' },
+    pending: { cls: 'status-pending', text: '待处理' },
+    processing: { cls: 'status-processing', text: '处理中' },
+  };
+  $('#alert-history').innerHTML = ALERT_HISTORY_DATA.map(a => {
+    const s = statusMap[a.status];
+    return `
+      <div class="alert-item">
+        <span class="time">${a.time}</span>
+        <span class="type">${a.type}</span>
+        <span class="status ${s.cls}">${s.text}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderHealthAgentReport() {
+  const e = selectedHealthElder;
+  const text = `心率变异性HRV较昨日下降12%
+ → 结合睡眠数据：深睡减少30分钟
+ → 判断：可能与近期疲劳有关
+ → 建议：今日减少活动量，增加午休时间
+ → 已通知护理员调整今日活动安排`;
+  typewriter($('#health-agent-report'), text, 25);
+}
+
+function renderHealthPanel() {
+  renderHealthElderList();
+  renderVitalGauges();
+  drawHeartRateChart();
+  drawBPChart();
+  renderHealthScore();
+  renderAlertHistory();
+  renderHealthAgentReport();
+}
+
+/* ============================================================
+   Vital Signs Live Update
+   ============================================================ */
+setInterval(() => {
+  if ($('#panel-health').classList.contains('active')) {
+    ELDER_DATA.forEach(e => {
+      e.hr += Math.floor(Math.random() * 7) - 3;
+      e.hr = Math.max(50, Math.min(120, e.hr));
+      e.spo2 += Math.floor(Math.random() * 3) - 1;
+      e.spo2 = Math.max(90, Math.min(100, e.spo2));
+    });
+    renderVitalGauges();
+    renderHealthElderList();
+  }
+}, 5000);
+
+/* ============================================================
+   Fall Detection Panel
+   ============================================================ */
+function renderSkeleton() {
+  const figure = $('#skeleton-figure');
+  // Simplified human skeleton with joints
+  const joints = [
+    { name: 'head', x: 50, y: 10, alert: false },
+    { name: 'neck', x: 50, y: 30, alert: false },
+    { name: 'lshoulder', x: 35, y: 35, alert: false },
+    { name: 'rshoulder', x: 65, y: 35, alert: false },
+    { name: 'lelbow', x: 25, y: 55, alert: false },
+    { name: 'relbow', x: 75, y: 55, alert: false },
+    { name: 'lhand', x: 20, y: 75, alert: false },
+    { name: 'rhand', x: 80, y: 75, alert: false },
+    { name: 'torso', x: 50, y: 55, alert: false },
+    { name: 'lhip', x: 42, y: 75, alert: false },
+    { name: 'rhip', x: 58, y: 75, alert: false },
+    { name: 'lknee', x: 40, y: 110, alert: false },
+    { name: 'rknee', x: 60, y: 110, alert: false },
+    { name: 'lfoot', x: 38, y: 140, alert: false },
+    { name: 'rfoot', x: 62, y: 140, alert: false },
+  ];
+
+  const bones = [
+    ['head', 'neck'], ['neck', 'lshoulder'], ['neck', 'rshoulder'],
+    ['lshoulder', 'lelbow'], ['lelbow', 'lhand'],
+    ['rshoulder', 'relbow'], ['relbow', 'rhand'],
+    ['neck', 'torso'], ['torso', 'lhip'], ['torso', 'rhip'],
+    ['lhip', 'lknee'], ['lknee', 'lfoot'],
+    ['rhip', 'rknee'], ['rknee', 'rfoot'],
+  ];
+
+  let html = '';
+  // Draw bones
+  bones.forEach(([a, b]) => {
+    const ja = joints.find(j => j.name === a);
+    const jb = joints.find(j => j.name === b);
+    const dx = jb.x - ja.x;
+    const dy = jb.y - ja.y;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    html += `<div class="skeleton-bone" style="left:${ja.x}%; top:${ja.y}%; width:${len}%; transform:rotate(${angle}deg);"></div>`;
+  });
+  // Draw joints
+  joints.forEach(j => {
+    html += `<div class="skeleton-joint ${j.alert ? 'alert' : ''}" style="left:${j.x}%; top:${j.y}%;"></div>`;
+  });
+  figure.innerHTML = html;
+
+  // Animate joints slightly
+  let frame = 0;
+  if (window._skeletonAnim) clearInterval(window._skeletonAnim);
+  window._skeletonAnim = setInterval(() => {
+    if (!$('#panel-fall').classList.contains('active')) {
+      clearInterval(window._skeletonAnim);
+      return;
+    }
+    frame++;
+    figure.querySelectorAll('.skeleton-joint').forEach((el, i) => {
+      const offset = Math.sin(frame * 0.1 + i * 0.5) * 1.5;
+      el.style.transform = `translate(-50%, -50%) translateX(${offset}px)`;
+    });
+  }, 50);
+}
+
+function drawFallCompareChart() {
+  const canvas = $('#fall-compare-canvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.offsetWidth;
+  const h = 140;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  const padding = { left: 35, right: 10, top: 15, bottom: 25 };
+  const cw = w - padding.left - padding.right;
+  const ch = h - padding.top - padding.bottom;
+  const minVal = 50, maxVal = 130;
+
+  // Data: before (5 min before fall) and after (5 min after fall)
+  const beforeHR = [72, 74, 73, 75, 72, 74];
+  const afterHR = [110, 115, 120, 118, 105, 98];
+  const labels = ['-5min', '-4min', '-3min', '-2min', '-1min', '跌倒', '+1min', '+2min', '+3min', '+4min', '+5min'];
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = padding.top + (ch / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(padding.left + cw, y);
+    ctx.stroke();
+    ctx.fillStyle = '#6B6B85';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(maxVal - ((maxVal - minVal) / 4) * i, padding.left - 5, y + 3);
+  }
+
+  // X labels
+  labels.forEach((l, i) => {
+    const x = padding.left + (cw / (labels.length - 1)) * i;
+    ctx.fillStyle = '#6B6B85';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(l, x, h - 8);
+  });
+
+  // Divider at fall point
+  const fallX = padding.left + (cw / (labels.length - 1)) * 5;
+  ctx.strokeStyle = 'rgba(255,107,107,0.4)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(fallX, padding.top);
+  ctx.lineTo(fallX, padding.top + ch);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Before line (green)
+  ctx.strokeStyle = '#6BCB77';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  beforeHR.forEach((v, i) => {
+    const x = padding.left + (cw / (labels.length - 1)) * i;
+    const y = padding.top + ch * (1 - (v - minVal) / (maxVal - minVal));
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // After line (red)
+  ctx.strokeStyle = '#FF6B6B';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  afterHR.forEach((v, i) => {
+    const x = padding.left + (cw / (labels.length - 1)) * (i + 5);
+    const y = padding.top + ch * (1 - (v - minVal) / (maxVal - minVal));
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Points
+  beforeHR.forEach((v, i) => {
+    const x = padding.left + (cw / (labels.length - 1)) * i;
+    const y = padding.top + ch * (1 - (v - minVal) / (maxVal - minVal));
+    ctx.fillStyle = '#6BCB77';
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  afterHR.forEach((v, i) => {
+    const x = padding.left + (cw / (labels.length - 1)) * (i + 5);
+    const y = padding.top + ch * (1 - (v - minVal) / (maxVal - minVal));
+    ctx.fillStyle = '#FF6B6B';
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function renderRiskList() {
+  const levelMap = {
+    high: { cls: 'risk-high', label: '高' },
+    mid: { cls: 'risk-mid', label: '中' },
+    low: { cls: 'risk-low', label: '低' },
+  };
+  $('#risk-list').innerHTML = RISK_ELDER_DATA.map(e => {
+    const lv = levelMap[e.level];
+    return `
+      <div class="risk-item">
+        <span class="risk-level ${lv.cls}">${lv.label}</span>
+        <span style="font-weight:500; min-width:60px;">${e.name} ${e.age}岁</span>
+        <div class="risk-factors">
+          ${e.factors.map(f => `<span class="risk-factor-tag">${f}</span>`).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderPrevention() {
+  $('#prevention-list').innerHTML = PREVENTION_DATA.map(p => `
+    <div class="prevention-card">${p}</div>
+  `).join('');
+}
+
+function renderFallStatsChart() {
+  const max = Math.max(...FALL_STATS_HOURS.map(d => d.count));
+  $('#fall-stats-chart').innerHTML = FALL_STATS_HOURS.map(d => {
+    const pct = max > 0 ? (d.count / max) * 100 : 0;
+    return `
+      <div class="fall-bar">
+        <div class="fall-bar-fill" style="height:${pct}%; min-height:${d.count > 0 ? '8px' : '0'}"></div>
+        <div class="fall-bar-label">${d.hour}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderFallAgentLog() {
+  const text = `监测到3号房间异常加速度
+ → 分析姿态变化曲线
+ → 纵向加速度峰值 2.8g
+ → 判定为跌倒事件
+ → 立即触发一级警报
+ → 通知值班护理员张三
+ → 同步通知家属
+ → 已启动应急处置流程`;
+  typewriter($('#fall-agent-log'), text, 25);
+}
+
+function renderFallPanel() {
+  renderSkeleton();
+  drawFallCompareChart();
+  renderRiskList();
+  renderPrevention();
+  renderFallStatsChart();
+  renderFallAgentLog();
+}
+
+/* ============================================================
+   Medication Panel
+   ============================================================ */
+function renderMedTimeline() {
+  const statusIcons = { taken: '✓', pending: '○', missed: '✗' };
+  $('#med-timeline').innerHTML = MED_SCHEDULE.map((m, i) => `
+    <div class="med-tl-point">
+      <div class="med-tl-icon ${m.status}" data-idx="${i}">${statusIcons[m.status]}</div>
+      <div class="med-tl-time">${m.time}</div>
+      <div class="med-tl-drug">${m.drug}</div>
+    </div>
+  `).join('');
+  // Click to toggle pending -> taken
+  $$('#med-timeline .med-tl-icon').forEach(icon => {
+    icon.addEventListener('click', () => {
+      const idx = parseInt(icon.dataset.idx);
+      if (MED_SCHEDULE[idx].status === 'pending') {
+        MED_SCHEDULE[idx].status = 'taken';
+        renderMedTimeline();
+      } else if (MED_SCHEDULE[idx].status === 'taken') {
+        MED_SCHEDULE[idx].status = 'pending';
+        renderMedTimeline();
+      }
+    });
+  });
+}
+
+function renderDrugList() {
+  $('#drug-list').innerHTML = DRUG_DATA.map(d => `
+    <div class="drug-item">
+      <span class="drug-name">${d.name}</span>
+      <span class="drug-dose">${d.dose}</span>
+      <span class="drug-freq">${d.freq}</span>
+      <span class="drug-purpose">[${d.purpose}]</span>
+      <span class="drug-note">${d.note}</span>
+    </div>
+  `).join('');
+}
+
+function renderPillBox() {
+  const days = ['一','二','三','四','五','六','日'];
+  const times = ['早','中','晚','睡'];
+  let html = '<div class="pill-box-cell header"></div>';
+  days.forEach(d => { html += `<div class="pill-box-cell header">${d}</div>`; });
+  times.forEach((t, ri) => {
+    html += `<div class="pill-box-cell header">${t}</div>`;
+    days.forEach((d, ci) => {
+      // Generate status: mostly taken, some pending, one missed
+      let status = 'taken';
+      if (ri === 3 && ci === 6) status = 'missed';
+      else if (ri >= 2 && ci === 6) status = 'pending';
+      else if (ri === 3 && ci === 5) status = 'pending';
+      html += `<div class="pill-box-cell ${status}" title="${d} ${t}"></div>`;
+    });
+  });
+  $('#pill-box-grid').innerHTML = html;
+}
+
+function renderMedRing() {
+  const completion = 92;
+  const circumference = 2 * Math.PI * 34;
+  const offset = circumference * (1 - completion / 100);
+  const fg = $('#med-ring .fg');
+  fg.setAttribute('stroke-dashoffset', offset);
+  // Animate number
+  let cur = 0;
+  const timer = setInterval(() => {
+    cur += 2;
+    if (cur >= completion) { cur = completion; clearInterval(timer); }
+    $('#med-completion-num').textContent = cur;
+  }, 30);
+}
+
+function renderMedAgentLog() {
+  const text = `张建国今日降压药尚未服用（已超时30分钟）
+ → 查询原因：外出活动
+ → 发送提醒至智能手表
+ → 15分钟后再次提醒
+ → 如超时1小时通知护理员`;
+  typewriter($('#med-agent-log'), text, 25);
+}
+
+function drawComplianceChart() {
+  const canvas = $('#compliance-canvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.offsetWidth;
+  const h = 140;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  const padding = { left: 30, right: 10, top: 10, bottom: 25 };
+  const cw = w - padding.left - padding.right;
+  const ch = h - padding.top - padding.bottom;
+
+  const days7 = [88, 90, 85, 92, 89, 94, 92];
+  const days30 = [];
+  for (let i = 0; i < 30; i++) {
+    days30.push(82 + Math.floor(Math.random() * 16));
+  }
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = padding.top + (ch / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(padding.left + cw, y);
+    ctx.stroke();
+    ctx.fillStyle = '#6B6B85';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(100 - 25 * i + '%', padding.left - 5, y + 3);
+  }
+
+  // 30-day line (background)
+  ctx.strokeStyle = 'rgba(78,205,196,0.4)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  days30.forEach((v, i) => {
+    const x = padding.left + (cw / (days30.length - 1)) * i;
+    const y = padding.top + ch * (1 - (v - 75) / 25);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // 7-day line (foreground)
+  const labels7 = ['6天前','5天前','4天前','3天前','2天前','昨天','今天'];
+  ctx.strokeStyle = '#6BCB77';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  days7.forEach((v, i) => {
+    const x = padding.left + (cw / (days7.length - 1)) * i;
+    const y = padding.top + ch * (1 - (v - 75) / 25);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Points for 7-day
+  days7.forEach((v, i) => {
+    const x = padding.left + (cw / (days7.length - 1)) * i;
+    const y = padding.top + ch * (1 - (v - 75) / 25);
+    ctx.fillStyle = '#6BCB77';
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // X labels (7-day only)
+  labels7.forEach((l, i) => {
+    const x = padding.left + (cw / (labels7.length - 1)) * i;
+    ctx.fillStyle = '#6B6B85';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(l, x, h - 8);
+  });
+}
+
+function renderMedicationPanel() {
+  renderMedTimeline();
+  renderDrugList();
+  renderPillBox();
+  renderMedRing();
+  renderMedAgentLog();
+  drawComplianceChart();
+}
+
+/* ============================================================
+   Call Modal
+   ============================================================ */
+let callTimer = null;
+let callSeconds = 0;
+
+function callElder(name, contact) {
+  const elder = ELDER_DATA.find(e => e.name === name) || { avatar: '👤' };
+  $('#call-avatar').textContent = elder.avatar || '👤';
+  $('#call-name').textContent = `紧急联系人 - ${contact}`;
+  $('#call-status').textContent = '正在呼叫中...';
+  $('#call-timer').textContent = '00:00';
+  $('#call-modal').classList.add('show');
+  callSeconds = 0;
+  setTimeout(() => {
+    $('#call-status').textContent = '已接通';
+    $('#call-status').style.color = 'var(--success)';
+    callTimer = setInterval(() => {
+      callSeconds++;
+      const m = String(Math.floor(callSeconds / 60)).padStart(2, '0');
+      const s = String(callSeconds % 60).padStart(2, '0');
+      $('#call-timer').textContent = `${m}:${s}`;
+    }, 1000);
+  }, 2000);
+}
+
+function hangupCall() {
+  $('#call-modal').classList.remove('show');
+  $('#call-status').style.color = 'var(--accent)';
+  if (callTimer) { clearInterval(callTimer); callTimer = null; }
+}
+
+/* ============================================================
+   Medication Actions
+   ============================================================ */
+function handleMedTaken() {
+  const popup = $('#reminder-popup');
+  popup.innerHTML = `
+    <span class="icon" style="font-size:32px;">✅</span>
+    <div class="info">
+      <div class="title" style="color:var(--success);">用药已确认</div>
+      <div class="detail">张建国 - 硝苯地平缓释片 10mg 已记录</div>
+    </div>
+  `;
+  setTimeout(() => {
+    popup.innerHTML = `
+      <span class="icon">💊</span>
+      <div class="info">
+        <div class="title">李淑芬 - 阿司匹林肠溶片</div>
+        <div class="detail">剂量: 100mg · 用法: 口服 · 注意: 空腹服用</div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="handleMedTaken()">已服用</button>
+        <button class="btn btn-secondary" onclick="handleMedDelay()">延迟15分钟</button>
+      </div>
+    `;
+  }, 3000);
+}
+
+function handleMedDelay() {
+  const popup = $('#reminder-popup');
+  popup.innerHTML = `
+    <span class="icon" style="font-size:32px;">⏰</span>
+    <div class="info">
+      <div class="title" style="color:var(--warning);">已延迟提醒</div>
+      <div class="detail">将在 15 分钟后再次提醒</div>
+    </div>
+  `;
+  setTimeout(() => {
+    popup.innerHTML = `
+      <span class="icon">💊</span>
+      <div class="info">
+        <div class="title">张建国 - 硝苯地平缓释片</div>
+        <div class="detail">剂量: 10mg · 用法: 口服 · 注意: 饭后服用</div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="handleMedTaken()">已服用</button>
+        <button class="btn btn-secondary" onclick="handleMedDelay()">延迟15分钟</button>
+      </div>
+    `;
+  }, 3000);
+}
+
+/* ============================================================
+   Init
+   ============================================================ */
+function init() {
+  renderDonut();
+  renderTimeline();
+  renderOverviewElders();
+  animateKPIs();
+  startOverviewAgent();
+}
+
+init();
+</script>
+
+<!-- AIGC: {"Label":"value1","ContentProducer":"001191110000802100433B11010001191110000802100433B11010","ProduceID":"0f2bd8ef-2440-40ba-b4ad-358fb469763f","ReservedCode1":"72dafc97cd38b92e5f3d5cdfd0dfbbe6","ContentPropagator":"001191110000802100433B11010001191110000802100433B11010","PropagateID":"2c25937f-7049-438a-b163-8e5a8ab685bc","ReservedCode2":"2734827274df537123a472bf4de01eb5"} -->
+</body>
+</html>
