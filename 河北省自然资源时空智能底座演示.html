@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>河北省自然资源时空智能底座</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#070e1e;--panel:rgba(8,16,36,0.95);--card:rgba(12,24,52,0.9);
+--border:rgba(30,80,160,0.35);--t1:#e0e8f0;--t2:#8899b0;--t3:#5a6a80;
+--blue:#0099ff;--cyan:#00d4ff;--green:#00e676;--orange:#ff8800;
+--red:#ff3d3d;--purple:#b060ff;--yellow:#ffcc00;--teal:#00bfa5;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--t1);font-family:'Microsoft YaHei',sans-serif;font-size:13px}
+#app{display:flex;flex-direction:column;height:100vh}
+
+/* Header */
+#header{background:linear-gradient(135deg,#0a1a3a 0%,#0d2550 100%);border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;gap:24px;flex-shrink:0;z-index:1000}
+.logo{font-size:18px;font-weight:bold;color:var(--cyan);white-space:nowrap;letter-spacing:1px}
+.logo .sub{font-size:11px;color:var(--t2);font-weight:normal;margin-left:8px}
+.tabs{display:flex;gap:4px;flex:1}
+.tab{padding:8px 16px;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--t2);cursor:pointer;font-size:13px;transition:all .2s;white-space:nowrap}
+.tab:hover{color:var(--t1);background:rgba(0,153,255,0.1)}
+.tab.active{color:#fff;background:rgba(0,153,255,0.2);border-color:var(--blue)}
+.tab .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.header-right{display:flex;align-items:center;gap:16px}
+.status-badge{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--green)}
+.status-badge .pulse{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.clock{font-size:13px;color:var(--cyan);font-variant-numeric:tabular-nums}
+
+/* Main Layout */
+#main{display:flex;flex:1;overflow:hidden}
+#left-panel{width:340px;background:var(--panel);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0}
+#map-wrap{flex:1;position:relative;overflow:hidden}
+#map{width:100%;height:100%;background:#0a1628}
+#right-panel{width:380px;background:var(--panel);border-left:1px solid var(--border);overflow-y:auto;flex-shrink:0}
+
+/* Left Panel */
+.agent-header{padding:16px;border-bottom:1px solid var(--border)}
+.agent-name{font-size:16px;font-weight:bold;color:var(--t1)}
+.agent-desc{font-size:12px;color:var(--t2);margin-top:4px;line-height:1.5}
+.agent-status{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11px}
+.agent-status .badge{padding:2px 8px;border-radius:3px;font-size:11px}
+.badge-online{background:rgba(0,230,118,0.15);color:var(--green)}
+.badge-running{background:rgba(0,153,255,0.15);color:var(--blue)}
+
+/* Thinking Chain */
+.thinking-chain{padding:12px 16px}
+.chain-title{font-size:12px;color:var(--cyan);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.chain-step{background:var(--card);border-radius:6px;padding:10px 12px;margin-bottom:8px;border-left:3px solid var(--blue);font-size:12px;line-height:1.6}
+.chain-step .step-label{font-size:10px;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}
+.chain-step .step-content{color:var(--t1)}
+.chain-step[data-type="source"]{border-left-color:var(--blue)}
+.chain-step[data-type="source"] .step-label{color:var(--blue)}
+.chain-step[data-type="reason"]{border-left-color:var(--purple)}
+.chain-step[data-type="reason"] .step-label{color:var(--purple)}
+.chain-step[data-type="action"]{border-left-color:var(--green)}
+.chain-step[data-type="action"] .step-label{color:var(--green)}
+.chain-step .auth-tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;margin-left:4px}
+.auth-auto{background:rgba(0,230,118,0.15);color:var(--green)}
+.auth-manual{background:rgba(255,136,0,0.15);color:var(--orange)}
+.auth-pending{background:rgba(255,204,0,0.15);color:var(--yellow)}
+
+/* Right Panel */
+.right-section{padding:14px 16px;border-bottom:1px solid var(--border)}
+.right-section h3{font-size:13px;color:var(--t1);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.metric-card{background:var(--card);border-radius:6px;padding:10px 12px;border:1px solid var(--border)}
+.metric-card .label{font-size:11px;color:var(--t2)}
+.metric-card .value{font-size:22px;font-weight:bold;margin-top:4px;font-variant-numeric:tabular-nums}
+.metric-card .unit{font-size:11px;color:var(--t3);margin-left:2px}
+.metric-card .trend{font-size:11px;margin-top:2px}
+.trend-up{color:var(--red)}
+.trend-down{color:var(--green)}
+.trend-flat{color:var(--t2)}
+
+.alert-item{background:var(--card);border-radius:6px;padding:10px 12px;margin-bottom:8px;border-left:3px solid var(--orange);font-size:12px;line-height:1.5}
+.alert-item .alert-time{font-size:10px;color:var(--t3);margin-bottom:4px}
+.alert-item .alert-title{color:var(--t1);font-weight:bold;margin-bottom:2px}
+.alert-item .alert-desc{color:var(--t2)}
+.alert-item.high{border-left-color:var(--red)}
+.alert-item.medium{border-left-color:var(--orange)}
+.alert-item.low{border-left-color:var(--yellow)}
+
+.task-list .task-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(30,80,160,0.15);font-size:12px}
+.task-item:last-child{border-bottom:none}
+.task-item .task-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.task-icon.done{background:rgba(0,230,118,0.15);color:var(--green)}
+.task-icon.progress{background:rgba(0,153,255,0.15);color:var(--blue)}
+.task-icon.pending{background:rgba(255,204,0,0.15);color:var(--yellow)}
+.task-item .task-text{flex:1;color:var(--t1)}
+.task-item .task-tag{font-size:10px;color:var(--t3);padding:1px 6px;background:rgba(255,255,255,0.05);border-radius:3px}
+
+/* Map overlays */
+.map-overlay-top{position:absolute;top:12px;left:12px;z-index:500;display:flex;gap:8px;flex-wrap:wrap;max-width:60%}
+.map-chip{background:rgba(8,16,36,0.85);border:1px solid var(--border);border-radius:4px;padding:4px 10px;font-size:11px;color:var(--t2);cursor:pointer;transition:all .2s}
+.map-chip:hover{color:var(--t1);border-color:var(--blue)}
+.map-chip.active{color:var(--cyan);border-color:var(--cyan);background:rgba(0,212,255,0.1)}
+
+.map-legend{position:absolute;bottom:12px;left:12px;z-index:500;background:rgba(8,16,36,0.9);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:11px}
+.map-legend .legend-title{color:var(--t2);margin-bottom:6px;font-size:10px}
+.map-legend .legend-item{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.map-legend .legend-color{width:12px;height:12px;border-radius:2px}
+
+/* AI Dialog */
+#ai-dialog{position:absolute;bottom:0;left:340px;right:380px;background:var(--panel);border-top:1px solid var(--border);max-height:200px;display:flex;flex-direction:column;z-index:600;transition:all .3s}
+#ai-dialog.collapsed{max-height:40px}
+.ai-dialog-header{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;cursor:pointer;border-bottom:1px solid var(--border)}
+.ai-dialog-header .title{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--cyan)}
+.ai-dialog-header .title .ai-icon{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:12px}
+.ai-dialog-body{padding:10px 16px;overflow-y:auto;max-height:150px}
+.ai-msg{margin-bottom:8px;font-size:12px;line-height:1.6}
+.ai-msg .role{font-weight:bold;margin-right:6px}
+.ai-msg.user .role{color:var(--cyan)}
+.ai-msg.ai .role{color:var(--blue)}
+.ai-msg .msg-block{display:inline-block;padding:4px 8px;border-radius:4px;margin:2px 0}
+.ai-msg .block-source{border:1px solid rgba(0,153,255,0.3);background:rgba(0,153,255,0.05)}
+.ai-msg .block-reason{border:1px solid rgba(176,96,255,0.3);background:rgba(176,96,255,0.05)}
+.ai-msg .block-action{border:1px solid rgba(0,230,118,0.3);background:rgba(0,230,118,0.05)}
+
+/* Leaflet overrides */
+.leaflet-container{background:#0a1628!important}
+.leaflet-tile-pane{filter:saturate(0.4) brightness(0.55) contrast(1.2)}
+.leaflet-control-zoom{border:1px solid var(--border)!important}
+.leaflet-control-zoom a{background:rgba(8,16,36,0.9)!important;color:var(--t1)!important;border-bottom:1px solid var(--border)!important}
+.leaflet-control-zoom a:hover{background:rgba(0,153,255,0.2)!important}
+.leaflet-popup-content-wrapper{background:rgba(8,16,36,0.95)!important;color:var(--t1)!important;border:1px solid var(--blue)!important;border-radius:6px!important}
+.leaflet-popup-tip{background:rgba(8,16,36,0.95)!important}
+.leaflet-popup-content{margin:10px 14px!important;font-size:12px!important;line-height:1.5!important}
+.leaflet-popup-content .popup-title{color:var(--cyan);font-weight:bold;margin-bottom:4px}
+.leaflet-popup-content .popup-row{color:var(--t2);margin-top:2px}
+.leaflet-popup-content .popup-row span{color:var(--t1)}
+
+/* Custom markers */
+.custom-marker{background:transparent;border:none}
+.marker-pulse{width:12px;height:12px;border-radius:50%;border:2px solid;animation:markerPulse 2s infinite}
+@keyframes markerPulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,0.4)}70%{box-shadow:0 0 0 10px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(30,80,160,0.3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(30,80,160,0.5)}
+
+/* Toast */
+#toast{position:absolute;top:70px;left:50%;transform:translateX(-50%);background:rgba(8,16,36,0.95);border:1px solid var(--blue);border-radius:6px;padding:8px 20px;font-size:13px;color:var(--cyan);z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
+#toast.show{opacity:1}
+
+/* Scenario-specific colors */
+.theme-overview{--theme:#00d4ff}
+.theme-survey{--theme:#00d4ff}
+.theme-planning{--theme:#b060ff}
+.theme-farmland{--theme:#00e676}
+.theme-ecology{--theme:#8bc34a}
+.theme-geohazard{--theme:#ff3d3d}
+
+/* Progress bar */
+.progress-bar{height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;margin-top:4px}
+.progress-bar .fill{height:100%;border-radius:2px;transition:width .5s}
+
+/* Table */
+.data-table{width:100%;border-collapse:collapse;font-size:12px}
+.data-table th{background:rgba(0,153,255,0.1);color:var(--cyan);padding:6px 8px;text-align:left;font-weight:normal;border-bottom:1px solid var(--border);font-size:11px}
+.data-table td{padding:6px 8px;border-bottom:1px solid rgba(30,80,160,0.15);color:var(--t1)}
+.data-table tr:hover td{background:rgba(0,153,255,0.05)}
+
+/* Image comparison */
+.img-compare{display:flex;gap:8px;margin-top:8px}
+.img-compare .img-box{flex:1;background:var(--card);border-radius:6px;overflow:hidden;border:1px solid var(--border)}
+.img-compare .img-label{font-size:10px;color:var(--t3);padding:4px 8px;text-align:center}
+.img-compare .img-placeholder{height:80px;display:flex;align-items:center;justify-content:center;font-size:24px}
+</style>
+</head>
+<body>
+<div id="app" class="theme-overview">
+<div id="header">
+<div class="logo">河北省自然资源时空智能底座<span class="sub">CIM + 大模型 + 智能体</span></div>
+<nav class="tabs" id="tabs">
+<button class="tab active" data-agent="overview"><span class="dot" style="background:#00d4ff"></span>总览驾驶舱</button>
+<button class="tab" data-agent="survey"><span class="dot" style="background:#00d4ff"></span>调查监测</button>
+<button class="tab" data-agent="planning"><span class="dot" style="background:#b060ff"></span>国土空间规划</button>
+<button class="tab" data-agent="farmland"><span class="dot" style="background:#00e676"></span>耕地保护</button>
+<button class="tab" data-agent="ecology"><span class="dot" style="background:#8bc34a"></span>生态修复监管</button>
+<button class="tab" data-agent="geohazard"><span class="dot" style="background:#ff3d3d"></span>地质灾害防治</button>
+</nav>
+<div class="header-right">
+<div class="status-badge"><span class="pulse"></span>系统运行中</div>
+<div class="clock" id="clock">--:--:--</div>
+</div>
+</div>
+<div id="main">
+<div id="left-panel"></div>
+<div id="map-wrap">
+<div id="map"></div>
+<div class="map-overlay-top" id="mapLayers"></div>
+<div class="map-legend" id="mapLegend"></div>
+<div id="toast"></div>
+</div>
+<div id="right-panel"></div>
+</div>
+<div id="ai-dialog">
+<div class="ai-dialog-header" onclick="toggleDialog()">
+<div class="title"><span class="ai-icon">AI</span>时空智能助手</div>
+<span style="color:var(--t2);font-size:12px" id="dialogToggle">收起 ▾</span>
+</div>
+<div class="ai-dialog-body" id="dialogBody"></div>
+</div>
+</div>
+<script>
+// ========== Map Init ==========
+var map=L.map('map',{zoomControl:true,attributionControl:false,minZoom:6,maxZoom:14}).setView([38.8,115.3],7);
+L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',{subdomains:'1234',maxZoom:18}).addTo(map);
+var markerLayer=L.layerGroup().addTo(map);
+var overlayLayer=L.layerGroup().addTo(map);
+var routeLayer=L.layerGroup();
+
+// ========== Hebei Cities ==========
+var hebeiCities=[
+{name:'石家庄',lat:38.042,lng:114.515,type:'capital'},
+{name:'唐山',lat:39.630,lng:118.180,type:'industrial'},
+{name:'秦皇岛',lat:39.935,lng:119.600,type:'coastal'},
+{name:'邯郸',lat:36.620,lng:114.540,type:'mining'},
+{name:'邢台',lat:37.070,lng:114.500,type:'mining'},
+{name:'保定',lat:38.874,lng:115.464,type:'plain'},
+{name:'张家口',lat:40.810,lng:114.880,type:'mountain'},
+{name:'承德',lat:40.960,lng:117.940,type:'mountain'},
+{name:'沧州',lat:38.310,lng:116.840,type:'coastal'},
+{name:'廊坊',lat:39.540,lng:116.690,type:'plain'},
+{name:'衡水',lat:37.740,lng:115.670,type:'plain'}
+];
+
+// ========== Agent Data ==========
+var agents={
+overview:{
+name:'自然资源总览驾驶舱',
+desc:'全域自然资源态势感知，实时汇聚调查监测、规划管控、耕地保护、生态修复、地灾防治五大领域数据，提供宏观决策支撑。',
+status:'运行中',
+theme:'#00d4ff',
+chain:[
+{type:'source',label:'数据来源',content:'接入卫星遥感(高分/吉林一号)、无人机航摄、地面物联网监测站、自然资源"一张图"数据库，实时汇聚11个地市184个县区数据'},
+{type:'reason',label:'智能分析',content:'大模型融合分析全省自然资源变化趋势：耕地面积月度减少0.03%、生态红线内人类活动3处、太行山区地灾风险等级提升'},
+{type:'action',label:'执行建议',content:'生成《河北省自然资源月度态势报告》，推送3条预警至相关市县自然资源局',auth:'auto'}
+],
+metrics:[
+{label:'国土面积',value:'18.88',unit:'万km²',trend:'flat',trendText:'稳定'},
+{label:'耕地保有量',value:'6.30',unit:'万km²',trend:'down',trendText:'-0.03%'},
+{label:'生态红线面积',value:'4.12',unit:'万km²',trend:'flat',trendText:'稳定'},
+{label:'矿产开采点',value:'1,247',unit:'个',trend:'down',trendText:'-12'},
+{label:'地灾隐患点',value:'3,856',unit:'处',trend:'up',trendText:'+23'},
+{label:'遥感解译效率',value:'92.5',unit:'%',trend:'up',trendText:'+5.2%'}
+],
+alerts:[
+{time:'10:32',level:'high',title:'邯郸武安市矿区越界开采预警',desc:'遥感变化检测发现采矿边界外扩约0.8公顷，疑似越界开采'},
+{time:'09:15',level:'medium',title:'承德围场县耕地"非粮化"提醒',desc:'永久基本农田范围内发现新增苗木种植约12亩'},
+{time:'08:40',level:'low',title:'保定涞源县地灾风险升级',desc:'降雨量达阈值，3处滑坡隐患点风险等级由黄升橙'}
+],
+tasks:[
+{text:'完成全省第二季度遥感影像解译',status:'done',tag:'调查监测'},
+{text:'张家口崇礼生态修复项目验收',status:'progress',tag:'生态修复'},
+{text:'石家庄鹿泉区规划调整审查',status:'pending',tag:'空间规划'},
+{text:'唐山丰南区耕地占补平衡核查',status:'progress',tag:'耕地保护'}
+],
+legend:[{c:'#00d4ff',t:'省级监测中心'},{c:'#00e676',t:'耕地保护区'},{c:'#ff3d3d',t:'地灾隐患点'},{c:'#ff8800',t:'矿区监测'},{c:'#8bc34a',t:'生态修复区'}]
+},
+survey:{
+name:'自然资源调查监测智能体',
+desc:'基于多源遥感影像智能解译，实现自然资源全要素动态监测。自动识别地物变化，生成变化图斑，支撑资产清查与执法监管。',
+status:'运行中',
+theme:'#00d4ff',
+chain:[
+{type:'source',label:'数据来源',content:'高分六号(2026-07-05过境)、吉林一号(2026-07-03)、Sentinel-2(2026-07-01)三源影像比对，历史"一张图"二调三调数据'},
+{type:'reason',label:'智能分析',content:'AI解译模型识别到石家庄正定新区新增建设用地图斑23处(共48.6公顷)、邯郸武安矿区地表变化2处(共8.3公顷)、保定白洋淀上游水域缩减1处(约3.2公顷)'},
+{type:'action',label:'执行建议',content:'自动生成变化检测报告并推送至执法督察系统，其中2处疑似违法图斑标记为"高优先级"待核查',auth:'manual'}
+],
+metrics:[
+{label:'本季解译图斑',value:'12,847',unit:'个',trend:'up',trendText:'+1,203'},
+{label:'AI解译精度',value:'94.2',unit:'%',trend:'up',trendText:'+2.1%'},
+{label:'疑似违法图斑',value:'86',unit:'处',trend:'down',trendText:'-15'},
+{label:'资产清查进度',value:'78.3',unit:'%',trend:'up',trendText:'+8.5%'}
+],
+alerts:[
+{time:'10:32',level:'high',title:'石家庄正定新区新增建设用地',desc:'检测到23处新增建设图斑(48.6公顷)，其中5处未在规划许可库中，疑似未批先建'},
+{time:'09:48',level:'medium',title:'邯郸武安矿区地表变化',desc:'采矿区域地表植被破坏8.3公顷，需核实是否在采矿许可范围内'},
+{time:'08:20',level:'low',title:'保定白洋淀上游水域变化',desc:'上游入淀河道水域面积缩减3.2公顷，建议联合水务部门核查'}
+],
+tasks:[
+{text:'正定新区疑似违法图斑实地核查',status:'progress',tag:'高优先级'},
+{text:'武安矿区变化图斑比对采矿许可',status:'pending',tag:'待核查'},
+{text:'第二季度调查监测报告编制',status:'progress',tag:'编制中'},
+{text:'森林资源年度清查数据入库',status:'done',tag:'已完成'}
+],
+legend:[{c:'#00d4ff',t:'新增变化图斑'},{c:'#ff8800',t:'疑似违法'},{c:'#ffcc00',t:'待核查'},{c:'#00e676',t:'已确认'}]
+},
+planning:{
+name:'国土空间规划智能体',
+desc:'基于三区三线管控要求，辅助规划审查与用途管制决策。智能检测规划冲突，提供空间分析支撑，实现"多规合一"协同审查。',
+status:'运行中',
+theme:'#b060ff',
+chain:[
+{type:'source',label:'数据来源',content:'河北省国土空间规划(2021-2035)三区三线成果数据、石家庄鹿泉区控规调整申请、自然资源"一张图"规划审查模块历史审批数据'},
+{type:'reason',label:'智能分析',content:'鹿泉区上庄镇工业用地调整为商住混合用地申请，AI空间分析：①与永久基本农田距离>500m(合规) ②位于城镇开发边界内(合规) ③周边500m内有1处文物保护单位需评估 ④交通承载力评价通过'},
+{type:'action',label:'执行建议',content:'出具智能审查意见：基本合规，建议补充文物保护影响评估材料后进入专家评审环节',auth:'manual'}
+],
+metrics:[
+{label:'三区三线合规率',value:'98.7',unit:'%',trend:'up',trendText:'+0.3%'},
+{label:'规划审查待办',value:'47',unit:'件',trend:'down',trendText:'-8'},
+{label:'冲突检测通过率',value:'95.2',unit:'%',trend:'up',trendText:'+1.8%'},
+{label:'平均审查时长',value:'3.2',unit:'天',trend:'down',trendText:'-1.5天'}
+],
+alerts:[
+{time:'10:15',level:'high',title:'邢台宁晋县规划调整冲突预警',desc:'拟调整地块与生态保护红线重叠0.3公顷，自动拦截并退回'},
+{time:'09:30',level:'medium',title:'唐山曹妃甸区用地性质矛盾',desc:'工业用地与已批准的商业用地规划存在重叠区域'},
+{time:'08:55',level:'low',title:'廊坊固安县规划时限提醒',desc:'2件规划审查申请即将超期(剩余3个工作日)'}
+],
+tasks:[
+{text:'鹿泉区控规调整智能审查',status:'progress',tag:'审查中'},
+{text:'宁晋县冲突地块退回处理',status:'pending',tag:'待处理'},
+{text:'全省三区三线季度合规检查',status:'progress',tag:'执行中'},
+{text:'曹妃甸用地矛盾协调',status:'pending',tag:'待协调'}
+],
+legend:[{c:'#b060ff',t:'规划审查项目'},{c:'#ff3d3d',t:'冲突区域'},{c:'#ffcc00',t:'待审查'},{c:'#00e676',t:'已通过'}]
+},
+farmland:{
+name:'耕地保护智能体',
+desc:'运用遥感AI+地面网格巡查，实现耕地"非农化""非粮化"动态监测。自动识别违法占用，支撑占补平衡核查与永久基本农田特殊保护。',
+status:'运行中',
+theme:'#00e676',
+chain:[
+{type:'source',label:'数据来源',content:'高分二号(2026-07-06过境)影像、永久基本农田数据库、土地变更调查数据、耕地保护田长制巡查上报数据'},
+{type:'reason',label:'智能分析',content:'AI比对发现：沧州献县2处永久基本农田被占用建房(共3.6亩)、承德围场县1处基本农田改种苗木(约12亩)、唐山丰南区1处占补平衡补充耕地质量不达标(有机质含量偏低)'},
+{type:'action',label:'执行建议',content:'①2处违法占用生成执法工单推送至沧州市执法支队 ②苗木种植发出预警提醒整改 ③占补平衡项目退回重新补充',auth:'manual'}
+],
+metrics:[
+{label:'耕地保有量',value:'6.30',unit:'万km²',trend:'down',trendText:'-0.03%'},
+{label:'基本农田面积',value:'5.51',unit:'万km²',trend:'flat',trendText:'稳定'},
+{label:'非农化预警',value:'14',unit:'处',trend:'down',trendText:'-6'},
+{label:'占补平衡缺口',value:'0',unit:'公顷',trend:'flat',trendText:'平衡'}
+],
+alerts:[
+{time:'10:20',level:'high',title:'沧州献县基本农田违法建房',desc:'检测到2处永久基本农田被违规占用建设住宅(共3.6亩)，已生成执法工单'},
+{time:'09:40',level:'medium',title:'承德围场基本农田"非粮化"',desc:'1处永久基本农田(约12亩)改种绿化苗木，违反"非粮化"管控要求'},
+{time:'08:30',level:'medium',title:'唐山丰南占补平衡不达标',desc:'补充耕地土壤有机质含量1.2%(标准≥1.5%)，质量评定不通过'}
+],
+tasks:[
+{text:'献县违法占用执法工单下发',status:'progress',tag:'执法中'},
+{text:'围场县非粮化整改通知',status:'pending',tag:'待发送'},
+{text:'丰南区占补平衡项目复核',status:'pending',tag:'待复核'},
+{text:'全省基本农田专项巡查',status:'done',tag:'已完成'}
+],
+legend:[{c:'#00e676',t:'永久基本农田'},{c:'#ff3d3d',t:'违法占用'},{c:'#ff8800',t:'非粮化'},{c:'#ffcc00',t:'占补平衡'}]
+},
+ecology:{
+name:'生态修复监管智能体',
+desc:'对矿山生态修复、全域土地综合整治、生态保护红线实施全过程监管。运用多时相遥感对比修复效果，智能评估生态恢复指标。',
+status:'运行中',
+theme:'#8bc34a',
+chain:[
+{type:'source',label:'数据来源',content:'张家口崇礼矿区修复前(2023-06)后(2026-07)遥感影像对比、生态修复验收指标库、生态保护红线人类活动监测数据'},
+{type:'reason',label:'智能分析',content:'崇礼矿区修复区植被覆盖度从32%提升至78%(达标)、土壤重金属含量降至标准值以下(达标)、但边坡稳定性监测传感器数据异常(2处微位移超标)，建议复检'},
+{type:'action',label:'执行建议',content:'修复效果总体达标(评分87/100)，边坡异常区域暂缓验收，建议补充地质安全评估后通过',auth:'manual'}
+],
+metrics:[
+{label:'矿山修复项目',value:'156',unit:'个',trend:'up',trendText:'+12'},
+{label:'修复总面积',value:'8,420',unit:'公顷',trend:'up',trendText:'+680'},
+{label:'植被恢复率',value:'83.5',unit:'%',trend:'up',trendText:'+4.2%'},
+{label:'红线违规活动',value:'3',unit:'处',trend:'down',trendText:'-5'}
+],
+alerts:[
+{time:'10:05',level:'medium',title:'崇礼矿区边坡稳定性异常',desc:'修复区2处边坡微位移传感器数据超标，建议补充地质安全评估'},
+{time:'09:20',level:'low',title:'邯郸涉县生态修复项目进展',desc:'涉县太行山生态修复项目第三季度植被恢复率达标(81%)'},
+{time:'08:10',level:'medium',title:'保定涞源生态红线人类活动',desc:'生态保护红线内发现1处新建道路施工，疑似违规'}
+],
+tasks:[
+{text:'崇礼矿区修复验收评估',status:'progress',tag:'评估中'},
+{text:'涉县太行山修复季度检查',status:'done',tag:'已完成'},
+{text:'涞源红线内道路核查',status:'pending',tag:'待核查'},
+{text:'全省矿山修复年度报告',status:'progress',tag:'编制中'}
+],
+legend:[{c:'#8bc34a',t:'生态修复区'},{c:'#00e676',t:'植被恢复'},{c:'#ff8800',t:'待修复'},{c:'#ff3d3d',t:'红线违规'}]
+},
+geohazard:{
+name:'地质灾害防治智能体',
+desc:'融合气象降雨数据与地质构造信息，实现地灾隐患智能识别与风险预警。支撑"隐患识别-风险研判-预警发布-应急响应"全链条防治。',
+status:'运行中',
+theme:'#ff3d3d',
+chain:[
+{type:'source',label:'数据来源',content:'河北省气象局实时降雨数据(2026-07-08 08:00-16:00)、地质灾害风险预警模型、3,856处隐患点台账、InSAR地表形变监测数据'},
+{type:'reason',label:'智能分析',content:'保定涞源县近8小时累计降雨量82mm(超橙色预警阈值)、太行山沿线3处隐患点InSAR形变速率>15mm/yr、综合研判涞源-易县段滑坡风险等级为橙色(高)'},
+{type:'action',label:'执行建议',content:'①自动发布橙色预警至涞源县自然资源局和应急管理局 ②建议转移隐患点周边200米内群众(约86户) ③调度2支技术队伍赴现场驻守',auth:'manual'}
+],
+metrics:[
+{label:'隐患点总数',value:'3,856',unit:'处',trend:'up',trendText:'+23'},
+{label:'本年预警次数',value:'47',unit:'次',trend:'up',trendText:'+8'},
+{label:'成功预报',value:'12',unit:'次',trend:'up',trendText:'+3'},
+{label:'InSAR监测覆盖',value:'68',unit:'%',trend:'up',trendText:'+12%'}
+],
+alerts:[
+{time:'10:42',level:'high',title:'保定涞源县滑坡橙色预警',desc:'涞源-易县段3处隐患点风险等级升至橙色，建议立即转移周边群众'},
+{time:'09:55',level:'medium',title:'承德丰宁县泥石流黄色预警',desc:'降雨持续，5处泥石流隐患点风险等级为黄色(较高)'},
+{time:'08:30',level:'low',title:'石家庄井陉矿区地面塌陷提醒',desc:'采空区地面形变监测数据轻微异常，建议加强巡查'}
+],
+tasks:[
+{text:'涞源县橙色预警发布与群众转移',status:'progress',tag:'紧急'},
+{text:'丰宁县黄色预警监测值守',status:'progress',tag:'值守中'},
+{text:'井陉矿区采空区巡查',status:'pending',tag:'待安排'},
+{text:'太行山区InSAR季度监测',status:'done',tag:'已完成'}
+],
+legend:[{c:'#ff3d3d',t:'橙色预警'},{c:'#ff8800',t:'黄色预警'},{c:'#ffcc00',t:'蓝色预警'},{c:'#00d4ff',t:'监测站'}]
+}
+};
+
+// ========== Scenario-specific map markers ==========
+var scenarioMarkers={
+overview:[
+{lat:38.042,lng:114.515,name:'石家庄·省级监测中心',type:'capital',popup:'省级监测中心<br>全市遥感解译覆盖率: 96.3%'},
+{lat:40.810,lng:114.880,name:'张家口·生态修复',type:'ecology',popup:'生态修复重点区<br>崇礼矿区修复项目: 156公顷<br>植被恢复率: 83.5%'},
+{lat:36.620,lng:114.540,name:'邯郸·矿区监测',type:'mining',popup:'矿区监测重点市<br>在册矿山: 287个<br>本月变化图斑: 8处'},
+{lat:39.630,lng:118.180,name:'唐山·耕地保护',type:'farmland',popup:'耕地保护重点市<br>耕地面积: 5,870 km²<br>基本农田: 4,920 km²'},
+{lat:39.150,lng:114.700,name:'保定·地灾防治',type:'geohazard',popup:'地质灾害重点区<br>隐患点: 892处<br>当前预警: 橙色'}
+],
+survey:[
+{lat:38.150,lng:114.540,name:'正定新区·变化图斑',type:'alert',popup:'新增建设图斑 23处<br>面积: 48.6公顷<br>疑似违法: 5处<br>状态: 待实地核查',color:'#ff8800'},
+{lat:36.700,lng:114.200,name:'武安矿区·地表变化',type:'alert',popup:'矿区地表变化 2处<br>面积: 8.3公顷<br>状态: 比对采矿许可中',color:'#ffcc00'},
+{lat:38.900,lng:115.600,name:'白洋淀上游·水域变化',type:'alert',popup:'水域面积缩减 3.2公顷<br>状态: 联合水务核查',color:'#ffcc00'},
+{lat:40.810,lng:114.880,name:'张家口·解译完成',type:'done',popup:'本季遥感解译完成<br>图斑数: 1,847个<br>精度: 95.1%',color:'#00e676'},
+{lat:39.935,lng:119.600,name:'秦皇岛·解译完成',type:'done',popup:'本季遥感解译完成<br>图斑数: 962个<br>精度: 93.8%',color:'#00e676'}
+],
+planning:[
+{lat:38.080,lng:114.300,name:'鹿泉区·规划审查',type:'review',popup:'控规调整审查<br>申请: 工业用地→商住混合<br>AI审查: 基本合规<br>状态: 待补充文物评估',color:'#b060ff'},
+{lat:37.470,lng:115.040,name:'宁晋县·规划冲突',type:'conflict',popup:'规划冲突预警<br>问题: 与生态红线重叠0.3公顷<br>状态: 已自动退回',color:'#ff3d3d'},
+{lat:39.270,lng:118.450,name:'曹妃甸·用地矛盾',type:'conflict',popup:'用地性质矛盾<br>问题: 工业与商业用地重叠<br>状态: 待协调',color:'#ff8800'},
+{lat:39.440,lng:116.690,name:'固安县·时限提醒',type:'warning',popup:'规划审查时限提醒<br>待办: 2件即将超期<br>剩余: 3个工作日',color:'#ffcc00'}
+],
+farmland:[
+{lat:38.200,lng:116.100,name:'献县·违法建房',type:'violation',popup:'永久基本农田违法建房<br>面积: 3.6亩(2处)<br>状态: 执法工单已下发',color:'#ff3d3d'},
+{lat:41.600,lng:117.500,name:'围场县·非粮化',type:'warning',popup:'基本农田非粮化<br>改种苗木: 12亩<br>状态: 整改通知待发送',color:'#ff8800'},
+{lat:39.300,lng:118.000,name:'丰南区·占补平衡',type:'review',popup:'占补平衡不达标<br>问题: 有机质1.2%(标准≥1.5%)<br>状态: 退回重新补充',color:'#ffcc00'},
+{lat:37.070,lng:114.500,name:'邢台·巡查完成',type:'done',popup:'基本农田专项巡查<br>覆盖: 11县184村<br>结果: 无新增违法',color:'#00e676'}
+],
+ecology:[
+{lat:40.970,lng:115.300,name:'崇礼矿区·修复验收',type:'progress',popup:'生态修复验收评估<br>修复面积: 156公顷<br>植被覆盖度: 32%→78%<br>评分: 87/100<br>状态: 边坡异常待复检',color:'#8bc34a'},
+{lat:36.580,lng:113.690,name:'涉县·太行山修复',type:'done',popup:'太行山生态修复<br>季度检查: 植被恢复率81%<br>状态: 达标',color:'#00e676'},
+{lat:39.350,lng:114.690,name:'涞源·红线违规',type:'alert',popup:'生态红线人类活动<br>问题: 红线内新建道路<br>状态: 待核查',color:'#ff3d3d'},
+{lat:38.900,lng:115.600,name:'白洋淀·湿地修复',type:'progress',popup:'湿地生态修复<br>修复面积: 420公顷<br>水质: Ⅳ类→Ⅲ类<br>状态: 持续监测中',color:'#8bc34a'}
+],
+geohazard:[
+{lat:39.350,lng:114.690,name:'涞源县·橙色预警',type:'danger',popup:'滑坡橙色预警<br>降雨量: 82mm/8h<br>隐患点: 3处<br>建议转移: 86户<br>状态: 预警已发布',color:'#ff3d3d'},
+{lat:41.200,lng:116.600,name:'丰宁县·黄色预警',type:'warning',popup:'泥石流黄色预警<br>隐患点: 5处<br>降雨持续中<br>状态: 监测值守',color:'#ff8800'},
+{lat:38.100,lng:114.100,name:'井陉矿区·塌陷提醒',type:'watch',popup:'地面塌陷提醒<br>采空区形变轻微异常<br>状态: 加强巡查',color:'#ffcc00'},
+{lat:40.960,lng:117.940,name:'承德·监测站',type:'station',popup:'地质灾害监测站<br>InSAR覆盖: 72%<br>传感器: 47个<br>状态: 正常运行',color:'#00d4ff'},
+{lat:36.500,lng:113.800,name:'邯郸西部·监测站',type:'station',popup:'地质灾害监测站<br>InSAR覆盖: 65%<br>传感器: 38个<br>状态: 正常运行',color:'#00d4ff'}
+]
+};
+
+// ========== Rendering ==========
+var currentAgent='overview';
+
+function render(){
+var d=agents[currentAgent];
+var theme=d.theme;
+document.getElementById('app').className='theme-'+currentAgent;
+
+// Left panel
+var html='<div class="agent-header" style="border-left:4px solid '+theme+'">';
+html+='<div class="agent-name">'+d.name+'</div>';
+html+='<div class="agent-desc">'+d.desc+'</div>';
+html+='<div class="agent-status"><span class="badge badge-online">● '+d.status+'</span><span class="badge badge-running">AI推理中</span></div>';
+html+='</div>';
+
+html+='<div class="thinking-chain">';
+html+='<div class="chain-title">智能体思考链</div>';
+d.chain.forEach(function(s){
+html+='<div class="chain-step" data-type="'+s.type+'">';
+html+='<div class="step-label">'+s.label+'</div>';
+html+='<div class="step-content">'+s.content;
+if(s.auth){
+var authText=s.auth==='auto'?'自动执行':(s.auth==='manual'?'人工确认':'待审核');
+html+=' <span class="auth-tag auth-'+s.auth+'">'+authText+'</span>';
+}
+html+='</div></div>';
+});
+html+='</div>';
+
+// Layer toggles
+html+='<div class="thinking-chain">';
+html+='<div class="chain-title">图层管理</div>';
+var layers=getLayers(currentAgent);
+layers.forEach(function(l){
+html+='<div style="margin-bottom:6px"><label style="cursor:pointer;font-size:12px;color:var(--t2);display:flex;align-items:center;gap:6px">';
+html+='<input type="checkbox" checked onchange="toggleLayer(\''+l.id+'\')" style="accent-color:'+theme+'">';
+html+='<span style="width:12px;height:12px;border-radius:2px;background:'+l.color+';display:inline-block"></span>';
+html+=l.name+'</label></div>';
+});
+html+='</div>';
+
+document.getElementById('left-panel').innerHTML=html;
+
+// Right panel
+html='<div class="right-section">';
+html+='<h3 style="color:'+theme+'">核心指标</h3>';
+html+='<div class="metric-grid">';
+d.metrics.forEach(function(m){
+html+='<div class="metric-card">';
+html+='<div class="label">'+m.label+'</div>';
+html+='<div class="value" style="color:'+theme+'">'+m.value+'<span class="unit">'+m.unit+'</span></div>';
+html+='<div class="trend trend-'+m.trend+'">'+m.trendText+'</div>';
+html+='</div>';
+});
+html+='</div></div>';
+
+html+='<div class="right-section">';
+html+='<h3 style="color:'+theme+'">实时预警</h3>';
+d.alerts.forEach(function(a){
+html+='<div class="alert-item '+a.level+'">';
+html+='<div class="alert-time">'+a.time+'</div>';
+html+='<div class="alert-title">'+a.title+'</div>';
+html+='<div class="alert-desc">'+a.desc+'</div>';
+html+='</div>';
+});
+html+='</div>';
+
+html+='<div class="right-section">';
+html+='<h3 style="color:'+theme+'">任务清单</h3>';
+html+='<div class="task-list">';
+d.tasks.forEach(function(t){
+var icon=t.status==='done'?'✓':(t.status==='progress'?'◐':'○');
+html+='<div class="task-item">';
+html+='<div class="task-icon '+t.status+'">'+icon+'</div>';
+html+='<div class="task-text">'+t.text+'</div>';
+html+='<div class="task-tag">'+t.tag+'</div>';
+html+='</div>';
+});
+html+='</div></div>';
+
+// Scenario-specific content
+if(currentAgent==='survey'){
+html+='<div class="right-section">';
+html+='<h3 style="color:'+theme+'">影像解译对比</h3>';
+html+='<div class="img-compare">';
+html+='<div class="img-box"><div class="img-label">2026-04 (T1)</div><div class="img-placeholder" style="background:linear-gradient(135deg,#1a3a1a,#0a2a0a)">🛰️</div></div>';
+html+='<div class="img-box"><div class="img-label">2026-07 (T2)</div><div class="img-placeholder" style="background:linear-gradient(135deg,#3a1a1a,#2a0a0a)">🛰️</div></div>';
+html+='</div>';
+html+='<div style="font-size:11px;color:var(--t2);margin-top:6px">AI检测到正定新区新增建设图斑23处，红色区域为变化区域</div>';
+html+='</div>';
+}
+
+if(currentAgent==='planning'){
+html+='<div class="right-section">';
+html+='<h3 style="color:'+theme+'">三区三线合规检查</h3>';
+html+='<table class="data-table"><thead><tr><th>管控线</th><th>合规率</th><th>状态</th></tr></thead><tbody>';
+html+='<tr><td>生态保护红线</td><td>99.2%</td><td style="color:var(--green)">达标</td></tr>';
+html+='<tr><td>永久基本农田</td><td>98.5%</td><td style="color:var(--green)">达标</td></tr>';
+html+='<tr><td>城镇开发边界</td><td>97.8%</td><td style="color:var(--green)">达标</td></tr>';
+html+='<tr><td>冲突检测项</td><td>3处</td><td style="color:var(--orange)">待处理</td></tr>';
+html+='</tbody></table></div>';
+}
+
+if(currentAgent==='farmland'){
+html+='<div class="right-section">';
+html+='<h3 style="color:'+theme+'">耕地"两非"监测统计</h3>';
+html+='<table class="data-table"><thead><tr><th>类型</th><th>本月</th><th>累计</th></tr></thead><tbody>';
+html+='<tr><td>非农化(违法占用)</td><td>5处</td><td>32处</td></tr>';
+html+='<tr><td>非粮化(改种苗木)</td><td>9处</td><td>67处</td></tr>';
+html+='<tr><td>已整改</td><td>8处</td><td>71处</td></tr>';
+html+='<tr><td>待整改</td><td>6处</td><td>28处</td></tr>';
+html+='</tbody></table></div>';
+}
+
+if(currentAgent==='ecology'){
+html+='<div class="right-section">';
+html+='<h3 style="color:'+theme+'">修复效果评估</h3>';
+html+='<div style="font-size:12px;color:var(--t2);margin-bottom:6px">崇礼矿区修复项目</div>';
+html+='<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2)"><span>植被覆盖度</span><span>32% → 78%</span></div><div class="progress-bar"><div class="fill" style="width:78%;background:var(--green)"></div></div></div>';
+html+='<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2)"><span>土壤重金属</span><span>达标</span></div><div class="progress-bar"><div class="fill" style="width:90%;background:var(--green)"></div></div></div>';
+html+='<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2)"><span>边坡稳定性</span><span>2处异常</span></div><div class="progress-bar"><div class="fill" style="width:65%;background:var(--orange)"></div></div></div>';
+html+='<div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2)"><span>综合评分</span><span>87/100</span></div><div class="progress-bar"><div class="fill" style="width:87%;background:var(--cyan)"></div></div></div>';
+html+='</div>';
+}
+
+if(currentAgent==='geohazard'){
+html+='<div class="right-section">';
+html+='<h3 style="color:'+theme+'">降雨量监测</h3>';
+html+='<table class="data-table"><thead><tr><th>区域</th><th>8h降雨</th><th>预警</th></tr></thead><tbody>';
+html+='<tr><td>保定涞源</td><td>82mm</td><td style="color:var(--red)">橙色</td></tr>';
+html+='<tr><td>承德丰宁</td><td>56mm</td><td style="color:var(--orange)">黄色</td></tr>';
+html+='<tr><td>石家庄井陉</td><td>28mm</td><td style="color:var(--yellow)">蓝色</td></tr>';
+html+='<tr><td>邢台临城</td><td>15mm</td><td style="color:var(--t2)">无</td></tr>';
+html+='</tbody></table>';
+html+='<div style="margin-top:10px;font-size:12px;color:var(--t2)">InSAR形变监测：涞源-易县段3处隐患点形变速率>15mm/yr，需重点关注</div>';
+html+='</div>';
+}
+
+document.getElementById('right-panel').innerHTML=html;
+
+// Legend
+html='<div class="legend-title">图例</div>';
+d.legend.forEach(function(l){
+html+='<div class="legend-item"><div class="legend-color" style="background:'+l.c+'"></div>'+l.t+'</div>';
+});
+document.getElementById('mapLegend').innerHTML=html;
+
+// Map markers
+renderMarkers();
+
+// Dialog
+renderDialog();
+}
+
+function getLayers(agent){
+var layers={
+overview:[
+{id:'cities',name:'地市中心城市',color:'#00d4ff'},
+{id:'farmland',name:'耕地保护区',color:'#00e676'},
+{id:'geohazard',name:'地灾隐患点',color:'#ff3d3d'},
+{id:'mining',name:'矿区监测',color:'#ff8800'},
+{id:'ecology',name:'生态修复区',color:'#8bc34a'}
+],
+survey:[
+{id:'changes',name:'变化图斑',color:'#00d4ff'},
+{id:'illegal',name:'疑似违法',color:'#ff8800'},
+{id:'verified',name:'已确认',color:'#00e676'}
+],
+planning:[
+{id:'review',name:'审查项目',color:'#b060ff'},
+{id:'conflict',name:'冲突区域',color:'#ff3d3d'},
+{id:'boundary',name:'三区三线',color:'#00d4ff'}
+],
+farmland:[
+{id:'basic',name:'永久基本农田',color:'#00e676'},
+{id:'violation',name:'违法占用',color:'#ff3d3d'},
+{id:'non Grain',name:'非粮化',color:'#ff8800'}
+],
+ecology:[
+{id:'repair',name:'生态修复区',color:'#8bc34a'},
+{id:'restored',name:'已恢复',color:'#00e676'},
+{id:'redline',name:'生态红线',color:'#ff3d3d'}
+],
+geohazard:[
+{id:'orange',name:'橙色预警',color:'#ff3d3d'},
+{id:'yellow',name:'黄色预警',color:'#ff8800'},
+{id:'station',name:'监测站',color:'#00d4ff'}
+]
+};
+return layers[agent]||[];
+}
+
+function renderMarkers(){
+markerLayer.clearLayers();
+overlayLayer.clearLayers();
+var markers=scenarioMarkers[currentAgent]||[];
+var themeColor=agents[currentAgent].theme;
+
+markers.forEach(function(m){
+var color=m.color||themeColor;
+var icon=L.divIcon({
+className:'custom-marker',
+html:'<div class="marker-pulse" style="border-color:'+color+';background:'+color+'33"></div>',
+iconSize:[12,12]
+});
+var marker=L.marker([m.lat,m.lng],{icon:icon}).addTo(markerLayer);
+var popupContent='<div class="popup-title">'+m.name+'</div>'+m.popup.replace(/\n/g,'<br>');
+marker.bindPopup(popupContent);
+});
+
+// Draw Hebei province boundary (simplified)
+if(currentAgent==='overview'||currentAgent==='planning'){
+var hebeiBoundary=[
+[40.6,113.5],[41.0,114.0],[41.5,114.5],[41.8,115.5],[41.8,116.5],[41.5,117.5],[41.5,118.5],[41.0,119.0],[40.5,119.5],[39.8,119.8],[39.5,119.5],[39.0,118.5],[38.5,118.0],[38.0,117.5],[37.5,117.0],[37.0,116.0],[36.5,114.8],[36.3,113.7],[36.8,113.4],[37.5,113.5],[38.0,113.8],[38.5,114.0],[39.0,113.5],[39.5,113.5],[40.0,113.8],[40.3,114.0],[40.6,113.5]
+];
+L.polygon(hebeiBoundary,{color:themeColor,weight:2,opacity:0.6,fillOpacity:0.05,dashArray:'5,5'}).addTo(overlayLayer);
+}
+
+// Farmland protection zones (simplified green areas)
+if(currentAgent==='farmland'){
+var farmZones=[
+[[39.0,115.5],[39.3,115.8],[39.5,116.0],[39.3,116.3],[39.0,116.0]],
+[[37.5,114.8],[37.8,115.0],[38.0,115.2],[37.8,115.5],[37.5,115.3]],
+[[38.5,116.5],[38.8,116.8],[39.0,117.0],[38.8,117.2],[38.5,117.0]]
+];
+farmZones.forEach(function(z){
+L.polygon(z,{color:'#00e676',weight:1,opacity:0.5,fillOpacity:0.15}).addTo(overlayLayer);
+});
+}
+
+// Ecology repair zones
+if(currentAgent==='ecology'){
+var ecoZones=[
+[[40.8,115.0],[41.0,115.3],[41.2,115.5],[41.0,115.8],[40.8,115.5]],
+[[36.4,113.5],[36.6,113.8],[36.8,114.0],[36.6,114.2],[36.4,114.0]]
+];
+ecoZones.forEach(function(z){
+L.polygon(z,{color:'#8bc34a',weight:1,opacity:0.5,fillOpacity:0.15}).addTo(overlayLayer);
+});
+}
+
+// Geohazard risk zones
+if(currentAgent==='geohazard'){
+var riskZones=[
+[[39.0,114.3],[39.3,114.6],[39.5,114.9],[39.3,115.2],[39.0,114.9]], // 涞源-易县
+[[41.0,116.3],[41.2,116.6],[41.4,116.9],[41.2,117.2],[41.0,116.9]]  // 丰宁
+];
+riskZones.forEach(function(z,idx){
+var c=idx===0?'#ff3d3d':'#ff8800';
+L.polygon(z,{color:c,weight:2,opacity:0.7,fillOpacity:0.12}).addTo(overlayLayer);
+});
+}
+
+// Planning three-lines
+if(currentAgent==='planning'){
+// 生态保护红线 (西部长城沿线)
+L.polyline([[40.5,113.8],[40.0,114.0],[39.5,113.8],[39.0,113.6],[38.5,113.8],[38.0,114.0],[37.5,113.6]],{color:'#00e676',weight:2,opacity:0.6,dashArray:'8,4'}).addTo(overlayLayer);
+// 城镇开发边界 (各市中心)
+L.polyline([[38.2,114.3],[38.2,114.7],[38.0,114.7],[38.0,114.3]],{color:'#b060ff',weight:2,opacity:0.6,dashArray:'8,4'}).addTo(overlayLayer);
+L.polyline([[39.8,118.0],[39.8,118.4],[39.5,118.4],[39.5,118.0]],{color:'#b060ff',weight:2,opacity:0.6,dashArray:'8,4'}).addTo(overlayLayer);
+}
+}
+
+function renderDialog(){
+var d=agents[currentAgent];
+var html='';
+if(currentAgent==='overview'){
+html+='<div class="ai-msg ai"><span class="role">时空智能助手:</span>';
+html+='已为您汇总全省自然资源态势。当前耕地保有量6.30万km²，较上月微降0.03%；3处生态红线内人类活动需核查；保定涞源地灾橙色预警已发布。';
+html+='</div>';
+html+='<div class="ai-msg ai"><span class="role">时空智能助手:</span>';
+html+='<div class="msg-block block-source">[数据来源] 高分六号卫星过境影像(07-05) + 11市自然资源一张图 + 气象局实时降雨</div>';
+html+='<div class="msg-block block-reason">[思考过程] 大模型融合多源数据，时空对比分析发现3类异常：耕地变化、红线活动、地灾风险</div>';
+html+='<div class="msg-block block-action">[执行建议] 生成月度态势报告，3条预警已推送至相关市县 <span class="auth-tag auth-auto">自动执行</span></div>';
+html+='</div>';
+}else if(currentAgent==='survey'){
+html+='<div class="ai-msg ai"><span class="role">调查监测智能体:</span>';
+html+='本季度遥感解译完成，发现变化图斑12,847个。石家庄正定新区检出5处疑似违法建设图斑(未批先建)，已推送至执法督察系统。';
+html+='</div>';
+html+='<div class="ai-msg ai"><span class="role">调查监测智能体:</span>';
+html+='<div class="msg-block block-source">[数据来源] 高分六号(07-05) + 吉林一号(07-03) + Sentinel-2(07-01) 三源影像融合比对</div>';
+html+='<div class="msg-block block-reason">[思考过程] AI解译模型识别地物类型变化，与规划许可库交叉比对，23处新增建设中5处无审批记录</div>';
+html+='<div class="msg-block block-action">[执行建议] 5处疑似违法图斑标记为"高优先级"，生成核查工单推送至石家庄市执法支队 <span class="auth-tag auth-manual">人工确认</span></div>';
+html+='</div>';
+}else if(currentAgent==='planning'){
+html+='<div class="ai-msg ai"><span class="role">规划智能体:</span>';
+html+='鹿泉区控规调整申请已完成AI空间分析。基本合规，但需补充文物保护影响评估。同时检测到宁晋县1处规划与生态红线冲突，已自动拦截。';
+html+='</div>';
+html+='<div class="ai-msg ai"><span class="role">规划智能体:</span>';
+html+='<div class="msg-block block-source">[数据来源] 河北省国土空间规划三区三线成果 + 鹿泉区控规调整申请 + 一张图规划审查历史数据</div>';
+html+='<div class="msg-block block-reason">[思考过程] 空间叠加分析：与基本农田距离>500m(合规)、在城镇开发边界内(合规)、周边500m有文保单位(需评估)、交通承载力通过</div>';
+html+='<div class="msg-block block-action">[执行建议] 出具智能审查意见"基本合规"，建议补充文物评估后进入专家评审 <span class="auth-tag auth-manual">人工确认</span></div>';
+html+='</div>';
+}else if(currentAgent==='farmland'){
+html+='<div class="ai-msg ai"><span class="role">耕地保护智能体:</span>';
+html+='检测到沧州献县2处永久基本农田违法建房(3.6亩)，已生成执法工单。承德围场1处基本农田改种苗木(12亩)，发出"非粮化"预警。占补平衡总体平衡，丰南区1处补充耕地质量不达标已退回。';
+html+='</div>';
+html+='<div class="ai-msg ai"><span class="role">耕地保护智能体:</span>';
+html+='<div class="msg-block block-source">[数据来源] 高分二号(07-06)影像 + 永久基本农田数据库 + 田长制巡查上报 + 土壤检测报告</div>';
+html+='<div class="msg-block block-reason">[思考过程] 遥感AI识别耕地地物变化，与基本农田图层交叉比对，分类判定"非农化"或"非粮化"；占补平衡项目核查土壤质量指标</div>';
+html+='<div class="msg-block block-action">[执行建议] ①违法占用→执法工单 ②非粮化→整改通知 ③占补不达标→退回重补 <span class="auth-tag auth-manual">人工确认</span></div>';
+html+='</div>';
+}else if(currentAgent==='ecology'){
+html+='<div class="ai-msg ai"><span class="role">生态修复智能体:</span>';
+html+='崇礼矿区修复项目评估完成。植被覆盖度从32%提升至78%，土壤重金属达标，综合评分87分。但2处边坡微位移传感器数据异常，建议补充地质安全评估后通过验收。';
+html+='</div>';
+html+='<div class="ai-msg ai"><span class="role">生态修复智能体:</span>';
+html+='<div class="msg-block block-source">[数据来源] 崇礼矿区修复前(2023-06)后(2026-07)多时相遥感影像 + 生态修复验收指标库 + 边坡监测传感器实时数据</div>';
+html+='<div class="msg-block block-reason">[思考过程] 多时相遥感对比分析植被恢复趋势，土壤采样数据比对标准值，IoT传感器数据异常检测发现2处边坡位移超标</div>';
+html+='<div class="msg-block block-action">[执行建议] 总体达标(87分)，边坡异常区域暂缓验收，补充地质评估后通过 <span class="auth-tag auth-manual">人工确认</span></div>';
+html+='</div>';
+}else if(currentAgent==='geohazard'){
+html+='<div class="ai-msg ai"><span class="role">地灾防治智能体:</span>';
+html+='保定涞源县近8小时降雨82mm，超橙色预警阈值。综合InSAR形变数据，涞源-易县段3处滑坡隐患风险升至橙色。建议立即转移周边86户群众，已调度2支技术队伍赴现场。';
+html+='</div>';
+html+='<div class="ai-msg ai"><span class="role">地灾防治智能体:</span>';
+html+='<div class="msg-block block-source">[数据来源] 气象局实时降雨(08:00-16:00) + 3,856处隐患点台账 + InSAR形变监测 + 地质构造数据</div>';
+html+='<div class="msg-block block-reason">[思考过程] 降雨量超阈值→触发风险模型→InSAR形变速率>15mm/yr验证→综合研判风险等级橙色(高)</div>';
+html+='<div class="msg-block block-action">[执行建议] ①发布橙色预警 ②建议转移86户 ③调度2支技术队 <span class="auth-tag auth-manual">人工确认</span></div>';
+html+='</div>';
+}
+document.getElementById('dialogBody').innerHTML=html;
+}
+
+function toggleLayer(id){
+showToast('图层切换: '+id);
+}
+
+function toggleDialog(){
+var dlg=document.getElementById('ai-dialog');
+var toggle=document.getElementById('dialogToggle');
+if(dlg.classList.contains('collapsed')){
+dlg.classList.remove('collapsed');
+toggle.textContent='收起 ▾';
+}else{
+dlg.classList.add('collapsed');
+toggle.textContent='展开 ▴';
+}
+}
+
+function showToast(msg){
+var t=document.getElementById('toast');
+t.textContent=msg;
+t.classList.add('show');
+setTimeout(function(){t.classList.remove('show')},2000);
+}
+
+// Tab switching
+document.getElementById('tabs').addEventListener('click',function(e){
+var btn=e.target.closest('.tab');
+if(!btn)return;
+document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+btn.classList.add('active');
+currentAgent=btn.dataset.agent;
+
+// Map focus adjustments
+var centers={
+overview:[38.8,115.3],
+survey:[38.3,115.0],
+planning:[38.0,115.2],
+farmland:[38.8,116.5],
+ecology:[40.0,114.8],
+geohazard:[39.5,115.0]
+};
+var zooms={
+overview:7,
+survey:8,
+planning:8,
+farmland:8,
+ecology:8,
+geohazard:8
+};
+map.flyTo(centers[currentAgent],zooms[currentAgent],{duration:0.8});
+
+render();
+showToast('切换至: '+agents[currentAgent].name);
+});
+
+// Clock
+function updateClock(){
+var d=new Date();
+var h=String(d.getHours()).padStart(2,'0');
+var m=String(d.getMinutes()).padStart(2,'0');
+var s=String(d.getSeconds()).padStart(2,'0');
+document.getElementById('clock').textContent=h+':'+m+':'+s;
+}
+setInterval(updateClock,1000);
+updateClock();
+
+// Initial render
+render();
+
+// Simulate real-time alert
+setTimeout(function(){
+showToast('新预警: 保定涞源县滑坡风险升至橙色');
+},5000);
+</script>
+</body>
+</html>
