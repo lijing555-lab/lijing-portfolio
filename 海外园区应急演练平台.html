@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>海外园区应急演练智能体平台</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root{--bg:#0a0e14;--card:#131820;--card2:#1a2030;--border:#2a3548;--t1:#e0e8f0;--t2:#8899b0;--t3:#6a7a90;--blue:#0099ff;--cyan:#00d4ff;--green:#00e676;--purple:#b060ff;--orange:#ff8800;--red:#ff3d3d;--yellow:#ffc800;--teal:#00bfa5}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;font-size:14px}
+.header{position:fixed;top:0;left:0;right:0;height:56px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;z-index:1000}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--cyan),var(--blue));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-text{font-size:15px;font-weight:600}.logo-text .sub{font-size:10px;color:var(--t2);font-weight:400;display:block;line-height:1.2}
+.nav-bar{display:flex;gap:2px;margin-left:32px;height:100%;align-items:flex-end}
+.nav-item{padding:8px 20px;font-size:14px;color:var(--t2);cursor:pointer;position:relative;transition:color .2s;border-radius:6px 6px 0 0}
+.nav-item:hover{color:var(--t1)}
+.nav-item.active{color:var(--cyan)}
+.nav-item.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--cyan)}
+.nav-idx{font-size:10px;color:var(--t3);margin-right:4px}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:18px;font-size:12px;color:var(--t2)}
+.stat-item{display:flex;align-items:center;gap:4px}
+.dot-on{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pd 2s infinite}
+@keyframes pd{50%{opacity:.4}}
+@keyframes pm{0%{box-shadow:0 0 0 0 rgba(255,61,61,.6)}70%{box-shadow:0 0 0 12px rgba(255,61,61,0)}100%{box-shadow:0 0 0 0 rgba(255,61,61,0)}}
+.stat-val{color:var(--t1);font-weight:600;font-size:14px}
+#clock{font-family:'Cascadia Code',monospace;color:var(--cyan)}
+.main{position:fixed;top:56px;left:0;right:0;bottom:0;display:flex}
+.map-area{flex:1;position:relative;overflow:hidden}
+#map{width:100%;height:100%;background:#0a0e14;z-index:1}
+#three-container{position:absolute;inset:0;z-index:2;display:none}
+#three-container.show{display:block}
+.leaflet-tile-pane{filter:brightness(.85) contrast(1.15)}
+.leaflet-container{background:#0a0e14}
+.leaflet-control-attribution{display:none}
+.map-tools{position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:6px;z-index:500}
+.map-btn{background:var(--card);border:1px solid var(--border);color:var(--t2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;backdrop-filter:blur(8px);transition:all .2s}
+.map-btn:hover{color:var(--t1);border-color:var(--blue)}
+.map-btn.active{background:rgba(0,153,255,.15);color:var(--cyan);border-color:var(--blue)}
+.map-legend{position:absolute;bottom:12px;right:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;z-index:500;backdrop-filter:blur(8px)}
+.legend-title{color:var(--t2);margin-bottom:6px;font-weight:600}
+.legend-row{display:flex;align-items:center;gap:8px;margin:3px 0}
+.legend-color{width:12px;height:12px;border-radius:50%}
+.side-panel{width:420px;background:var(--card);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.panel-body{flex:1;overflow-y:auto;padding:12px}
+.panel-body::-webkit-scrollbar{width:6px}
+.panel-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.panel-body::-webkit-scrollbar-track{background:transparent}
+.fp-section{margin-bottom:14px}
+.fp-title{font-size:12px;color:var(--t2);font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.5px}
+.fp-card{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px}
+.fp-card.accent-cyan{border-left:3px solid var(--cyan)}
+.fp-card.accent-purple{border-left:3px solid var(--purple)}
+.fp-card.accent-orange{border-left:3px solid var(--orange)}
+.fp-card.accent-green{border-left:3px solid var(--green)}
+.fp-card.accent-blue{border-left:3px solid var(--blue)}
+.fp-card.accent-yellow{border-left:3px solid var(--yellow)}
+.fp-card.accent-red{border-left:3px solid var(--red)}
+.fp-card.accent-teal{border-left:3px solid var(--teal)}
+.fp-card-header{display:flex;align-items:center;margin-bottom:8px}
+.fp-card-title{font-size:13px;font-weight:600;flex:1}
+.fp-row{display:flex;align-items:center;padding:6px 0;border-bottom:1px solid rgba(42,53,72,.5)}
+.fp-row:last-child{border-bottom:none}
+.fp-row .label{color:var(--t2);font-size:12px;min-width:80px}
+.fp-row .val{color:var(--t1);font-size:12px;font-weight:500;margin-left:auto;text-align:right}
+.fp-btn{padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:var(--card2);color:var(--t1);font-size:13px;cursor:pointer;transition:all .2s;font-family:inherit}
+.fp-btn:hover{border-color:var(--blue);background:rgba(0,153,255,.1)}
+.fp-btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.fp-btn.primary:hover{background:#0080e0}
+.fp-btn.full{width:100%}
+.fp-select{padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--t1);font-size:12px;font-family:inherit;cursor:pointer}
+.fp-input{padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--t1);font-size:12px;font-family:inherit}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500}
+.tag.cyan{background:rgba(0,212,255,.15);color:var(--cyan)}
+.tag.purple{background:rgba(176,96,255,.15);color:var(--purple)}
+.tag.orange{background:rgba(255,136,0,.15);color:var(--orange)}
+.tag.green{background:rgba(0,230,118,.15);color:var(--green)}
+.tag.blue{background:rgba(0,153,255,.15);color:var(--blue)}
+.tag.yellow{background:rgba(255,200,0,.15);color:var(--yellow)}
+.tag.red{background:rgba(255,61,61,.15);color:var(--red)}
+.tag.teal{background:rgba(0,191,165,.15);color:var(--teal)}
+.tag.gray{background:rgba(136,153,176,.15);color:var(--t2)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.stat{background:var(--bg);border-radius:6px;padding:8px;text-align:center}
+.stat-val{font-size:18px;font-weight:700}.stat-label{font-size:10px;color:var(--t2);margin-top:2px}
+.scenario-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+.scenario-card{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;transition:all .2s;text-align:center}
+.scenario-card:hover{border-color:var(--blue);background:rgba(0,153,255,.05)}
+.scenario-card.active{border-color:var(--cyan);background:rgba(0,212,255,.08)}
+.sc-icon{font-size:22px;margin-bottom:4px}.sc-name{font-size:11px;font-weight:600}.sc-sev{font-size:10px;color:var(--t3);margin-top:2px}
+.agent-row{display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer;transition:all .2s}
+.agent-row:hover{background:rgba(0,153,255,.05)}
+.agent-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.agent-info{flex:1;min-width:0}.agent-name{font-size:12px;font-weight:600}.agent-meta{font-size:10px;color:var(--t3)}
+.agent-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.tl-container{position:relative;padding-left:20px}
+.tl-node{position:relative;padding:0 0 16px 16px;border-left:2px solid var(--border)}
+.tl-node:last-child{border-left-color:transparent}
+.tl-node::before{content:'';position:absolute;left:-7px;top:2px;width:12px;height:12px;border-radius:50%;background:var(--card);border:2px solid var(--cyan)}
+.tl-node.done::before{background:var(--cyan)}
+.tl-node.active::before{background:var(--orange);box-shadow:0 0 8px var(--orange)}
+.tl-time{font-size:11px;color:var(--t3);font-family:'Cascadia Code',monospace}
+.tl-title{font-size:13px;font-weight:600;margin:2px 0}.tl-desc{font-size:12px;color:var(--t2);line-height:1.4}
+.replay-timeline{position:relative;height:60px;background:var(--bg);border-radius:8px;border:1px solid var(--border);margin:12px 0;cursor:pointer}
+.replay-track{position:absolute;top:50%;left:0;right:0;height:2px;background:var(--border);transform:translateY(-50%)}
+.replay-progress{position:absolute;top:0;left:0;height:100%;background:var(--purple);border-radius:1px;transition:width .3s}
+.replay-handle{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:var(--purple);transform:translate(-50%,-50%);box-shadow:0 0 8px var(--purple);transition:left .3s}
+.replay-marker{position:absolute;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;cursor:pointer;z-index:2}
+.replay-marker:hover{transform:translate(-50%,-50%) scale(1.4)}
+.replay-marker-label{position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--t3);white-space:nowrap;pointer-events:none}
+.replay-time-display{position:absolute;bottom:4px;left:12px;font-size:11px;color:var(--t2);font-family:'Cascadia Code',monospace}
+.builder-palette{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.palette-item{background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;cursor:grab;font-size:12px;display:flex;align-items:center;gap:6px;transition:all .2s;user-select:none}
+.palette-item:hover{border-color:var(--cyan);background:rgba(0,212,255,.05)}
+.palette-item.dragging{opacity:.4;cursor:grabbing}
+.palette-icon{font-size:16px}
+.builder-canvas{background:var(--bg);border:2px dashed var(--border);border-radius:8px;min-height:200px;position:relative;overflow:hidden}
+.builder-canvas.drag-over{border-color:var(--cyan);background:rgba(0,212,255,.03)}
+.placed-item{position:absolute;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;cursor:move;display:flex;align-items:center;gap:6px;z-index:10}
+.placed-item.selected{border-color:var(--cyan);box-shadow:0 0 8px rgba(0,212,255,.3)}
+.placed-item .pi-del{cursor:pointer;color:var(--red);font-size:14px;margin-left:4px}
+.builder-info{font-size:11px;color:var(--t3);margin-top:8px;text-align:center}
+.chat-toggle{position:absolute;bottom:16px;right:16px;width:48px;height:48px;border-radius:50%;background:var(--blue);border:none;color:#fff;font-size:20px;cursor:pointer;box-shadow:0 4px 16px rgba(0,153,255,.4);z-index:600;transition:transform .2s}
+.chat-toggle:hover{transform:scale(1.1)}
+.chat-panel{position:absolute;bottom:72px;right:16px;width:360px;height:420px;background:var(--card);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;z-index:600;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.chat-panel.hidden{display:none}
+.chat-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.chat-body{flex:1;overflow-y:auto;padding:10px}
+.chat-body::-webkit-scrollbar{width:4px}.chat-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.chat-msg{margin-bottom:10px;max-width:85%}
+.chat-msg.agent{margin-right:auto}.chat-msg.user{margin-left:auto;text-align:right}
+.chat-bubble{display:inline-block;padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.5}
+.chat-msg.agent .chat-bubble{background:var(--card2);border:1px solid var(--border)}
+.chat-msg.user .chat-bubble{background:var(--blue);color:#fff}
+.chat-suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:8px;border-top:1px solid var(--border)}
+.chat-suggestion{padding:4px 10px;background:var(--card2);border:1px solid var(--border);border-radius:12px;font-size:11px;cursor:pointer;transition:all .2s}
+.chat-suggestion:hover{border-color:var(--blue);color:var(--cyan)}
+.chat-input-row{display:flex;padding:8px;border-top:1px solid var(--border);gap:6px}
+.chat-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--t1);font-size:13px;font-family:inherit}
+.chat-input:focus{outline:none;border-color:var(--blue)}
+.chat-send{padding:6px 12px;background:var(--blue);border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:13px}
+.toast-container{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:13px;display:flex;align-items:center;gap:8px;backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,.4);animation:ti .3s}
+@keyframes ti{from{opacity:0;transform:translateY(-10px)}}
+.toast-icon{font-size:16px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9998;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;width:680px;max-height:80vh;display:flex;flex-direction:column}
+.modal-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center}
+.modal-title{font-size:15px;font-weight:600;flex:1}
+.modal-close{background:none;border:none;color:var(--t2);font-size:20px;cursor:pointer}
+.modal-body{flex:1;overflow-y:auto;padding:18px}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.ad-react-step{display:flex;gap:8px;margin:6px 0;padding:6px;background:var(--bg);border-radius:6px}
+.ad-react-icon{width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+.ad-react-icon.obs{background:rgba(0,212,255,.2);color:var(--cyan)}
+.ad-react-icon.think{background:rgba(176,96,255,.2);color:var(--purple)}
+.ad-react-icon.act{background:rgba(0,230,118,.2);color:var(--green)}
+.wf-step{display:flex;gap:10px;margin:8px 0}
+.wf-dot{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.wf-dot.cyan{background:rgba(0,212,255,.15);color:var(--cyan)}
+.wf-dot.purple{background:rgba(176,96,255,.15);color:var(--purple)}
+.wf-dot.orange{background:rgba(255,136,0,.15);color:var(--orange)}
+.wf-dot.green{background:rgba(0,230,118,.15);color:var(--green)}
+.wf-dot.yellow{background:rgba(255,200,0,.15);color:var(--yellow)}
+.wf-content{flex:1}.wf-title{font-size:13px;font-weight:600}.wf-desc{font-size:12px;color:var(--t2);margin-top:2px}
+.wf-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.wf-meta span{font-size:10px;padding:1px 6px;border-radius:3px;background:var(--bg);color:var(--t3)}
+.rr-section{margin-bottom:18px}
+.rr-section-title{font-size:14px;font-weight:600;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.dim-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.dim-card{background:var(--bg);border-radius:8px;padding:12px;text-align:center}
+.dim-card .dc-title{font-size:11px;color:var(--t2)}
+.dim-card .dc-val{font-size:18px;font-weight:700;margin:4px 0}
+.dim-card .dc-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.dim-card .dc-bar-fill{height:100%;border-radius:2px}
+.rr-metric-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(42,53,72,.5)}
+.rr-metric-label{flex:1;font-size:12px;color:var(--t2)}
+.rr-metric-bar{flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden}
+.rr-metric-fill{height:100%;border-radius:3px}
+.rr-metric-val{font-size:13px;font-weight:600;min-width:60px;text-align:right}
+.rr-timeline-node{display:flex;gap:10px;margin:8px 0}
+.rr-tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.rr-tl-content{flex:1}
+.rr-tl-time{font-size:11px;color:var(--t3);font-family:'Cascadia Code',monospace}
+.rr-tl-title{font-size:13px;font-weight:600}
+.rr-tl-desc{font-size:12px;color:var(--t2)}
+.info-banner{background:rgba(0,153,255,.08);border:1px solid rgba(0,153,255,.2);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--t2);margin-bottom:8px}
+.warn-banner{background:rgba(255,200,0,.08);border:1px solid rgba(255,200,0,.2);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--yellow);margin:8px 0}
+.demo-progress{position:absolute;top:0;left:0;right:0;height:3px;z-index:999;display:none}
+.demo-progress.show{display:block}
+.demo-progress-fill{height:100%;width:0%;transition:width .3s}
+#three-tooltip{position:absolute;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--t1);pointer-events:none;z-index:50;display:none;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo"><div class="logo-icon">🛡️</div><div class="logo-text">海外园区应急演练智能体平台<span class="sub">Overseas Park Emergency Drill Platform</span></div></div>
+  <div class="nav-bar" id="nav-bar">
+    <div class="nav-item active" data-tab="config" onclick="switchTab('config')"><span class="nav-idx">01</span>场景配置</div>
+    <div class="nav-item" data-tab="scene" onclick="switchTab('scene')"><span class="nav-idx">02</span>态势感知</div>
+    <div class="nav-item" data-tab="drill" onclick="switchTab('drill')"><span class="nav-idx">03</span>演练推演</div>
+    <div class="nav-item" data-tab="command" onclick="switchTab('command')"><span class="nav-idx">04</span>演练指挥</div>
+    <div class="nav-item" data-tab="review" onclick="switchTab('review')"><span class="nav-idx">05</span>演练复盘</div>
+  </div>
+  <div class="top-right">
+    <div class="stat-item"><span class="dot-on"></span><span>智能体</span><span class="stat-val">20</span><span>部署</span></div>
+    <div class="stat-item"><span>区域</span><span class="stat-val">5</span></div>
+    <div class="stat-item"><span id="clock">--:--:--</span></div>
+  </div>
+</div>
+<div class="main">
+  <div class="map-area">
+    <div id="map"></div>
+    <div id="three-container"></div>
+    <div id="three-tooltip"></div>
+    <div class="map-tools">
+      <button class="map-btn active" onclick="setMapView('overview',event)">全景</button>
+      <button class="map-btn" onclick="setMapView('risk',event)">风险</button>
+      <button class="map-btn" onclick="setMapView('route',event)">路线</button>
+      <button class="map-btn" onclick="setMapView('zone',event)">分区</button>
+      <button class="map-btn" onclick="toggle3D()">3D场景</button>
+    </div>
+    <div class="map-legend">
+      <div class="legend-title">图例</div>
+      <div class="legend-row"><div class="legend-color" style="background:#ff3d3d"></div><span>紧急事件</span></div>
+      <div class="legend-row"><div class="legend-color" style="background:#ff8800"></div><span>重要告警</span></div>
+      <div class="legend-row"><div class="legend-color" style="background:#00d4ff"></div><span>监控设备</span></div>
+      <div class="legend-row"><div class="legend-color" style="background:#00e676"></div><span>人员/车辆</span></div>
+    </div>
+    <button class="chat-toggle" onclick="toggleChat()">💬</button>
+    <div class="chat-panel hidden" id="chat-panel">
+      <div class="chat-header"><span style="font-size:16px">🤖</span><span style="font-size:13px;font-weight:600">演练智能助手</span><span style="margin-left:auto;cursor:pointer;color:var(--t2)" onclick="toggleChat()">✕</span></div>
+      <div class="chat-body" id="chat-body"></div>
+      <div class="chat-suggestions" id="chat-suggestions"></div>
+      <div class="chat-input-row"><input type="text" class="chat-input" id="chat-input" placeholder="输入问题..." onkeypress="if(event.key==='Enter')sendChat()"><button class="chat-send" onclick="sendChat()">发送</button></div>
+    </div>
+  </div>
+  <div class="side-panel"><div class="panel-body" id="panel-content"></div></div>
+</div>
+<div class="toast-container" id="toast-container"></div>
+<div class="modal-overlay" id="agent-detail-overlay"><div class="modal"><div class="modal-header"><div class="modal-title" id="agent-detail-title"></div><button class="modal-close" onclick="document.getElementById('agent-detail-overlay').classList.remove('show')">✕</button></div><div class="modal-body" id="agent-detail-body"></div></div></div>
+<div class="modal-overlay" id="review-report-overlay"><div class="modal" style="width:760px"><div class="modal-header"><div class="modal-title">演练复盘报告</div><button class="modal-close" onclick="document.getElementById('review-report-overlay').classList.remove('show')">✕</button></div><div class="modal-body" id="review-report-body"></div><div class="modal-footer"><button class="fp-btn" onclick="document.getElementById('review-report-overlay').classList.remove('show')">关闭</button></div></div></div>
+<div class="demo-progress" id="demo-progress"><div class="demo-progress-fill" id="demo-progress-fill" style="background:var(--cyan)"></div></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
+<script>
+// === DATA ===
+const PARK_CENTER=[25.2854,51.5310];
+const scenarios={intrusion:{name:'不明人员侵扰',icon:'🚨',color:'red',severity:'I级',desc:'不明人员从园区东侧围栏入侵',location:[25.2870,51.5360],agents:['周界监控Agent','身份识别Agent','威胁评估Agent','处置调度Agent'],phases:['探测告警','身份研判','威胁评估','拦截处置','记录归档']},medical:{name:'紧急医疗转运',icon:'🚑',color:'green',severity:'III级',desc:'员工突发心脏不适，需紧急医疗转运',location:[25.2840,51.5280],agents:['生命体征Agent','医疗资源Agent','转运调度Agent','联络协调Agent'],phases:['紧急呼叫','病情评估','资源匹配','转运执行','交接记录']},evacuation:{name:'人员撤离行动',icon:'🏃',color:'orange',severity:'I级',desc:'周边安全形势骤变，启动全员撤离',location:[25.2854,51.5310],agents:['撤离指挥Agent','路线规划Agent','人数清点Agent','交通管控Agent'],phases:['撤离指令','路线分配','编队引导','清点确认','安全抵达']},shelter:{name:'营地紧急避险',icon:'🛡️',color:'yellow',severity:'II级',desc:'极端天气预警，就地避险',location:[25.2860,51.5330],agents:['气象监测Agent','设施防护Agent','物资调配Agent','避险管理Agent'],phases:['预警接收','设施检查','物资调配','就地避险','解除预警']},fire:{name:'火灾突发事件',icon:'🔥',color:'red',severity:'I级',desc:'园区生产区发生火灾',location:[25.2850,51.5350],agents:['火情监测Agent','蔓延推演Agent','消防调度Agent','疏散引导Agent'],phases:['火情探测','蔓延分析','消防调度','疏散引导','灭火确认']}};
+
+const agentDetails={
+'周界监控Agent':{icon:'📡',color:'cyan',status:'运行中',uptime:'1h12m',calls:43,errors:0,desc:'实时监控园区周界安防设备',capabilities:['多源感知融合','行为模式识别','告警分级'],react:[{type:'observation',title:'红外触发',text:'东侧E-12区红外告警3.2秒',time:'14:28:33'},{type:'thought',title:'分析',text:'排除动物误报(8%)，判定人为穿越',time:'14:28:35'},{type:'action',title:'告警',text:'入侵II级，联动CAM-E12',time:'14:28:40'}]},
+'身份识别Agent':{icon:'🔍',color:'purple',status:'运行中',uptime:'1h12m',calls:28,errors:0,desc:'人脸和步态特征比对，识别人员身份',capabilities:['人脸检测','1:N比对','风险画像'],react:[{type:'observation',title:'图像采集',text:'CAM-E12提取3帧关键图像',time:'14:28:42'},{type:'thought',title:'比对',text:'员工库186人无匹配，判定外部人员',time:'14:28:48'},{type:'action',title:'结果',text:'2名未知人员，风险中高',time:'14:28:50'}]},
+'威胁评估Agent':{icon:'🛡️',color:'orange',status:'运行中',uptime:'1h12m',calls:19,errors:0,desc:'评估威胁等级并给出处置建议',capabilities:['多因子评估','意图预测'],react:[{type:'observation',title:'汇总',text:'2名未知人员，向北门移动',time:'14:28:55'},{type:'thought',title:'计算',text:'身份未知40%+行为可疑30%=中高',time:'14:28:58'},{type:'action',title:'评估',text:'II级橙色，建议拦截',time:'14:29:02'}]},
+'处置调度Agent':{icon:'🚀',color:'green',status:'运行中',uptime:'1h12m',calls:15,errors:0,desc:'调度安保力量执行拦截',capabilities:['力量分配','路径计算'],react:[{type:'observation',title:'力量',text:'A组4人/北门300m+B组3人/东侧200m',time:'14:29:05'},{type:'thought',title:'方案',text:'B组包抄，A组设卡，3min到位',time:'14:29:08'},{type:'action',title:'指令',text:'B组E-12区，A组北门设卡',time:'14:29:10'}]},
+'生命体征Agent':{icon:'❤️',color:'green',status:'运行中',uptime:'23m',calls:12,errors:0,desc:'监测患者生命体征',capabilities:['心率监测','SpO2监测'],react:[{type:'observation',title:'数据',text:'心率112/血压145/95/血氧93%',time:'14:15:00'},{type:'thought',title:'评估',text:'疑似心血管事件',time:'14:15:05'},{type:'action',title:'建议',text:'启动医疗转运',time:'14:15:10'}]},
+'医疗资源Agent':{icon:'🏥',color:'cyan',status:'运行中',uptime:'23m',calls:8,errors:0,desc:'匹配附近医疗资源',capabilities:['医院检索','急救车调度'],react:[{type:'observation',title:'检索',text:'Hamad(3.2km)/AlAhli(5.1km)',time:'14:15:15'},{type:'thought',title:'匹配',text:'Hamad心血管科最优',time:'14:15:20'},{type:'action',title:'预约',text:'通知Hamad急诊准备',time:'14:15:25'}]},
+'转运调度Agent':{icon:'🚑',color:'orange',status:'运行中',uptime:'23m',calls:6,errors:0,desc:'规划急救转运路线',capabilities:['路线规划','ETA预测'],react:[{type:'observation',title:'路线',text:'A(3.2km/8min) vs B(4.5km/12min)',time:'14:15:30'},{type:'thought',title:'选择',text:'路线A，Salwa Road车少',time:'14:15:35'},{type:'action',title:'出发',text:'急救车出发ETA8min',time:'14:15:40'}]},
+'联络协调Agent':{icon:'📞',color:'blue',status:'运行中',uptime:'23m',calls:10,errors:0,desc:'协调各方联络',capabilities:['多语言','信息同步'],react:[{type:'observation',title:'清单',text:'项目经理/HR/家属/保险',time:'14:15:45'},{type:'thought',title:'同步',text:'中英阿三语事件简报',time:'14:15:50'},{type:'action',title:'确认',text:'各方已通知',time:'14:16:00'}]},
+'撤离指挥Agent':{icon:'📢',color:'orange',status:'待命',uptime:'45m',calls:32,errors:0,desc:'生成分区撤离方案',capabilities:['态势评估','分区撤离'],react:[{type:'observation',title:'分布',text:'A80/B60/C46共186人',time:'14:00:00'},{type:'thought',title:'方案',text:'A→北，B+C→南',time:'14:00:05'},{type:'action',title:'指令',text:'12min内完成撤离',time:'14:00:10'}]},
+'路线规划Agent':{icon:'🛣️',color:'cyan',status:'待命',uptime:'45m',calls:24,errors:0,desc:'规划撤离路线',capabilities:['多路线','容量计算'],react:[{type:'observation',title:'路线',text:'1(A→北800m)/2(B→南600m)/3(C→南450m)',time:'14:00:15'},{type:'thought',title:'容量',text:'路线1容80人/min',time:'14:00:18'},{type:'action',title:'下发',text:'A走1/B走2/C走3',time:'14:00:20'}]},
+'人数清点Agent':{icon:'🔢',color:'purple',status:'待命',uptime:'45m',calls:18,errors:0,desc:'清点撤离人数',capabilities:['多源清点','缺失分析'],react:[{type:'observation',title:'清点',text:'北78/南106=184/186',time:'14:12:10'},{type:'thought',title:'分析',text:'1人请假在外/1人B区失踪',time:'14:12:12'},{type:'action',title:'搜救',text:'搜索B区',time:'14:12:15'}]},
+'交通管控Agent':{icon:'🚦',color:'blue',status:'待命',uptime:'45m',calls:14,errors:0,desc:'调整信号灯保障撤离',capabilities:['信号控制','路障管理'],react:[{type:'observation',title:'态势',text:'北门Salwa中等/南门畅通',time:'14:00:25'},{type:'thought',title:'管控',text:'北门全红行人优先',time:'14:00:30'},{type:'action',title:'执行',text:'信号灯已调',time:'14:00:35'}]},
+'气象监测Agent':{icon:'🌡️',color:'cyan',status:'运行中',uptime:'2h30m',calls:56,errors:0,desc:'采集气象数据预测极端天气',capabilities:['多源采集','短临预报'],react:[{type:'observation',title:'数据',text:'风速18m/s↑/气压降5hPa/能见度200m',time:'13:45:00'},{type:'thought',title:'研判',text:'沙尘暴30min内影响',time:'13:48:00'},{type:'action',title:'预警',text:'沙尘暴橙色预警',time:'13:50:00'}]},
+'设施防护Agent':{icon:'🔧',color:'orange',status:'待命',uptime:'2h30m',calls:22,errors:0,desc:'检查设施状态并加固',capabilities:['设施检查','加固评估'],react:[{type:'observation',title:'检查',text:'A密封92%/B88%/户外3台未回收',time:'13:52:00'},{type:'thought',title:'评估',text:'B区需加固',time:'13:53:00'},{type:'action',title:'加固',text:'B区密封+回收设备',time:'13:55:00'}]},
+'物资调配Agent':{icon:'📦',color:'green',status:'待命',uptime:'2h30m',calls:18,errors:0,desc:'盘点调配应急物资',capabilities:['库存盘点','需求计算'],react:[{type:'observation',title:'库存',text:'水2.5吨/食品3天/医疗包12',time:'13:56:00'},{type:'thought',title:'需求',text:'186人×72h需水3.3吨',time:'13:57:00'},{type:'action',title:'调拨',text:'紧急调拨1吨水',time:'13:58:00'}]},
+'避险管理Agent':{icon:'🏠',color:'yellow',status:'待命',uptime:'2h30m',calls:12,errors:0,desc:'管理避险区人员',capabilities:['避险区管理','状态监测'],react:[{type:'observation',title:'检查',text:'3避险区A80/B60/C50人',time:'14:00:00'},{type:'thought',title:'分配',text:'就近分配',time:'14:02:00'},{type:'action',title:'引导',text:'全员进入避险区',time:'14:05:00'}]},
+'火情监测Agent':{icon:'🔥',color:'red',status:'待命',uptime:'15m',calls:38,errors:0,desc:'多源火灾探测',capabilities:['多源探测','火情评估'],react:[{type:'observation',title:'探测',text:'B区烟感+温感+视频确认',time:'14:30:00'},{type:'thought',title:'评估',text:'面积20m²/400°C/蔓延趋势',time:'14:30:05'},{type:'action',title:'警报',text:'火灾I级响应',time:'14:30:10'}]},
+'蔓延推演Agent':{icon:'🔮',color:'purple',status:'待命',uptime:'15m',calls:16,errors:0,desc:'建模火灾蔓延趋势',capabilities:['蔓延建模','影响评估'],react:[{type:'observation',title:'环境',text:'风12m/s西北/42°C/湿度15%',time:'14:30:15'},{type:'thought',title:'建模',text:'5min蔓延仓库/10min威胁C区',time:'14:30:20'},{type:'action',title:'输出',text:'10min疏散C区',time:'14:30:25'}]},
+'消防调度Agent':{icon:'🚒',color:'orange',status:'待命',uptime:'15m',calls:12,errors:0,desc:'调度消防力量',capabilities:['力量盘点','方案生成'],react:[{type:'observation',title:'力量',text:'园区2辆5min/外部15min',time:'14:30:30'},{type:'thought',title:'方案',text:'1号主攻/2号防御C区',time:'14:30:32'},{type:'action',title:'出动',text:'2辆出动+外部请求',time:'14:30:35'}]},
+'疏散引导Agent':{icon:'🚪',color:'green',status:'待命',uptime:'15m',calls:14,errors:0,desc:'引导人员疏散',capabilities:['区域评估','路线生成'],react:[{type:'observation',title:'评估',text:'B60人疏散/C46预防性',time:'14:30:40'},{type:'thought',title:'方案',text:'B走路线2/C走路线3',time:'14:30:42'},{type:'action',title:'启动',text:'引导员到位',time:'14:30:45'}]},
+};
+
+const agentWorkflows={
+'周界监控Agent':{color:'cyan',steps:[{dot:'cyan',title:'多源感知',desc:'红外+视频+电子围栏',meta:['红外','视频','围栏']},{dot:'purple',title:'行为识别',desc:'AI模型识别行为',meta:['入侵','徘徊']},{dot:'orange',title:'告警分级',desc:'I/II/III级',meta:['I级','II级']},{dot:'green',title:'联动处置',desc:'视频追踪+安保联动',meta:['追踪','联动']}]},
+'身份识别Agent':{color:'purple',steps:[{dot:'cyan',title:'图像采集',desc:'提取关键帧',meta:['人脸','质量']},{dot:'purple',title:'特征提取',desc:'人脸+步态向量',meta:['人脸','步态']},{dot:'purple',title:'数据库比对',desc:'1:N比对',meta:['员工','访客']},{dot:'green',title:'风险画像',desc:'输出识别结果',meta:['身份','风险']}]},
+'威胁评估Agent':{color:'orange',steps:[{dot:'cyan',title:'信息汇总',desc:'身份+行为+环境',meta:['身份','行为']},{dot:'purple',title:'因子分析',desc:'多因子模型',meta:['身份','行为','环境']},{dot:'orange',title:'等级评定',desc:'综合威胁等级',meta:['I级','II级']},{dot:'green',title:'处置建议',desc:'拦截方案',meta:['方案','力量']}]},
+'处置调度Agent':{color:'green',steps:[{dot:'cyan',title:'力量盘点',desc:'查询可用力量',meta:['人员','装备']},{dot:'purple',title:'方案生成',desc:'最优调度',meta:['路径','协同']},{dot:'orange',title:'指令下达',desc:'行动指令',meta:['分配','路线']},{dot:'green',title:'执行跟踪',desc:'实时跟踪',meta:['追踪','状态']}]},
+'生命体征Agent':{color:'green',steps:[{dot:'cyan',title:'数据采集',desc:'心率/血压/血氧',meta:['心率','SpO2']},{dot:'purple',title:'趋势分析',desc:'异常模式识别',meta:['趋势','异常']},{dot:'orange',title:'病情评估',desc:'严重程度',meta:['轻','中','重']},{dot:'green',title:'紧急建议',desc:'处置建议',meta:['急救','转运']}]},
+'医疗资源Agent':{color:'cyan',steps:[{dot:'cyan',title:'资源检索',desc:'医院/急救车',meta:['医院','车辆']},{dot:'purple',title:'匹配评估',desc:'最优机构',meta:['专科','距离']},{dot:'orange',title:'资源预约',desc:'通知准备',meta:['急诊','床位']},{dot:'green',title:'确认反馈',desc:'确认可用',meta:['确认','ETA']}]},
+'转运调度Agent':{color:'orange',steps:[{dot:'cyan',title:'路线分析',desc:'多条路线',meta:['路线A','路线B']},{dot:'purple',title:'最优选择',desc:'时间最短',meta:['时间','拥堵']},{dot:'orange',title:'转运启动',desc:'出发+共享位置',meta:['出发','位置']},{dot:'green',title:'到达确认',desc:'交接确认',meta:['到达','交接']}]},
+'联络协调Agent':{color:'blue',steps:[{dot:'cyan',title:'联络清单',desc:'通知对象',meta:['管理','家属']},{dot:'purple',title:'信息同步',desc:'多语言同步',meta:['中','英','阿']},{dot:'green',title:'确认记录',desc:'记录结果',meta:['确认','归档']}]},
+'撤离指挥Agent':{color:'orange',steps:[{dot:'cyan',title:'态势评估',desc:'人员分布',meta:['人数','分布']},{dot:'purple',title:'撤离方案',desc:'分区+优先级',meta:['分区','集结']},{dot:'orange',title:'指令发布',desc:'全员撤离',meta:['广播','路线']},{dot:'green',title:'进度监控',desc:'实时监控',meta:['进度','告警']}]},
+'路线规划Agent':{color:'cyan',steps:[{dot:'cyan',title:'路线分析',desc:'可行路线',meta:['路线1','路线2']},{dot:'purple',title:'容量计算',desc:'通行容量',meta:['容量','速率']},{dot:'orange',title:'最优分配',desc:'分配路线',meta:['A区','B区']},{dot:'green',title:'动态调整',desc:'实时调整',meta:['拥堵','分流']}]},
+'人数清点Agent':{color:'purple',steps:[{dot:'cyan',title:'多源清点',desc:'门禁/人脸/手动',meta:['门禁','人脸']},{dot:'purple',title:'名单核对',desc:'在册vs已撤离',meta:['在册','已撤']},{dot:'orange',title:'缺失分析',desc:'最后位置',meta:['轨迹','搜救']},{dot:'green',title:'确认安全',desc:'全员确认',meta:['确认','归档']}]},
+'交通管控Agent':{color:'blue',steps:[{dot:'cyan',title:'交通态势',desc:'车流分析',meta:['车流','道路']},{dot:'orange',title:'信号控制',desc:'信号灯+路障',meta:['行人','路障']},{dot:'green',title:'外部协调',desc:'协调外部',meta:['路口','恢复']}]},
+'气象监测Agent':{color:'cyan',steps:[{dot:'cyan',title:'多源采集',desc:'气象数据',meta:['风速','气压']},{dot:'purple',title:'趋势研判',desc:'预测极端',meta:['预报','趋势']},{dot:'orange',title:'预警发布',desc:'等级预警',meta:['蓝色','橙色']},{dot:'green',title:'持续监测',desc:'直至解除',meta:['更新','解除']}]},
+'设施防护Agent':{color:'orange',steps:[{dot:'cyan',title:'设施检查',desc:'门窗/通风',meta:['门窗','通风']},{dot:'purple',title:'加固评估',desc:'防护等级',meta:['密封','强度']},{dot:'orange',title:'加固指令',desc:'加固密封',meta:['关闭','密封']},{dot:'green',title:'状态确认',desc:'确认完成',meta:['确认','监测']}]},
+'物资调配Agent':{color:'green',steps:[{dot:'cyan',title:'库存盘点',desc:'物资库存',meta:['水','食品','医疗']},{dot:'purple',title:'需求计算',desc:'人数×时长',meta:['需求','缺口']},{dot:'orange',title:'调配方案',desc:'分配方案',meta:['分配','优先']},{dot:'green',title:'执行确认',desc:'到位确认',meta:['到位','消耗']}]},
+'避险管理Agent':{color:'yellow',steps:[{dot:'cyan',title:'避险准备',desc:'检查避险区',meta:['容量','设施']},{dot:'orange',title:'人员引导',desc:'进入避险区',meta:['引导','统计']},{dot:'purple',title:'状态监测',desc:'监测状态',meta:['点名','巡查']},{dot:'green',title:'解除评估',desc:'评估解除',meta:['解除','恢复']}]},
+'火情监测Agent':{color:'red',steps:[{dot:'cyan',title:'多源探测',desc:'烟感+温感+视频',meta:['烟感','温感']},{dot:'purple',title:'火情评估',desc:'位置/面积/强度',meta:['位置','面积']},{dot:'orange',title:'等级发布',desc:'响应等级',meta:['I级','II级']},{dot:'green',title:'持续监测',desc:'直至扑灭',meta:['蔓延','复燃']}]},
+'蔓延推演Agent':{color:'purple',steps:[{dot:'cyan',title:'环境采集',desc:'风速/温度/湿度',meta:['风速','温度']},{dot:'purple',title:'蔓延建模',desc:'蔓延趋势',meta:['速率','方向']},{dot:'orange',title:'影响评估',desc:'威胁范围',meta:['建筑','疏散']},{dot:'green',title:'推演输出',desc:'结果和建议',meta:['时间线','建议']}]},
+'消防调度Agent':{color:'orange',steps:[{dot:'cyan',title:'力量盘点',desc:'消防力量',meta:['车辆','人员']},{dot:'purple',title:'方案生成',desc:'灭火方案',meta:['路线','水源']},{dot:'orange',title:'调度指令',desc:'出动指令',meta:['出发','到位']},{dot:'green',title:'执行跟踪',desc:'跟踪进度',meta:['进度','增援']}]},
+'疏散引导Agent':{color:'green',steps:[{dot:'cyan',title:'区域评估',desc:'疏散区域',meta:['人数','通道']},{dot:'purple',title:'方案生成',desc:'路线+引导员',meta:['通道','引导']},{dot:'orange',title:'引导启动',desc:'启动疏散',meta:['指令','监控']},{dot:'green',title:'清点确认',desc:'确认安全',meta:['清点','搜救']}]},
+};
+
+const agentStatusData=[
+{name:'周界监控Agent',icon:'📡',status:'running',uptime:'1h12m',calls:43,errors:0,cpu:'28%',mem:'180MB',trigger:'事件驱动',lastRun:'14:28:42'},
+{name:'身份识别Agent',icon:'🔍',status:'running',uptime:'1h12m',calls:28,errors:0,cpu:'35%',mem:'220MB',trigger:'Webhook',lastRun:'14:28:50'},
+{name:'威胁评估Agent',icon:'🛡️',status:'running',uptime:'1h12m',calls:19,errors:0,cpu:'22%',mem:'160MB',trigger:'事件驱动',lastRun:'14:29:02'},
+{name:'处置调度Agent',icon:'🚀',status:'running',uptime:'1h12m',calls:15,errors:0,cpu:'30%',mem:'200MB',trigger:'Webhook',lastRun:'14:29:10'},
+{name:'生命体征Agent',icon:'❤️',status:'idle',uptime:'23m',calls:12,errors:0,cpu:'8%',mem:'140MB',trigger:'事件驱动',lastRun:'14:15:10'},
+{name:'医疗资源Agent',icon:'🏥',status:'idle',uptime:'23m',calls:8,errors:0,cpu:'5%',mem:'120MB',trigger:'Webhook',lastRun:'14:15:25'},
+{name:'转运调度Agent',icon:'🚑',status:'idle',uptime:'23m',calls:6,errors:0,cpu:'3%',mem:'100MB',trigger:'Webhook',lastRun:'14:15:40'},
+{name:'联络协调Agent',icon:'📞',status:'idle',uptime:'23m',calls:10,errors:0,cpu:'5%',mem:'110MB',trigger:'事件驱动',lastRun:'14:16:00'},
+{name:'撤离指挥Agent',icon:'📢',status:'idle',uptime:'45m',calls:32,errors:0,cpu:'5%',mem:'120MB',trigger:'Cron 30s',lastRun:'14:12:15'},
+{name:'路线规划Agent',icon:'🛣️',status:'idle',uptime:'45m',calls:24,errors:0,cpu:'4%',mem:'110MB',trigger:'Webhook',lastRun:'14:00:20'},
+{name:'人数清点Agent',icon:'🔢',status:'idle',uptime:'45m',calls:18,errors:0,cpu:'3%',mem:'100MB',trigger:'事件驱动',lastRun:'14:12:15'},
+{name:'交通管控Agent',icon:'🚦',status:'idle',uptime:'45m',calls:14,errors:0,cpu:'3%',mem:'95MB',trigger:'Webhook',lastRun:'14:00:35'},
+{name:'气象监测Agent',icon:'🌡️',status:'running',uptime:'2h30m',calls:56,errors:0,cpu:'18%',mem:'150MB',trigger:'Cron 10s',lastRun:'13:50:10'},
+{name:'设施防护Agent',icon:'🔧',status:'idle',uptime:'2h30m',calls:22,errors:0,cpu:'4%',mem:'130MB',trigger:'事件驱动',lastRun:'13:55:10'},
+{name:'物资调配Agent',icon:'📦',status:'idle',uptime:'2h30m',calls:18,errors:0,cpu:'3%',mem:'110MB',trigger:'Webhook',lastRun:'13:55:40'},
+{name:'避险管理Agent',icon:'🏠',status:'idle',uptime:'2h30m',calls:12,errors:0,cpu:'2%',mem:'90MB',trigger:'事件驱动',lastRun:'14:10:10'},
+{name:'火情监测Agent',icon:'🔥',status:'idle',uptime:'15m',calls:38,errors:0,cpu:'3%',mem:'100MB',trigger:'事件驱动',lastRun:'14:30:10'},
+{name:'蔓延推演Agent',icon:'🔮',status:'idle',uptime:'15m',calls:16,errors:0,cpu:'4%',mem:'120MB',trigger:'Webhook',lastRun:'14:30:25'},
+{name:'消防调度Agent',icon:'🚒',status:'idle',uptime:'15m',calls:12,errors:0,cpu:'3%',mem:'100MB',trigger:'Webhook',lastRun:'14:30:35'},
+{name:'疏散引导Agent',icon:'🚪',status:'idle',uptime:'15m',calls:14,errors:0,cpu:'3%',mem:'95MB',trigger:'Webhook',lastRun:'14:30:45'},
+];
+
+const scenarioReplayMarkers={
+intrusion:[{time:'00:00',type:'config',desc:'演练场景配置完成'},{time:'02:15',type:'alert',desc:'东侧围栏入侵告警触发'},{time:'02:45',type:'identify',desc:'身份识别Agent锁定2名不明人员'},{time:'03:10',type:'assess',desc:'威胁评估II级，建议拦截'},{time:'03:30',type:'dispatch',desc:'安保B组+A组联动出击'},{time:'05:20',type:'intercept',desc:'B组到达指定位置'},{time:'06:30',type:'resolve',desc:'不明人员已离开园区'},{time:'07:00',type:'review',desc:'处置完成，进入复盘'}],
+medical:[{time:'00:00',type:'config',desc:'医疗转运演练配置完成'},{time:'01:00',type:'alert',desc:'员工心脏不适紧急呼叫'},{time:'01:30',type:'identify',desc:'生命体征Agent评估病情'},{time:'02:00',type:'assess',desc:'匹配Hamad医院(3.2km/8min)'},{time:'02:30',type:'dispatch',desc:'急救车出发ETA 8分钟'},{time:'05:00',type:'intercept',desc:'急救车到达园区'},{time:'08:00',type:'resolve',desc:'患者送达医院急诊'},{time:'08:30',type:'review',desc:'转运完成，进入复盘'}],
+evacuation:[{time:'00:00',type:'config',desc:'撤离演练配置完成'},{time:'01:00',type:'alert',desc:'全员撤离指令发布'},{time:'01:30',type:'identify',desc:'路线规划Agent分配3条路线'},{time:'02:00',type:'assess',desc:'交通管控Agent启动信号灯控制'},{time:'03:00',type:'dispatch',desc:'A区80人开始撤离'},{time:'05:00',type:'intercept',desc:'A区78/80人到达北集结点'},{time:'08:00',type:'resolve',desc:'B+C区全部到达，1人搜救中'},{time:'12:00',type:'review',desc:'全员确认安全，进入复盘'}],
+shelter:[{time:'00:00',type:'config',desc:'避险演练配置完成'},{time:'01:00',type:'alert',desc:'气象Agent发布沙尘暴橙色预警'},{time:'01:30',type:'identify',desc:'设施防护Agent检查门窗密封'},{time:'02:00',type:'assess',desc:'物资调配Agent分配72h物资'},{time:'05:00',type:'dispatch',desc:'全员进入避险区'},{time:'10:00',type:'intercept',desc:'沙尘暴影响园区，设施完好'},{time:'15:00',type:'resolve',desc:'沙尘暴减弱，解除预警'},{time:'16:00',type:'review',desc:'避险结束，进入复盘'}],
+fire:[{time:'00:00',type:'config',desc:'火灾演练配置完成'},{time:'00:30',type:'alert',desc:'B区烟感+温感同时触发'},{time:'01:00',type:'identify',desc:'火情监测Agent评估火源20m²'},{time:'01:30',type:'assess',desc:'蔓延推演Agent预测5min威胁C区'},{time:'02:00',type:'dispatch',desc:'消防调度Agent出动2辆消防车'},{time:'03:00',type:'intercept',desc:'疏散引导Agent启动C区疏散'},{time:'05:00',type:'resolve',desc:'明火扑灭，确认无复燃'},{time:'09:00',type:'review',desc:'处置完成，进入复盘'}],
+};
+
+const scenarioDeduction={
+intrusion:{models:[{value:'diffusion',name:'入侵行为扩散模型'},{value:'intercept',name:'拦截成功率模型'},{value:'response',name:'响应时间分析模型'},{value:'risk',name:'综合风险评估模型'}],results:[{icon:'🎯',title:'拦截成功率',val:'87%',pct:87,color:'green'},{icon:'⏱️',title:'平均响应',val:'3.2min',pct:64,color:'cyan'},{icon:'👥',title:'影响人数',val:'12',pct:30,color:'orange'},{icon:'📊',title:'风险指数',val:'6.8',pct:68,color:'red'}],steps:[{time:'T+0',title:'初始状态',desc:'2名不明人员位于东侧围栏E-12区'},{time:'T+1min',title:'告警触发',desc:'周界监控Agent检测并确认入侵'},{time:'T+2min',title:'身份研判',desc:'身份识别Agent完成比对，判定未知人员'},{time:'T+3min',title:'威胁评估',desc:'威胁等级II级，建议拦截'},{time:'T+5min',title:'力量到位',desc:'安保B组到达指定拦截位置'},{time:'T+7min',title:'处置完成',desc:'不明人员离开，处置结束'}],logs:[{t:'14:28:33',l:'info',text:'周界监控Agent检测到入侵告警'},{t:'14:28:45',l:'info',text:'身份识别Agent启动图像比对'},{t:'14:29:02',l:'warn',text:'威胁等级评定为II级'},{t:'14:29:10',l:'ok',text:'处置调度Agent下达拦截指令'},{t:'14:32:15',l:'ok',text:'不明人员已离开园区'}]},
+medical:{models:[{value:'triage',name:'医疗分诊模型'},{value:'transport',name:'转运时间预测模型'},{value:'resource',name:'医疗资源匹配模型'},{value:'survival',name:'生存率评估模型'}],results:[{icon:'🏥',title:'医院匹配',val:'Hamad',pct:95,color:'green'},{icon:'🚑',title:'转运时间',val:'8min',pct:80,color:'cyan'},{icon:'❤️',title:'病情稳定',val:'改善',pct:70,color:'orange'},{icon:'📊',title:'风险指数',val:'4.2',pct:42,color:'red'}],steps:[{time:'T+0',title:'紧急呼叫',desc:'员工心脏不适，紧急呼叫医务室'},{time:'T+0.5min',title:'体征评估',desc:'生命体征Agent分析心率112/血氧93%'},{time:'T+1min',title:'资源匹配',desc:'医疗资源Agent匹配Hamad医院'},{time:'T+1.5min',title:'转运启动',desc:'急救车出发，ETA 8分钟'},{time:'T+5min',title:'到达',desc:'急救车到达园区接患者'},{time:'T+8min',title:'送达',desc:'患者送达Hamad医院急诊'}],logs:[{t:'14:15:00',l:'warn',text:'生命体征Agent检测到异常'},{t:'14:15:10',l:'info',text:'医疗资源Agent开始匹配医院'},{t:'14:15:25',l:'info',text:'Hamad医院确认接收'},{t:'14:15:40',l:'ok',text:'转运调度Agent启动急救车'},{t:'14:23:00',l:'ok',text:'患者送达Hamad医院'}]},
+evacuation:{models:[{value:'flow',name:'人员流动模型'},{value:'capacity',name:'路线容量模型'},{value:'congestion',name:'拥堵预测模型'},{value:'time',name:'撤离时间估算模型'}],results:[{icon:'🏃',title:'撤离完成率',val:'99%',pct:99,color:'green'},{icon:'⏱️',title:'撤离时间',val:'12min',pct:80,color:'cyan'},{icon:'👥',title:'已撤离',val:'185/186',pct:99,color:'orange'},{icon:'📊',title:'风险指数',val:'3.5',pct:35,color:'red'}],steps:[{time:'T+0',title:'撤离指令',desc:'全员撤离指令发布'},{time:'T+1min',title:'路线分配',desc:'A区→北集结点，B区→南集结点'},{time:'T+3min',title:'编队引导',desc:'A区80人开始沿路线1撤离'},{time:'T+5min',title:'首批到达',desc:'A区首批人员到达北集结点'},{time:'T+10min',title:'清点确认',desc:'北78/80，南60/60，C区46/46'},{time:'T+12min',title:'全部安全',desc:'缺失1人确认请假在外，全员安全'}],logs:[{t:'14:00:10',l:'info',text:'撤离指挥Agent发布指令'},{t:'14:00:20',l:'info',text:'路线规划Agent下发3条路线'},{t:'14:00:35',l:'info',text:'交通管控Agent启动信号控制'},{t:'14:12:10',l:'warn',text:'北集结点78/80人，2人缺失'},{t:'14:12:15',l:'ok',text:'1人请假在外确认安全，1人搜救中'}]},
+shelter:{models:[{value:'weather',name:'气象预测模型'},{value:'structural',name:'设施承压模型'},{value:'supply',name:'物资消耗模型'},{value:'duration',name:'避险时长估算模型'}],results:[{icon:'🌡️',title:'沙尘强度',val:'强',pct:85,color:'red'},{icon:'🛡️',title:'设施完好',val:'98%',pct:98,color:'green'},{icon:'📦',title:'物资充足',val:'72h',pct:90,color:'cyan'},{icon:'📊',title:'风险指数',val:'5.2',pct:52,color:'orange'}],steps:[{time:'T+0',title:'预警接收',desc:'气象Agent发布沙尘暴橙色预警'},{time:'T+5min',title:'设施检查',desc:'设施防护Agent检查门窗密封92%'},{time:'T+10min',title:'物资调配',desc:'物资调配Agent分配72h物资'},{time:'T+15min',title:'全员避险',desc:'186人进入3个避险区'},{time:'T+2h',title:'沙尘过境',desc:'沙尘暴影响园区，设施完好98%'},{time:'T+3h',title:'解除预警',desc:'沙尘暴减弱，解除预警'}],logs:[{t:'13:50:00',l:'warn',text:'气象Agent发布沙尘暴橙色预警'},{t:'13:55:00',l:'info',text:'设施防护Agent启动检查'},{t:'13:58:00',l:'info',text:'物资调配Agent分配物资'},{t:'14:05:00',l:'ok',text:'全员进入避险区'},{t:'15:50:00',l:'ok',text:'沙尘暴减弱，解除预警'}]},
+fire:{models:[{value:'spread',name:'火势蔓延模型'},{value:'resource',name:'消防资源匹配模型'},{value:'evacuation',name:'疏散时间估算模型'},{value:'damage',name:'损失评估模型'}],results:[{icon:'🔥',title:'蔓延速率',val:'2.5m/min',pct:75,color:'red'},{icon:'🚒',title:'消防到达',val:'5min',pct:90,color:'green'},{icon:'🏃',title:'疏散完成',val:'100%',pct:100,color:'green'},{icon:'📊',title:'风险指数',val:'7.5',pct:75,color:'red'}],steps:[{time:'T+0',title:'火情探测',desc:'B区烟感+温感+视频确认明火'},{time:'T+0.5min',title:'火情评估',desc:'火源20m²/400°C/蔓延趋势'},{time:'T+1min',title:'蔓延推演',desc:'5min蔓延仓库/10min威胁C区'},{time:'T+2min',title:'消防调度',desc:'2辆消防车出动'},{time:'T+3min',title:'疏散启动',desc:'C区46人预防性疏散'},{time:'T+5min',title:'明火扑灭',desc:'确认无复燃'}],logs:[{t:'14:30:00',l:'warn',text:'火情监测Agent检测到火灾'},{t:'14:30:10',l:'info',text:'蔓延推演Agent启动建模'},{t:'14:30:25',l:'info',text:'消防调度Agent出动'},{t:'14:30:35',l:'ok',text:'疏散引导Agent启动'},{t:'14:35:00',l:'ok',text:'明火扑灭'}]},
+};
+
+const scenarioReview={
+intrusion:{metrics:[{icon:'⏱️',title:'告警响应',val:'12s',pct:92,color:'green',target:'<30秒'},{icon:'🏃',title:'力量到位',val:'3.2min',pct:85,color:'green',target:'<5分钟'},{icon:'🎯',title:'处置准确',val:'90%',pct:90,color:'cyan',target:'≥85%'},{icon:'🤝',title:'协同效率',val:'78%',pct:78,color:'orange',target:'≥80%'}],timeline:[{time:'14:28:33',phase:'感知',color:'cyan',title:'入侵告警触发',desc:'红外+视频双重确认'},{time:'14:28:45',phase:'感知',color:'cyan',title:'身份识别启动',desc:'视频图像提取+数据库比对'},{time:'14:29:02',phase:'推演',color:'purple',title:'威胁评估完成',desc:'II级，建议拦截'},{time:'14:29:10',phase:'调度',color:'orange',title:'处置指令下达',desc:'B组包抄+A组设卡'},{time:'14:32:15',phase:'执行',color:'green',title:'不明人员离开',desc:'处置完成'},{time:'14:35:00',phase:'复盘',color:'yellow',title:'演练结束',desc:'进入复盘阶段'}],lessons:[{text:'东侧围栏红外灵敏度偏高',suggestion:'调低阈值至85%',action:'设备配置更新',tag:'device'},{text:'B组3分钟到位优于目标',suggestion:'沉淀"双组包抄"Skill',action:'Skill入库',tag:'skill'},{text:'身份识别2秒可优化',suggestion:'改用向量预计算',action:'算法优化',tag:'optimize'},{text:'北门摄像头存在盲区',suggestion:'增加1台补盲',action:'设备采购',tag:'device'}]},
+medical:{metrics:[{icon:'📞',title:'呼叫响应',val:'8s',pct:95,color:'green',target:'<15秒'},{icon:'🚑',title:'急救车到达',val:'5min',pct:90,color:'green',target:'<10分钟'},{icon:'🏥',title:'医院匹配',val:'精确',pct:95,color:'cyan',target:'≤2km'},{icon:'❤️',title:'转运安全',val:'100%',pct:100,color:'green',target:'100%'}],timeline:[{time:'14:15:00',phase:'感知',color:'cyan',title:'紧急呼叫',desc:'员工心脏不适'},{time:'14:15:05',phase:'感知',color:'cyan',title:'体征评估',desc:'心率112/血氧93%'},{time:'14:15:25',phase:'推演',color:'purple',title:'资源匹配',desc:'Hamad医院3.2km'},{time:'14:15:40',phase:'调度',color:'orange',title:'转运启动',desc:'急救车出发'},{time:'14:20:00',phase:'执行',color:'green',title:'送达医院',desc:'患者交接Hamad急诊'},{time:'14:25:00',phase:'复盘',color:'yellow',title:'演练结束',desc:'进入复盘阶段'}],lessons:[{text:'呼叫响应8秒优于15秒目标',suggestion:'沉淀"快速医疗响应"Skill',action:'Skill入库',tag:'skill'},{text:'Hamad医院匹配精确度高',suggestion:'建立长期合作关系',action:'资源建设',tag:'device'},{text:'急救车ETA预测误差<1min',suggestion:'沉淀转运ETA模型',action:'Skill入库',tag:'skill'},{text:'多语言联络协调顺畅',suggestion:'增加阿语常用语库',action:'知识库更新',tag:'optimize'}]},
+evacuation:{metrics:[{icon:'⏱️',title:'撤离时间',val:'12min',pct:80,color:'green',target:'<15分钟'},{icon:'👥',title:'撤离率',val:'99.5%',pct:99,color:'green',target:'≥99%'},{icon:'🛣️',title:'路线准确',val:'100%',pct:100,color:'cyan',target:'100%'},{icon:'📊',title:'风险指数',val:'3.5',pct:35,color:'green',target:'<5'}],timeline:[{time:'14:00:10',phase:'感知',color:'cyan',title:'撤离指令',desc:'全员撤离指令发布'},{time:'14:00:20',phase:'推演',color:'purple',title:'路线分配',desc:'3条路线下发'},{time:'14:00:35',phase:'调度',color:'orange',title:'交通管控',desc:'信号灯调整'},{time:'14:03:00',phase:'执行',color:'green',title:'编队撤离',desc:'A区80人出发'},{time:'14:12:15',phase:'执行',color:'green',title:'清点确认',desc:'184/186到达'},{time:'14:15:00',phase:'复盘',color:'yellow',title:'演练结束',desc:'1人搜救确认安全'}],lessons:[{text:'撤离12分钟达标',suggestion:'沉淀"分区撤离"Skill',action:'Skill入库',tag:'skill'},{text:'2人缺失暴露清点延迟',suggestion:'增加RFID自动清点',action:'设备升级',tag:'device'},{text:'路线容量计算准确',suggestion:'沉淀路线容量模型',action:'Skill入库',tag:'skill'},{text:'交通管控联动有效',suggestion:'扩展外部信号灯控制范围',action:'方案优化',tag:'optimize'}]},
+shelter:{metrics:[{icon:'🌡️',title:'预警提前',val:'30min',pct:90,color:'green',target:'≥20min'},{icon:'🛡️',title:'设施完好',val:'98%',pct:98,color:'green',target:'≥95%'},{icon:'📦',title:'物资充足',val:'72h',pct:90,color:'cyan',target:'≥48h'},{icon:'👥',title:'避险完成',val:'100%',pct:100,color:'green',target:'100%'}],timeline:[{time:'13:50:00',phase:'感知',color:'cyan',title:'预警接收',desc:'沙尘暴橙色预警'},{time:'13:55:00',phase:'推演',color:'purple',title:'设施评估',desc:'密封率92%'},{time:'13:58:00',phase:'调度',color:'orange',title:'物资调配',desc:'72h物资分配'},{time:'14:05:00',phase:'执行',color:'green',title:'全员避险',desc:'186人进入避险区'},{time:'15:50:00',phase:'执行',color:'green',title:'沙尘过境',desc:'设施完好98%'},{time:'16:00:00',phase:'复盘',color:'yellow',title:'解除预警',desc:'进入复盘阶段'}],lessons:[{text:'预警提前30分钟到位',suggestion:'沉淀"气象预警"Skill',action:'Skill入库',tag:'skill'},{text:'B区密封率88%需提升',suggestion:'升级门窗密封条',action:'设备改造',tag:'device'},{text:'物资72h充足',suggestion:'建立自动补货机制',action:'方案优化',tag:'optimize'},{text:'避险区容量匹配良好',suggestion:'沉淀避险区分配模型',action:'Skill入库',tag:'skill'}]},
+fire:{metrics:[{icon:'🔥',title:'探测时间',val:'30s',pct:95,color:'green',target:'<60秒'},{icon:'🚒',title:'消防到达',val:'5min',pct:90,color:'green',target:'<8分钟'},{icon:'🏃',title:'疏散完成',val:'100%',pct:100,color:'green',target:'100%'},{icon:'📊',title:'风险指数',val:'7.5',pct:75,color:'orange',target:'<8'}],timeline:[{time:'14:30:00',phase:'感知',color:'cyan',title:'火情探测',desc:'烟感+温感+视频确认'},{time:'14:30:15',phase:'推演',color:'purple',title:'蔓延建模',desc:'5min威胁C区'},{time:'14:30:35',phase:'调度',color:'orange',title:'消防出动',desc:'2辆消防车'},{time:'14:30:45',phase:'执行',color:'green',title:'疏散启动',desc:'C区46人疏散'},{time:'14:35:00',phase:'执行',color:'green',title:'明火扑灭',desc:'确认无复燃'},{time:'14:40:00',phase:'复盘',color:'yellow',title:'演练结束',desc:'进入复盘'}],lessons:[{text:'5分钟消防到达优于8分钟目标',suggestion:'沉淀"快速灭火"Skill',action:'Skill入库',tag:'skill'},{text:'蔓延推演准确率85%',suggestion:'增加风速实时校正',action:'算法优化',tag:'optimize'},{text:'B区灭火器有2具过期',suggestion:'建立有效期自动巡检',action:'设备管理',tag:'device'},{text:'疏散路线与消防路线交叉',suggestion:'调整疏散通道至东侧',action:'方案更新',tag:'device'}]},
+};
+
+const activeEvents={
+intrusion:{title:'入侵告警',loc:'东侧围栏E-12',time:'14:28:33',severity:'II级',color:'red',coords:[25.2870,51.5360]},
+medical:{title:'医疗紧急',loc:'A区办公楼',time:'14:15:00',severity:'III级',color:'orange',coords:[25.2840,51.5280]},
+evacuation:{title:'全员撤离',loc:'全园区',time:'14:00:10',severity:'I级',color:'red',coords:[25.2854,51.5310]},
+shelter:{title:'沙尘暴预警',loc:'全园区',time:'13:50:00',severity:'II级',color:'yellow',coords:[25.2860,51.5330]},
+fire:{title:'火灾告警',loc:'B区生产区',time:'14:30:00',severity:'I级',color:'red',coords:[25.2850,51.5350]},
+};
+
+const parkMarkers={buildings:[{name:'A区办公楼',coords:[25.2854,51.5290],type:'office'},{name:'B区生产区',coords:[25.2850,51.5350],type:'production'},{name:'C区仓储区',coords:[25.2830,51.5330],type:'warehouse'},{name:'生活区',coords:[25.2870,51.5290],type:'living'},{name:'北门/集结点',coords:[25.2890,51.5310],type:'gate'},{name:'南门/集结点',coords:[25.2820,51.5310],type:'gate'},{name:'东侧围栏',coords:[25.2870,51.5360],type:'fence'},{name:'医务室',coords:[25.2858,51.5300],type:'medical'}],cameras:[{name:'CAM-E12',coords:[25.2870,51.5360]},{name:'CAM-N01',coords:[25.2890,51.5310]},{name:'CAM-S01',coords:[25.2820,51.5310]},{name:'CAM-W01',coords:[25.2850,51.5270]}]};
+
+const paletteItems=[
+{type:'building',icon:'🏢',label:'办公楼'},{type:'building',icon:'🏭',label:'生产区'},{type:'building',icon:'🏪',label:'仓储区'},{type:'building',icon:'🏠',label:'生活区'},{type:'gate',icon:'🚪',label:'出入口'},{type:'fence',icon:'🚧',label:'围栏'},{type:'camera',icon:'📹',label:'摄像头'},{type:'medical',icon:'🏥',label:'医务室'},{type:'assembly',icon:'📍',label:'集结点'},{type:'patrol',icon:'🚶',label:'巡逻路线'},
+];
+
+const chatCommands={
+'入侵':{reply:()=>{const sc=scenarios[currentScenario];return`<b>${sc.name}</b>：${sc.desc}。威胁等级<b>${sc.severity}</b>，已启动${sc.agents.length}个智能体协同处置。`;},think:()=>scenarios[currentScenario].agents.map((a,i)=>({type:i===0?'o':i===1?'t':'a',title:agentDetails[a]?agentDetails[a].icon+' '+a:a,text:agentDetails[a]?agentDetails[a].desc:'智能体'})),flow:[],action:()=>{switchTab('scene');}},
+'医疗':{reply:'紧急医疗转运已启动。生命体征Agent监测到员工心率112bpm、血氧93%，疑似心血管事件。医疗资源Agent已匹配Hamad医院(3.2km)，急救车已出发ETA 8分钟。',think:[{type:'o',title:'生命体征',text:'心率112/血压145/95/血氧93%'},{type:'t',title:'病情评估',text:'疑似心血管事件，需紧急转运'},{type:'a',title:'资源匹配',text:'Hamad医院3.2km，ICU床位可用'}],flow:[{icon:'📞',dept:'联络Agent',deptCls:'blue',desc:'通知医院+家属'},{icon:'🚑',dept:'转运Agent',deptCls:'orange',desc:'急救车出发'}],action:()=>{switchTab('scene');selectScenario('medical');}},
+'撤离':{reply:'全员撤离指令已发布。撤离指挥Agent评估园区186人，分配3条撤离路线。A区→北集结点，B+C区→南集结点。交通管控Agent已调整信号灯。',think:[{type:'o',title:'人员分布',text:'A区80/B区60/C区46共186人'},{type:'t',title:'路线规划',text:'3条路线，容量匹配'},{type:'a',title:'交通管控',text:'北门全红行人优先'}],flow:[{icon:'📢',dept:'指挥Agent',deptCls:'orange',desc:'发布撤离指令'},{icon:'🛣️',dept:'路线Agent',deptCls:'cyan',desc:'下发3条路线'}],action:()=>{switchTab('scene');selectScenario('evacuation');}},
+'火灾':{reply:'火灾I级响应已启动。火情监测Agent确认B区明火20m²，蔓延推演Agent预测5分钟威胁C区。消防调度Agent已出动2辆消防车，疏散引导Agent启动C区疏散。',think:[{type:'o',title:'火情探测',text:'烟感+温感+视频确认，面积20m²'},{type:'t',title:'蔓延推演',text:'风速12m/s，5min蔓延至仓库'},{type:'a',title:'消防调度',text:'2辆消防车5min到达'}],flow:[{icon:'🔥',dept:'火情Agent',deptCls:'red',desc:'探测评估'},{icon:'🚒',dept:'消防Agent',deptCls:'orange',desc:'出动灭火'}],action:()=>{switchTab('scene');selectScenario('fire');}},
+'避险':{reply:'沙尘暴橙色预警已发布。气象监测Agent预测30分钟内沙尘暴影响园区。设施防护Agent检查门窗密封92%，物资调配Agent分配72h物资。186人已进入避险区。',think:[{type:'o',title:'气象预警',text:'风速18m/s↑，气压降5hPa'},{type:'t',title:'设施评估',text:'密封率92%，B区需加固'},{type:'a',title:'避险启动',text:'186人进入3个避险区'}],flow:[{icon:'🌡️',dept:'气象Agent',deptCls:'cyan',desc:'发布预警'},{icon:'🏠',dept:'避险Agent',deptCls:'yellow',desc:'引导避险'}],action:()=>{switchTab('scene');selectScenario('shelter');}},
+'推演':{reply:()=>{const sc=scenarios[currentScenario];const ded=scenarioDeduction[currentScenario];const m=ded.models.map(x=>x.name).join(' + ');const r0=ded.results[0]?`${ded.results[0].title}${ded.results[0].val}`:'';const r1=ded.results[1]?`${ded.results[1].title}${ded.results[1].val}`:'';return`当前场景<b>${sc.name}</b>。推演模型：${m}。结果：${r0}，${r1}。`;},think:()=>scenarioDeduction[currentScenario].steps.slice(0,3).map((s,i)=>({type:i===0?'o':i===1?'t':'a',title:s.title,text:s.desc})),flow:[],action:()=>{switchTab('drill');}},
+'回放':{reply:()=>{const m=scenarioReplayMarkers[currentScenario];const tm=m.length>0?m[m.length-1].time.split(':')[0]:'7';return`回放已就绪。共<b>${m.length}个关键事件节点</b>，全程${tm}分钟。请在演练复盘页面查看时间轴回放。`;},think:[],flow:[],action:()=>{switchTab('review');}},
+};
+
+// === STATE ===
+let currentTab='config',currentScenario='intrusion',is3DMode=false,chatOpen=false;
+let map,eventLayer,cameraLayer,routeLayer,zoneLayer,personnelLayer;
+let threeScene,threeCamera,threeRenderer,threeMeshes=[];
+let placedItems=[];
+let selectedPlacedIdx=-1;
+let demoRunning=false,demoTimers=[];
+let replayPos=0,replayPlaying=false,replayTimer=null;
+
+// === MAP ===
+function initMap(){
+  map=L.map('map',{zoomControl:false,attributionControl:false}).setView(PARK_CENTER,14);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',{subdomains:['a','b','c','d'],maxZoom:19}).addTo(map);
+  L.control.zoom({position:'topleft'}).addTo(map);
+  eventLayer=L.layerGroup().addTo(map);
+  cameraLayer=L.layerGroup().addTo(map);
+  routeLayer=L.layerGroup().addTo(map);
+  zoneLayer=L.layerGroup().addTo(map);
+  personnelLayer=L.layerGroup().addTo(map);
+  drawParkMarkers();
+}
+function drawParkMarkers(){
+  eventLayer.clearLayers();cameraLayer.clearLayers();routeLayer.clearLayers();zoneLayer.clearLayers();personnelLayer.clearLayers();
+  parkMarkers.buildings.forEach(b=>{
+    let iconHtml='',iconClass='';
+    const typeMap={office:['🏢','rgba(0,153,255,0.2)'],production:['🏭','rgba(255,136,0,0.2)'],warehouse:['🏪','rgba(0,191,165,0.2)'],living:['🏠','rgba(0,230,118,0.2)'],gate:['🚪','rgba(255,200,0,0.2)'],fence:['🚧','rgba(255,61,61,0.2)'],medical:['🏥','rgba(0,230,118,0.2)']};
+    const tm=typeMap[b.type]||['🏢','rgba(0,153,255,0.2)'];
+    L.marker(b.coords,{icon:L.divIcon({className:'',html:`<div style="font-size:20px;text-shadow:0 0 4px rgba(0,0,0,.8)">${tm[0]}</div>`,iconSize:[24,24],iconAnchor:[12,12]})}).addTo(zoneLayer).bindPopup(`<b>${b.name}</b>`);
+  });
+  parkMarkers.cameras.forEach(c=>{
+    L.marker(c.coords,{icon:L.divIcon({className:'',html:`<div style="width:10px;height:10px;border-radius:50%;background:#00d4ff;border:1px solid #fff;box-shadow:0 0 4px #00d4ff"></div>`,iconSize:[12,12],iconAnchor:[6,6]})}).addTo(cameraLayer).bindPopup(`<b>${c.name}</b>`);
+  });
+  const evt=activeEvents[currentScenario];
+  if(evt){
+    L.marker(evt.coords,{icon:L.divIcon({className:'',html:`<div style="width:14px;height:14px;border-radius:50%;background:#ff3d3d;border:2px solid #ff3d3d;animation:pm 2s infinite;box-shadow:0 0 10px #ff3d3d"></div>`,iconSize:[18,18],iconAnchor:[9,9]})}).addTo(eventLayer).bindPopup(`<b>${evt.title}</b><br>${evt.loc}<br>${evt.time}<br>${evt.severity}`);
+  }
+}
+function setMapView(view,e){
+  if(e){document.querySelectorAll('.map-btn').forEach(b=>b.classList.remove('active'));e.target.classList.add('active');}
+  const views={overview:{center:PARK_CENTER,zoom:14},risk:{center:[25.2870,51.5360],zoom:16},route:{center:PARK_CENTER,zoom:15},zone:{center:PARK_CENTER,zoom:16}};
+  if(views[view])map.flyTo(views[view].center,views[view].zoom,{duration:1});
+}
+
+// === 3D ===
+function init3D(){
+  const container=document.getElementById('three-container');
+  threeScene=new THREE.Scene();
+  threeScene.background=new THREE.Color(0x0a0e14);
+  threeScene.fog=new THREE.Fog(0x0a0e14,80,200);
+  const w=container.clientWidth||800,h=container.clientHeight||600;
+  threeCamera=new THREE.PerspectiveCamera(60,w/h,0.1,1000);
+  threeCamera.position.set(60,50,60);
+  threeCamera.lookAt(0,0,0);
+  threeRenderer=new THREE.WebGLRenderer({antialias:true});
+  threeRenderer.setSize(w,h);
+  threeRenderer.setPixelRatio(window.devicePixelRatio);
+  container.appendChild(threeRenderer.domElement);
+  // Lights
+  threeScene.add(new THREE.AmbientLight(0x404060,0.6));
+  const dl=new THREE.DirectionalLight(0xffffff,0.8);
+  dl.position.set(50,80,50);
+  threeScene.add(dl);
+  // Ground
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshPhongMaterial({color:0x1a2030}));
+  ground.rotation.x=-Math.PI/2;
+  threeScene.add(ground);
+  // Grid
+  const grid=new THREE.GridHelper(200,40,0x2a3548,0x1a2030);
+  grid.position.y=0.1;
+  threeScene.add(grid);
+  // Buildings
+  const bldData=[{name:'A区办公楼',x:-15,z:-10,w:12,d:8,h:10,c:0x0099ff},{name:'B区生产区',x:-5,z:15,w:14,d:10,h:8,c:0xff8800},{name:'C区仓储区',x:15,z:10,w:10,d:12,h:6,c:0x00bfa5},{name:'生活区',x:20,z:-15,w:8,d:8,h:7,c:0x00e676},{name:'医务室',x:-2,z:-2,w:4,d:4,h:4,c:0x00e676}];
+  bldData.forEach(b=>{
+    const mesh=new THREE.Mesh(new THREE.BoxGeometry(b.w,b.h,b.d),new THREE.MeshPhongMaterial({color:b.c,transparent:true,opacity:0.7}));
+    mesh.position.set(b.x,b.h/2,b.z);
+    mesh.userData={name:b.name,type:'building'};
+    threeScene.add(mesh);
+    threeMeshes.push(mesh);
+    const edges=new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry),new THREE.LineBasicMaterial({color:b.c}));
+    edges.position.copy(mesh.position);
+    threeScene.add(edges);
+  });
+  // Fence
+  const fp=[[-40,-30],[40,-30],[40,30],[-40,30]];
+  const flp=fp.map(p=>new THREE.Vector3(p[0],3,p[1])).concat([new THREE.Vector3(fp[0][0],3,fp[0][1])]);
+  const fence=new THREE.Line(new THREE.BufferGeometry().setFromPoints(flp),new THREE.LineBasicMaterial({color:0xff8800,opacity:0.5,transparent:true}));
+  threeScene.add(fence);
+  // Event marker
+  const eMarker=new THREE.Mesh(new THREE.ConeGeometry(2,6,8),new THREE.MeshPhongMaterial({color:0xff3d3d,emissive:0x660000}));
+  eMarker.position.set(35,8,-20);
+  eMarker.userData={name:'事件标记',type:'event'};
+  threeScene.add(eMarker);
+  threeMeshes.push(eMarker);
+  // Cameras
+  for(let i=0;i<4;i++){
+    const cm=new THREE.Mesh(new THREE.SphereGeometry(0.8,8,6),new THREE.MeshPhongMaterial({color:0x00d4ff,emissive:0x003344}));
+    const ang=i*Math.PI/2;
+    cm.position.set(Math.cos(ang)*38,5,Math.sin(ang)*28);
+    cm.userData={name:'CAM-'+i,type:'camera'};
+    threeScene.add(cm);
+    threeMeshes.push(cm);
+  }
+  // Mouse controls
+  let isDragging=false,prevX=0,prevY=0;
+  const dom=threeRenderer.domElement;
+  dom.addEventListener('mousedown',e=>{isDragging=true;prevX=e.clientX;prevY=e.clientY;});
+  dom.addEventListener('mouseup',()=>isDragging=false);
+  dom.addEventListener('mousemove',e=>{
+    if(!isDragging)return;
+    const dx=e.clientX-prevX,dy=e.clientY-prevY;
+    const sph=THREE.Spherical().setFromVector3(threeCamera.position);
+    sph.theta-=dx*0.01;sph.phi=Math.max(0.1,Math.min(Math.PI-0.1,sph.phi-dy*0.01));
+    threeCamera.position.setFromSpherical(sph);
+    threeCamera.lookAt(0,0,0);
+    prevX=e.clientX;prevY=e.clientY;
+  });
+  dom.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const d=threeCamera.position.distanceTo(new THREE.Vector3(0,0,0));
+    const nd=Math.max(20,Math.min(150,d+e.deltaY*0.1));
+    threeCamera.position.normalize().multiplyScalar(nd);
+    threeCamera.lookAt(0,0,0);
+  });
+  // Click pick
+  const raycaster=new THREE.Raycaster();
+  const mouse=new THREE.Vector2();
+  dom.addEventListener('click',e=>{
+    const rect=dom.getBoundingClientRect();
+    mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+    mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+    raycaster.setFromCamera(mouse,threeCamera);
+    const hits=raycaster.intersectObjects(threeMeshes);
+    if(hits.length>0){
+      const obj=hits[0].object;
+      const tip=document.getElementById('three-tooltip');
+      tip.textContent=obj.userData.name||'';
+      tip.style.left=(e.clientX-rect.left+10)+'px';
+      tip.style.top=(e.clientY-rect.top+10)+'px';
+      tip.style.display='block';
+      setTimeout(()=>tip.style.display='none',3000);
+    }
+  });
+  animate3D();
+}
+function animate3D(){
+  requestAnimationFrame(animate3D);
+  if(threeRenderer&&is3DMode)threeRenderer.render(threeScene,threeCamera);
+}
+function toggle3D(){
+  const c=document.getElementById('three-container');
+  is3DMode=!is3DMode;
+  if(is3DMode){
+    c.classList.add('show');
+    if(!threeScene)init3D();
+    else{const w=c.clientWidth,h=c.clientHeight;threeCamera.aspect=w/h;threeCamera.updateProjectionMatrix();threeRenderer.setSize(w,h);}
+    showToast('🌐','3D场景已开启','拖拽旋转/滚轮缩放/点击拾取');
+  }else{
+    c.classList.remove('show');
+    showToast('🗺️','2D地图已切换','返回地图视图');
+  }
+}
+
+// === PANEL RENDERERS ===
+function switchTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const el=document.querySelector(`.nav-item[data-tab="${tab}"]`);
+  if(el)el.classList.add('active');
+  const renderers={config:renderConfigPanel,scene:renderScenePanel,drill:renderDrillPanel,command:renderCommandPanel,review:renderReviewPanel};
+  if(renderers[tab])renderers[tab]();
+  updateChatSuggestions();
+}
+
+function renderConfigPanel(){
+  let h='';
+  h+='<div class="fp-section"><div class="fp-title"><span>🏗️</span>演练场景选择</div>';
+  h+='<div class="scenario-grid">';
+  Object.entries(scenarios).forEach(([key,sc])=>{
+    h+=`<div class="scenario-card ${currentScenario===key?'active':''}" onclick="selectScenario('${key}')"><div class="sc-icon">${sc.icon}</div><div class="sc-name">${sc.name}</div><div class="sc-sev">${sc.severity}</div></div>`;
+  });
+  h+='</div></div>';
+  h+='<div class="fp-section"><div class="fp-title"><span>🧩</span>三维场景搭建</div>';
+  h+='<div class="info-banner">从下方组件库中拖拽元素到画布区域，搭建演练场景。点击元素可删除。</div>';
+  h+='<div class="builder-palette">';
+  paletteItems.forEach((p,i)=>{
+    h+=`<div class="palette-item" draggable="true" ondragstart="onPaletteDragStart(event,${i})"><span class="palette-icon">${p.icon}</span>${p.label}</div>`;
+  });
+  h+='</div>';
+  h+='<div class="builder-canvas" id="builder-canvas" ondragover="onCanvasDragOver(event)" ondragleave="onCanvasDragLeave(event)" ondrop="onCanvasDrop(event)">';
+  if(placedItems.length===0){
+    h+='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--t3);font-size:13px;text-align:center">将组件拖拽到此处<br><span style="font-size:11px">或点击下方按钮加载默认场景</span></div>';
+  }
+  placedItems.forEach((item,idx)=>{
+    h+=`<div class="placed-item ${selectedPlacedIdx===idx?'selected':''}" style="left:${item.x}px;top:${item.y}px" onclick="event.stopPropagation();selectPlaced(${idx})" onmousedown="startDragPlaced(event,${idx})">${item.icon} ${item.label}<span class="pi-del" onclick="event.stopPropagation();delPlaced(${idx})">✕</span></div>`;
+  });
+  h+='</div>';
+  h+=`<div class="builder-info">已放置 ${placedItems.length} 个元素</div>`;
+  h+='<div style="display:flex;gap:6px;margin-top:8px">';
+  h+='<button class="fp-btn" onclick="loadDefaultScene()">加载默认场景</button>';
+  h+='<button class="fp-btn" onclick="clearScene()">清空画布</button>';
+  h+='<button class="fp-btn primary" onclick="applyConfig()">应用配置</button>';
+  h+='</div></div>';
+  h+='<div class="fp-section"><div class="fp-title"><span>📋</span>场景参数</div>';
+  const sc=scenarios[currentScenario];
+  h+='<div class="fp-card accent-'+sc.color+'">';
+  h+=`<div class="fp-card-header"><div class="fp-card-title">${sc.icon} ${sc.name}</div><span class="tag ${sc.color}">${sc.severity}</span></div>`;
+  h+=`<div class="fp-row"><span class="label">描述</span><span class="val">${sc.desc}</span></div>`;
+  h+=`<div class="fp-row"><span class="label">智能体</span><span class="val">${sc.agents.length}个</span></div>`;
+  h+=`<div class="fp-row"><span class="label">阶段</span><span class="val">${sc.phases.length}个</span></div>`;
+  h+='<div class="fp-row"><span class="label">处置流程</span></div>';
+  h+='<div style="padding:4px 0;display:flex;flex-wrap:wrap;gap:4px">';
+  sc.phases.forEach(p=>h+=`<span class="tag ${sc.color}">${p}</span>`);
+  h+='</div>';
+  h+='</div></div>';
+  document.getElementById('panel-content').innerHTML=h;
+  // Load default items if empty
+  if(placedItems.length===0){
+    setTimeout(()=>{
+      if(placedItems.length===0&&currentTab==='config')loadDefaultScene();
+    },100);
+  }
+}
+
+function renderScenePanel(){
+  let h='';
+  const sc=scenarios[currentScenario];
+  h+='<div class="fp-section"><div class="fp-title"><span>🛰️</span>态势感知</div>';
+  h+='<div class="fp-card accent-'+sc.color+'">';
+  h+=`<div class="fp-card-header"><div class="fp-card-title">${sc.icon} ${sc.name}</div><span class="tag ${sc.color}">${sc.severity}</span></div>`;
+  h+=`<div class="fp-row"><span class="label">事件位置</span><span class="val">${sc.location[0].toFixed(4)}, ${sc.location[1].toFixed(4)}</span></div>`;
+  const evt=activeEvents[currentScenario];
+  if(evt){
+    h+=`<div class="fp-row"><span class="label">事件类型</span><span class="val">${evt.title}</span></div>`;
+    h+=`<div class="fp-row"><span class="label">发生时间</span><span class="val">${evt.time}</span></div>`;
+    h+=`<div class="fp-row"><span class="label">严重等级</span><span class="val">${evt.severity}</span></div>`;
+  }
+  h+='</div>';
+  // Active agents
+  h+='<div class="fp-card accent-blue">';
+  h+=`<div class="fp-card-header"><div class="fp-card-title">🤖 活跃智能体 (${sc.agents.length})</div></div>`;
+  sc.agents.forEach(name=>{
+    const a=agentDetails[name];
+    if(a){
+      h+=`<div class="agent-row" onclick="openAgentDetail('${name}')">`;
+      h+=`<div class="agent-icon" style="background:rgba(0,212,255,.1);color:var(--${a.color})">${a.icon}</div>`;
+      h+=`<div class="agent-info"><div class="agent-name">${name}</div><div class="agent-meta">${a.status} · ${a.calls}次调用 · ${a.errors}错误</div></div>`;
+      h+=`<div class="agent-dot" style="background:var(--green);box-shadow:0 0 6px var(--green)"></div>`;
+      h+='</div>';
+    }
+  });
+  h+='</div>';
+  // Phases
+  h+='<div class="fp-card accent-purple">';
+  h+='<div class="fp-card-header"><div class="fp-card-title">📡 处置阶段</div></div>';
+  h+='<div class="tl-container">';
+  sc.phases.forEach((p,i)=>{
+    h+=`<div class="tl-node ${i<3?'done':i===3?'active':''}">`;
+    h+=`<div class="tl-time">Phase ${i+1}</div>`;
+    h+=`<div class="tl-title">${p}</div>`;
+    h+=`<div class="tl-desc">${sc.agents[i]||''}</div>`;
+    h+='</div>';
+  });
+  h+='</div></div>';
+  // Stats
+  h+='<div class="stats">';
+  const ded=scenarioDeduction[currentScenario];
+  ded.results.forEach(r=>{
+    h+=`<div class="stat"><div class="stat-val" style="color:var(--${r.color})">${r.val}</div><div class="stat-label">${r.title}</div></div>`;
+  });
+  h+='</div>';
+  h+='</div>';
+  document.getElementById('panel-content').innerHTML=h;
+}
+
+function renderDrillPanel(){
+  let h='';
+  const sc=scenarios[currentScenario];
+  const ded=scenarioDeduction[currentScenario];
+  // Scenario selector
+  h+='<div class="fp-section"><div class="fp-title"><span>🎯</span>演练场景选择</div>';
+  h+='<div class="scenario-grid">';
+  Object.entries(scenarios).forEach(([key,sc2])=>{
+    h+=`<div class="scenario-card ${currentScenario===key?'active':''}" onclick="selectScenario('${key}')"><div class="sc-icon">${sc2.icon}</div><div class="sc-name">${sc2.name}</div><div class="sc-sev">${sc2.severity}</div></div>`;
+  });
+  h+='</div></div>';
+  // Deduction models
+  h+='<div class="fp-card accent-orange">';
+  h+='<div class="fp-card-header"><div class="fp-card-title">🔮 态势推演模型</div></div>';
+  h+='<div class="fp-row"><span class="label">当前场景</span><span class="val">'+sc.name+'</span></div>';
+  ded.models.forEach(m=>{
+    h+=`<div class="fp-row"><span class="label">${m.name}</span><span class="tag orange">就绪</span></div>`;
+  });
+  h+=`<button class="fp-btn primary full" style="margin-top:8px" onclick="startDeduction()">▶ 启动推演</button>`;
+  h+='</div>';
+  // Results
+  h+='<div class="fp-card accent-green">';
+  h+='<div class="fp-card-header"><div class="fp-card-title">📊 推演结果</div></div>';
+  h+='<div class="stats">';
+  ded.results.forEach(r=>{
+    h+=`<div class="stat"><div class="stat-val" style="color:var(--${r.color})">${r.val}</div><div class="stat-label">${r.title}</div></div>`;
+  });
+  h+='</div></div>';
+  // Steps
+  h+='<div class="fp-card accent-blue">';
+  h+='<div class="fp-card-header"><div class="fp-card-title">⏱️ 推演时间轴</div></div>';
+  h+='<div class="tl-container">';
+  ded.steps.forEach((s,i)=>{
+    h+=`<div class="tl-node ${i<ded.steps.length-1?'done':'active'}">`;
+    h+=`<div class="tl-time">${s.time}</div>`;
+    h+=`<div class="tl-title">${s.title}</div>`;
+    h+=`<div class="tl-desc">${s.desc}</div>`;
+    h+='</div>';
+  });
+  h+='</div></div>';
+  // Logs
+  h+='<div class="fp-card accent-cyan">';
+  h+='<div class="fp-card-header"><div class="fp-card-title">📋 推演日志</div></div>';
+  ded.logs.forEach(log=>{
+    const lc=log.l==='warn'?'orange':log.l==='ok'?'green':'cyan';
+    h+=`<div class="fp-row"><span class="tag ${lc}" style="min-width:50px">${log.t}</span><span style="font-size:12px;color:var(--t2);margin-left:8px">${log.text}</span></div>`;
+  });
+  h+='</div>';
+  // Demo button
+  h+='<button class="fp-btn primary full" onclick="startDrillDemo()">▶ 启动端到端演练演示</button>';
+  document.getElementById('panel-content').innerHTML=h;
+}
+
+function renderCommandPanel(){
+  let h='';
+  const sc=scenarios[currentScenario];
+  h+='<div class="fp-section"><div class="fp-title"><span>🎖️</span>演练指挥</div>';
+  // Command center
+  h+='<div class="fp-card accent-red">';
+  h+=`<div class="fp-card-header"><div class="fp-card-title">🚨 指挥中心 - ${sc.name}</div><span class="tag red">${sc.severity}</span></div>`;
+  h+='<div class="fp-row"><span class="label">指挥官</span><span class="val">园区应急总指挥</span></div>';
+  h+='<div class="fp-row"><span class="label">响应级别</span><span class="val">'+sc.severity+'</span></div>';
+  h+='<div class="fp-row"><span class="label">启动时间</span><span class="val">'+(activeEvents[currentScenario]?activeEvents[currentScenario].time:'--')+'</span></div>';
+  h+='</div>';
+  // Departments
+  h+='<div class="fp-card accent-orange">';
+  h+='<div class="fp-card-header"><div class="fp-card-title">📞 多部门协同</div></div>';
+  const depts=[
+    {name:'安保部',status:'已就位',color:'green',detail:'A组4人+B组3人'},
+    {name:'医疗组',status:'待命',color:'yellow',detail:'医务室2人+急救车'},
+    {name:'消防组',status:'待命',color:'yellow',detail:'消防车2辆'},
+    {name:'后勤组',status:'已就位',color:'green',detail:'物资72h'},
+    {name:'外联组',status:'运行中',color:'cyan',detail:'使馆+医院+保险'},
+  ];
+  depts.forEach(d=>{
+    h+=`<div class="fp-row"><span class="label">${d.name}</span><span class="tag ${d.color}">${d.status}</span><span class="val">${d.detail}</span></div>`;
+  });
+  h+='</div>';
+  // Agents status
+  h+='<div class="fp-card accent-blue">';
+  h+=`<div class="fp-card-header"><div class="fp-card-title">🤖 智能体调度 (${sc.agents.length})</div></div>`;
+  sc.agents.forEach(name=>{
+    const a=agentDetails[name];
+    const s=agentStatusData.find(x=>x.name===name);
+    if(a&&s){
+      h+=`<div class="agent-row" onclick="openAgentDetail('${name}')">`;
+      h+=`<div class="agent-icon" style="background:rgba(0,212,255,.1);color:var(--${a.color})">${a.icon}</div>`;
+      h+=`<div class="agent-info"><div class="agent-name">${name}</div><div class="agent-meta">${s.cpu} CPU · ${s.mem} · ${s.trigger}</div></div>`;
+      h+=`<div class="agent-dot" style="background:var(--${s.status==='running'?'green':'t2'});box-shadow:0 0 6px ${s.status==='running'?'var(--green)':'transparent'}"></div>`;
+      h+='</div>';
+    }
+  });
+  h+='</div>';
+  // Communication log
+  h+='<div class="fp-card accent-green">';
+  h+='<div class="fp-card-header"><div class="fp-card-title">📡 指挥通信日志</div></div>';
+  const ded=scenarioDeduction[currentScenario];
+  ded.logs.forEach(log=>{
+    const lc=log.l==='warn'?'orange':log.l==='ok'?'green':'cyan';
+    h+=`<div class="fp-row"><span class="tag ${lc}" style="min-width:50px">${log.t}</span><span style="font-size:12px;color:var(--t2);margin-left:8px">${log.text}</span></div>`;
+  });
+  h+='</div></div>';
+  document.getElementById('panel-content').innerHTML=h;
+}
+
+function renderReviewPanel(){
+  let h='';
+  const sc=scenarios[currentScenario];
+  const rv=scenarioReview[currentScenario];
+  const markers=scenarioReplayMarkers[currentScenario];
+  const totalMin=markers.length>0?markers[markers.length-1].time.split(':')[0]:'7';
+  h+='<div class="fp-section"><div class="fp-title"><span>📝</span>演练复盘</div>';
+  // Replay timeline
+  h+='<div class="fp-card accent-purple">';
+  h+=`<div class="fp-card-header"><div class="fp-card-title">⏮️ 过程回放时间轴</div><span class="tag purple">${totalMin}分钟</span></div>`;
+  h+='<div class="info-banner">拖动时间轴或点击节点跳转到关键事件。点击播放按钮自动回放。</div>';
+  // Timeline bar
+  h+='<div class="replay-timeline" id="replay-timeline" onclick="seekReplayByPos(event)">';
+  h+='<div class="replay-track"></div>';
+  h+=`<div class="replay-progress" id="replay-progress" style="width:0%"></div>`;
+  h+=`<div class="replay-handle" id="replay-handle" style="left:0%"></div>`;
+  const typeColors={config:'#00bfa5',alert:'#ff3d3d',identify:'#b060ff',assess:'#ff8800',dispatch:'#00e676',intercept:'#00d4ff',resolve:'#00e676',review:'#ffc800'};
+  markers.forEach((m,i)=>{
+    const pct=(i/(markers.length-1))*100;
+    const c=typeColors[m.type]||'#00d4ff';
+    h+=`<div class="replay-marker" style="left:${pct}%;background:${c}" onclick="event.stopPropagation();seekReplay(${i})" title="${m.time} ${m.desc}">`;
+    h+=`<div class="replay-marker-label">${m.time}</div>`;
+    h+='</div>';
+  });
+  h+=`<div class="replay-time-display" id="replay-time-display">00:00 / ${markers[markers.length-1]?markers[markers.length-1].time:'07:00'}</div>`;
+  h+='</div>';
+  // Replay controls
+  h+='<div style="display:flex;gap:6px;margin-top:8px">';
+  h+='<button class="fp-btn" onclick="toggleReplay()" id="replay-play-btn">▶ 播放</button>';
+  h+='<button class="fp-btn" onclick="seekReplay(0)">⏮ 起点</button>';
+  h+=`<button class="fp-btn" onclick="seekReplay(${markers.length-1})">⏭ 终点</button>`;
+  h+='</div>';
+  // Current event display
+  h+='<div id="replay-current-event" style="margin-top:10px;padding:8px;background:var(--bg);border-radius:6px;font-size:12px;color:var(--t2)"></div>';
+  h+='</div>';
+  // Evaluation metrics
+  h+='<div class="fp-card accent-yellow">';
+  h+='<div class="fp-card-header"><div class="fp-card-title">📊 处置效果评估</div></div>';
+  h+='<div class="dim-grid">';
+  rv.metrics.forEach(m=>{
+    h+=`<div class="dim-card"><div class="dc-title">${m.title}</div><div class="dc-val" style="color:var(--${m.color})">${m.val}</div><div class="dc-bar"><div class="dc-bar-fill" style="width:${m.pct}%;background:var(--${m.color})"></div></div><div style="font-size:11px;color:var(--t3);margin-top:2px">目标: ${m.target}</div></div>`;
+  });
+  h+='</div></div>';
+  // Timeline review
+  h+='<div class="fp-card accent-blue">';
+  h+='<div class="fp-card-header"><div class="fp-card-title">⏱️ 处置时间线</div></div>';
+  h+='<div class="tl-container">';
+  rv.timeline.forEach(t=>{
+    h+=`<div class="tl-node done"><div class="tl-time">${t.time} <span class="tag ${t.color}" style="margin-left:4px">${t.phase}</span></div><div class="tl-title">${t.title}</div><div class="tl-desc">${t.desc}</div></div>`;
+  });
+  h+='</div></div>';
+  // Lessons
+  h+='<div class="fp-card accent-yellow">';
+  h+='<div class="fp-card-header"><div class="fp-card-title">💡 经验教训与改进</div></div>';
+  rv.lessons.forEach(l=>{
+    h+=`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-size:13px;color:var(--t1)">${l.text}</div><div style="font-size:12px;color:var(--t2);margin-top:4px">建议: ${l.suggestion}</div><div style="margin-top:4px"><span class="tag ${l.tag==='skill'?'green':l.tag==='device'?'orange':'purple'}">${l.action}</span></div></div>`;
+  });
+  h+='</div>';
+  // Skill registry
+  h+='<div class="fp-card accent-green">';
+  h+='<div class="fp-card-header"><div class="fp-card-title">🔄 Skill沉淀流程</div></div>';
+  const skillSteps=[
+    {dot:'cyan',title:'经验提取',desc:'从本次演练提取成功经验'},
+    {dot:'purple',title:'Skill生成',desc:`生成"${sc.name}处置"Skill`},
+    {dot:'yellow',title:'验证入库',desc:'匹配度92%，通过验证'},
+    {dot:'green',title:'后续复用',desc:'下次类似场景自动激活'},
+  ];
+  skillSteps.forEach((s,i)=>{
+    h+=`<div class="wf-step"><div class="wf-dot ${s.dot}">${i+1}</div><div class="wf-content"><div class="wf-title">${s.title}</div><div class="wf-desc">${s.desc}</div></div></div>`;
+  });
+  h+='</div>';
+  h+='<button class="fp-btn primary full" onclick="generateReviewReport()">📄 生成完整复盘报告</button>';
+  h+='</div>';
+  document.getElementById('panel-content').innerHTML=h;
+  // Init replay
+  replayPos=0;updateReplayUI();
+}
+
+// === REPLAY ===
+function seekReplay(idx){
+  const markers=scenarioReplayMarkers[currentScenario];
+  replayPos=Math.max(0,Math.min(markers.length-1,idx));
+  updateReplayUI();
+}
+function seekReplayByPos(e){
+  const tl=document.getElementById('replay-timeline');
+  if(!tl)return;
+  const rect=tl.getBoundingClientRect();
+  const pct=(e.clientX-rect.left)/rect.width;
+  const markers=scenarioReplayMarkers[currentScenario];
+  const idx=Math.round(pct*(markers.length-1));
+  seekReplay(idx);
+}
+function toggleReplay(){
+  replayPlaying=!replayPlaying;
+  const btn=document.getElementById('replay-play-btn');
+  if(btn)btn.textContent=replayPlaying?'⏸ 暂停':'▶ 播放';
+  if(replayPlaying){
+    const markers=scenarioReplayMarkers[currentScenario];
+    replayTimer=setInterval(()=>{
+      if(replayPos>=markers.length-1){
+        replayPlaying=false;
+        if(btn)btn.textContent='▶ 播放';
+        clearInterval(replayTimer);
+        return;
+      }
+      replayPos++;updateReplayUI();
+    },1500);
+  }else{
+    clearInterval(replayTimer);
+  }
+}
+function updateReplayUI(){
+  const markers=scenarioReplayMarkers[currentScenario];
+  if(!markers||markers.length===0)return;
+  const m=markers[replayPos];
+  const pct=(replayPos/(markers.length-1))*100;
+  const prog=document.getElementById('replay-progress');
+  const handle=document.getElementById('replay-handle');
+  const disp=document.getElementById('replay-time-display');
+  const evt=document.getElementById('replay-current-event');
+  if(prog)prog.style.width=pct+'%';
+  if(handle)handle.style.left=pct+'%';
+  if(disp)disp.textContent=`${m.time} / ${markers[markers.length-1].time}`;
+  if(evt)evt.innerHTML=`<span class="tag purple">${m.time}</span> <span style="color:var(--t1);margin-left:8px">${m.desc}</span>`;
+}
+
+// === AGENT DETAIL ===
+function openAgentDetail(name){
+  const a=agentDetails[name];
+  if(!a)return;
+  document.getElementById('agent-detail-title').innerHTML=`${a.icon} ${name}`;
+  let body='';
+  body+=`<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap"><span class="tag ${a.color}">${a.status}</span><span class="tag">运行 ${a.uptime}</span><span class="tag">调用 ${a.calls}次</span><span class="tag green">${a.errors}错误</span></div>`;
+  body+=`<div style="margin-bottom:16px;font-size:13px;color:var(--t2);line-height:1.6">${a.desc}</div>`;
+  body+=`<div style="margin-bottom:16px"><div style="font-size:13px;font-weight:600;margin-bottom:8px">核心能力</div>`;
+  a.capabilities.forEach(c=>body+=`<span class="tag ${a.color}" style="margin:2px">${c}</span>`);
+  body+='</div>';
+  body+=`<div style="margin-bottom:16px"><div style="font-size:13px;font-weight:600;margin-bottom:8px">ReAct 推理轨迹</div>`;
+  const typeMap={observation:{cls:'obs',label:'O'},thought:{cls:'think',label:'T'},action:{cls:'act',label:'A'}};
+  a.react.forEach(r=>{
+    const tm=typeMap[r.type]||{cls:'obs',label:'O'};
+    body+=`<div class="ad-react-step"><div class="ad-react-icon ${tm.cls}">${tm.label}</div><div><div style="font-size:12px;font-weight:600">${r.title}</div><div style="font-size:12px;color:var(--t2)">${r.text}</div><div style="font-size:10px;color:var(--t3);margin-top:2px">${r.time}</div></div></div>`;
+  });
+  body+='</div>';
+  if(agentWorkflows[name]){
+    body+=`<div><div style="font-size:13px;font-weight:600;margin-bottom:8px">工作流程</div>`;
+    agentWorkflows[name].steps.forEach((s,i)=>{
+      body+=`<div class="wf-step"><div class="wf-dot ${s.dot}">${i+1}</div><div class="wf-content"><div class="wf-title">${s.title}</div><div class="wf-desc">${s.desc}</div><div class="wf-meta">`;
+      (s.meta||[]).forEach(m=>body+=`<span>${m}</span>`);
+      body+='</div></div></div>';
+    });
+    body+='</div>';
+  }
+  document.getElementById('agent-detail-body').innerHTML=body;
+  document.getElementById('agent-detail-overlay').classList.add('show');
+}
+
+// === SCENARIO ===
+function selectScenario(key){
+  currentScenario=key;
+  drawParkMarkers();
+  const sc=scenarios[key];
+  if(sc&&map)map.flyTo(sc.location,15,{duration:1});
+  showToast(sc.icon,`场景切换: ${sc.name}`,sc.desc);
+  if(currentTab==='config')renderConfigPanel();
+  else if(currentTab==='scene')renderScenePanel();
+  else if(currentTab==='drill')renderDrillPanel();
+  else if(currentTab==='command')renderCommandPanel();
+  else if(currentTab==='review')renderReviewPanel();
+}
+
+// === BUILDER (drag-drop) ===
+function onPaletteDragStart(e,idx){
+  e.dataTransfer.setData('text/plain',idx);
+  e.target.classList.add('dragging');
+}
+function onCanvasDragOver(e){
+  e.preventDefault();
+  document.getElementById('builder-canvas').classList.add('drag-over');
+}
+function onCanvasDragLeave(){
+  document.getElementById('builder-canvas').classList.remove('drag-over');
+}
+function onCanvasDrop(e){
+  e.preventDefault();
+  document.getElementById('builder-canvas').classList.remove('drag-over');
+  const idx=parseInt(e.dataTransfer.getData('text/plain'));
+  const p=paletteItems[idx];
+  if(!p)return;
+  const canvas=document.getElementById('builder-canvas');
+  const rect=canvas.getBoundingClientRect();
+  placedItems.push({type:p.type,icon:p.icon,label:p.label,x:e.clientX-rect.left-40,y:e.clientY-rect.top-15});
+  renderConfigPanel();
+}
+function selectPlaced(idx){
+  selectedPlacedIdx=idx;
+  renderConfigPanel();
+}
+function delPlaced(idx){
+  placedItems.splice(idx,1);
+  selectedPlacedIdx=-1;
+  renderConfigPanel();
+}
+function startDragPlaced(e,idx){
+  e.preventDefault();
+  selectedPlacedIdx=idx;
+  const canvas=document.getElementById('builder-canvas');
+  if(!canvas)return;
+  const rect=canvas.getBoundingClientRect();
+  const item=placedItems[idx];
+  const startX=e.clientX,startY=e.clientY;
+  const origX=item.x,origY=item.y;
+  const onMove=ev=>{
+    item.x=Math.max(0,Math.min(rect.width-80,origX+ev.clientX-startX));
+    item.y=Math.max(0,Math.min(rect.height-30,origY+ev.clientY-startY));
+    const el=canvas.querySelector(`.placed-item:nth-child(${idx+1})`);
+    // Just re-render for simplicity
+  };
+  const onUp=()=>{
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('mouseup',onUp);
+    renderConfigPanel();
+  };
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onUp);
+}
+function loadDefaultScene(){
+  placedItems=[
+    {type:'building',icon:'🏢',label:'A区办公楼',x:20,y:30},
+    {type:'building',icon:'🏭',label:'B区生产区',x:150,y:80},
+    {type:'building',icon:'🏪',label:'C区仓储区',x:250,y:50},
+    {type:'gate',icon:'🚪',label:'北门',x:120,y:10},
+    {type:'gate',icon:'🚪',label:'南门',x:180,y:150},
+    {type:'fence',icon:'🚧',label:'东侧围栏',x:300,y:120},
+    {type:'camera',icon:'📹',label:'CAM-E12',x:280,y:100},
+    {type:'medical',icon:'🏥',label:'医务室',x:80,y:60},
+  ];
+  renderConfigPanel();
+  showToast('🏗️','默认场景已加载','8个元素已放置');
+}
+function clearScene(){
+  placedItems=[];
+  selectedPlacedIdx=-1;
+  renderConfigPanel();
+}
+function applyConfig(){
+  showToast('✅','配置已应用',`场景: ${scenarios[currentScenario].name}，元素: ${placedItems.length}个`);
+}
+
+// === DEDUCTION ===
+function startDeduction(){
+  showToast('🔮','推演启动','正在运行推演模型...');
+  setTimeout(()=>{
+    const ded=scenarioDeduction[currentScenario];
+    const r0=ded.results[0]?`${ded.results[0].title}: ${ded.results[0].val}`:'';
+    const r1=ded.results[1]?`${ded.results[1].title}: ${ded.results[1].val}`:'';
+    showToast('✅','推演完成',`${r0} / ${r1}`);
+  },2000);
+}
+
+// === REVIEW REPORT ===
+function generateReviewReport(){
+  const rv=scenarioReview[currentScenario];
+  const sc=scenarios[currentScenario];
+  const markers=scenarioReplayMarkers[currentScenario];
+  const totalMin=markers.length>0?markers[markers.length-1].time.split(':')[0]:'7';
+  const score=Math.round(rv.metrics.reduce((s,m)=>s+m.pct,0)/rv.metrics.length);
+  let h='';
+  h+=`<div class="rr-section"><div class="rr-section-title">事件概览</div><div class="dim-grid"><div class="dim-card"><div class="dc-title">演练场景</div><div class="dc-val" style="color:var(--red)">${sc.name}</div></div><div class="dim-card"><div class="dc-title">演练时长</div><div class="dc-val" style="color:var(--cyan)">${totalMin}分钟</div></div><div class="dim-card"><div class="dc-title">智能体</div><div class="dc-val" style="color:var(--green)">${sc.agents.length}个</div></div><div class="dim-card"><div class="dc-title">综合评分</div><div class="dc-val" style="color:var(--yellow)">${score}分</div></div></div></div>`;
+  h+='<div class="rr-section"><div class="rr-section-title">处置效果评估</div>';
+  rv.metrics.forEach(m=>{
+    h+=`<div class="rr-metric-row"><div class="rr-metric-label">${m.title}（目标: ${m.target}）</div><div class="rr-metric-bar"><div class="rr-metric-fill" style="width:${m.pct}%;background:var(--${m.color})"></div></div><div class="rr-metric-val" style="color:var(--${m.color})">${m.val}</div></div>`;
+  });
+  h+='</div>';
+  h+='<div class="rr-section"><div class="rr-section-title">处置时间线</div>';
+  const colorMap={cyan:'var(--cyan)',purple:'var(--purple)',orange:'var(--orange)',green:'var(--green)',yellow:'var(--yellow)'};
+  rv.timeline.forEach(t=>{
+    h+=`<div class="rr-timeline-node"><div class="rr-tl-dot" style="background:${colorMap[t.color]||'var(--cyan)'}"></div><div class="rr-tl-content"><div class="rr-tl-time">${t.time} · ${t.phase}</div><div class="rr-tl-title">${t.title}</div><div class="rr-tl-desc">${t.desc}</div></div></div>`;
+  });
+  h+='</div>';
+  h+='<div class="rr-section"><div class="rr-section-title">经验教训与改进建议</div>';
+  rv.lessons.forEach(l=>{
+    h+=`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-size:13px;color:var(--t1)">${l.text}</div><div style="font-size:12px;color:var(--t2);margin-top:4px">建议: ${l.suggestion}</div><span class="tag orange" style="margin-top:4px">${l.action}</span></div>`;
+  });
+  h+='</div>';
+  h+=`<div class="rr-section"><div class="rr-section-title">智能体运行统计</div>`;
+  sc.agents.forEach(name=>{
+    const a=agentDetails[name];
+    if(a)h+=`<div class="fp-row"><span class="label">${a.icon} ${name}</span><span class="tag">${a.calls}次</span><span class="tag green">${a.errors}错误</span></div>`;
+  });
+  h+='</div>';
+  h+='<div class="warn-banner">本报告为演练复盘，非真实事件处置记录。数据仅供演练评估和改进参考。</div>';
+  document.getElementById('review-report-body').innerHTML=h;
+  document.getElementById('review-report-overlay').classList.add('show');
+}
+
+// === CHAT ===
+function toggleChat(){
+  chatOpen=!chatOpen;
+  document.getElementById('chat-panel').classList.toggle('hidden',!chatOpen);
+  if(chatOpen){
+    const body=document.getElementById('chat-body');
+    if(body.children.length===0){
+      addChatMsg('演练智能助手已就绪。可询问入侵、医疗、撤离、火灾、避险、推演、回放等话题。','agent');
+    }
+    updateChatSuggestions();
+  }
+}
+function updateChatSuggestions(){
+  const el=document.getElementById('chat-suggestions');
+  if(!el)return;
+  const sugg={config:['不明人员入侵','紧急医疗转运','全员撤离','火灾突发事件','营地避险'],scene:['当前态势','推演分析','回放过程'],drill:['启动推演','查看结果'],command:['指挥调度','部门协同'],review:['复盘报告','经验教训','回放过程']};
+  const list=sugg[currentTab]||['不明人员入侵','推演分析','回放过程'];
+  el.innerHTML=list.map(s=>`<div class="chat-suggestion" onclick="document.getElementById('chat-input').value='${s}';sendChat()">${s}</div>`).join('');
+}
+function addChatMsg(text,sender,extra){
+  const body=document.getElementById('chat-body');
+  const div=document.createElement('div');
+  div.className='chat-msg '+sender;
+  let html=`<div class="chat-bubble">${text}</div>`;
+  if(extra)html+=extra;
+  div.innerHTML=html;
+  body.appendChild(div);
+  body.scrollTop=body.scrollHeight;
+}
+function sendChat(){
+  const input=document.getElementById('chat-input');
+  const text=input.value.trim();
+  if(!text)return;
+  addChatMsg(text,'user');
+  input.value='';
+  const body=document.getElementById('chat-body');
+  const typing=document.createElement('div');
+  typing.className='chat-msg agent';
+  typing.innerHTML='<div class="chat-bubble" style="color:var(--t2)">思考中...</div>';
+  body.appendChild(typing);
+  body.scrollTop=body.scrollHeight;
+  setTimeout(()=>{
+    body.removeChild(typing);
+    const cmd=matchChat(text);
+    if(cmd){
+      const replyText=typeof cmd.reply==='function'?cmd.reply():cmd.reply;
+      const thinkArr=typeof cmd.think==='function'?cmd.think():(cmd.think||[]);
+      let extra='';
+      if(thinkArr.length>0){
+        extra+='<div style="margin-top:8px;border:1px solid var(--border);border-radius:6px;overflow:hidden"><div style="padding:6px 10px;font-size:11px;color:var(--t2);cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'">💭 推理过程 ('+thinkArr.length+'步)</div><div style="padding:8px 10px;display:none;border-top:1px solid var(--border)">';
+        thinkArr.forEach(s=>{
+          const icons={o:'O',t:'T',a:'A'};
+          const cls=s.type==='o'?'obs':s.type==='t'?'think':'act';
+          extra+=`<div style="display:flex;gap:8px;margin:4px 0;font-size:12px"><div class="ad-react-icon ${cls}" style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${icons[s.type]||'O'}</div><div><b>${s.title}</b>: ${s.text}</div></div>`;
+        });
+        extra+='</div></div>';
+      }
+      addChatMsg(replyText,'agent',extra);
+      if(cmd.action)setTimeout(cmd.action,600);
+    }else{
+      addChatMsg('未找到匹配的演练场景。可试试：入侵、医疗、撤离、火灾、避险、推演、回放。','agent');
+    }
+  },800);
+}
+function matchChat(t){
+  if(t.includes('入侵')||t.includes('侵扰')||t.includes('不明人员'))return chatCommands['入侵'];
+  if(t.includes('医疗')||t.includes('转运')||t.includes('心脏'))return chatCommands['医疗'];
+  if(t.includes('撤离')||t.includes('疏散'))return chatCommands['撤离'];
+  if(t.includes('火灾')||t.includes('着火')||t.includes('消防'))return chatCommands['火灾'];
+  if(t.includes('避险')||t.includes('沙尘')||t.includes('营地'))return chatCommands['避险'];
+  if(t.includes('推演')||t.includes('演练')||t.includes('模拟'))return chatCommands['推演'];
+  if(t.includes('回放')||t.includes('回顾')||t.includes('复盘'))return chatCommands['回放'];
+  return null;
+}
+
+// === DEMO MODE ===
+function startDrillDemo(){
+  if(demoRunning)return;
+  demoRunning=true;
+  const phases=[
+    {phase:'config',label:'场景配置 - 搭建场景',duration:4000,color:'cyan',actions:[
+      ()=>{switchTab('config');showToast('🏗️','场景配置','选择场景+搭建3D环境');},
+    ]},
+    {phase:'scene',label:'态势感知 - 事件触发',duration:5000,color:'cyan',actions:[
+      ()=>{switchTab('scene');showToast('🚨','态势感知',`${scenarios[currentScenario].name}事件触发`);},
+      ()=>{if(!chatOpen)toggleChat();sendChatDemo(scenarios[currentScenario].name);},
+    ]},
+    {phase:'drill',label:'演练推演 - 模型计算',duration:6000,color:'orange',actions:[
+      ()=>{switchTab('drill');showToast('🔮','推演启动','态势推演进行中...');},
+      ()=>{
+        const ded=scenarioDeduction[currentScenario];
+        const r0=ded.results[0]?`${ded.results[0].title}: ${ded.results[0].val}`:'';
+        const r1=ded.results[1]?`${ded.results[1].title}: ${ded.results[1].val}`:'';
+        showToast('✅','推演完成',`${r0} / ${r1}`);
+      },
+    ]},
+    {phase:'command',label:'演练指挥 - 调度执行',duration:5000,color:'red',actions:[
+      ()=>{switchTab('command');showToast('🎖️','指挥调度','多部门协同+智能体调度');},
+    ]},
+    {phase:'review',label:'演练复盘 - 评估报告',duration:6000,color:'yellow',actions:[
+      ()=>{
+        switchTab('review');
+        const rv=scenarioReview[currentScenario];
+        const score=Math.round(rv.metrics.reduce((s,m)=>s+m.pct,0)/rv.metrics.length);
+        showToast('📝','复盘完成',`综合评分${score}分`);
+      },
+      ()=>{generateReviewReport();},
+    ]},
+  ];
+  let cumulative=0;
+  const total=phases.reduce((s,p)=>s+p.duration,0);
+  document.getElementById('demo-progress').classList.add('show');
+  phases.forEach(p=>{
+    p.actions.forEach((a,ai)=>{
+      const delay=cumulative+(p.duration/p.actions.length)*ai;
+      demoTimers.push(setTimeout(a,delay));
+    });
+    demoTimers.push(setTimeout(()=>{
+      document.getElementById('demo-progress-fill').style.width=((cumulative+p.duration)/total*100)+'%';
+      document.getElementById('demo-progress-fill').style.background=`var(--${p.color})`;
+    },cumulative));
+    cumulative+=p.duration;
+  });
+  demoTimers.push(setTimeout(()=>{
+    demoRunning=false;
+    document.getElementById('demo-progress').classList.remove('show');
+    showToast('✅','演示完成','端到端演练流程演示完毕');
+  },cumulative+500));
+}
+function sendChatDemo(text){
+  document.getElementById('chat-input').value=text;
+  sendChat();
+}
+
+// === TOAST ===
+function showToast(icon,title,desc){
+  const c=document.getElementById('toast-container');
+  const t=document.createElement('div');
+  t.className='toast';
+  t.innerHTML=`<span class="toast-icon">${icon}</span><div><div style="font-weight:600;font-size:13px">${title}</div><div style="font-size:11px;color:var(--t2)">${desc}</div></div>`;
+  c.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},3000);
+}
+
+// === CLOCK ===
+function updateClock(){
+  const d=new Date();
+  document.getElementById('clock').textContent=d.toLocaleTimeString('zh-CN',{hour12:false});
+}
+
+// === INIT ===
+window.addEventListener('load',()=>{
+  initMap();
+  switchTab('config');
+  updateClock();
+  setInterval(updateClock,1000);
+});
+window.addEventListener('resize',()=>{
+  if(map)map.invalidateSize();
+  if(threeRenderer&&is3DMode){
+    const c=document.getElementById('three-container');
+    threeCamera.aspect=c.clientWidth/c.clientHeight;
+    threeCamera.updateProjectionMatrix();
+    threeRenderer.setSize(c.clientWidth,c.clientHeight);
+  }
+});
+</script>
+
+<!-- AIGC: {"Label":"value1","ContentProducer":"001191110000802100433B11010001191110000802100433B11010","ProduceID":"2ed1fa04-92bf-48e8-ae72-c5f70bcfd736","ReservedCode1":"72dafc97cd38b92e5f3d5cdfd0dfbbe6","ContentPropagator":"001191110000802100433B11010001191110000802100433B11010","PropagateID":"21fec44f-1583-4de6-b589-1f3715e6feaa","ReservedCode2":"2734827274df537123a472bf4de01eb5"} -->
+</body>
+</html>
